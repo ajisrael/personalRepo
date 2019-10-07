@@ -1,0 +1,62 @@
+Problem 2.d:
+Module VelAvg (portVel, stbdVel, meanVel)         // Figure 1
+// ----------------------------------------------------------
+// Receive input from port & starboard velocity sensors & 
+// Output mean of the two sensor values.
+// ----------------------------------------------------------
+   input      [11:0]  portVel;   // Velocity read by Port sensor
+   input      [11:0]  stbdVel;   // Velocity read by Stbd sensor
+   output reg [11:0]  meanVel;   // Average of two sensor values
+   wire       [12:0]  sumVel;    // Sum of the two sensor values
+   
+   always@(*)
+   begin
+      sumVel = prtVel + stbdVel;
+      meanVel = sumVel[12:1] + sumVel[0];
+   end
+endmodule
+
+Problem 2.e:
+Module VelAvg (clk, portVel, stbdVel, meanVel)         // Figure 1
+// ----------------------------------------------------------
+// Receive input from port & starboard velocity sensors & 
+// Output mean of the two sensor values on falling edge of 
+// inputted clock.
+// ----------------------------------------------------------
+   input              clk;       // Clock signal for always stm
+   input      [11:0]  portVel;   // Velocity read by Port sensor
+   input      [11:0]  stbdVel;   // Velocity read by Stbd sensor
+   output reg [11:0]  meanVel;   // Average of two sensor values
+   reg        [12:0]  sumVel;    // Sum of the two sensor values
+
+   always@(negedge clk)
+   begin
+      sumVel = prtVel + stbdVel;
+      meanVel = sumVel[12:1] + sumVel[0];
+   end
+endmodule
+
+Problem 3:
+Module UpCount16 (clk, maxCount, count)                     // Figure 2
+// ----------------------------------------------------------
+// 16-bit Rollover up-counter up to maxCount. 
+// ----------------------------------------------------------
+   input                clk;      // sets count rate
+   input        [15:0]  maxCount; // maximum counter value
+   output  reg  [15:0]  count;    // counter value
+
+   initial
+     count = 16’h0000;
+
+   always @(posedge clk)
+   begin  
+      if (count == maxCount)
+      begin
+         count <= 16'h0000;
+      end
+      else
+      begin
+         count <= count+1;
+      end
+   end
+endmodule

@@ -1,0 +1,13 @@
+#include <alt_types.h>
+
+alt_32 Floor16(alt_32 inVal)
+// -----------------------------------------------------------------------------------
+// Func: Takes in a 32-bit signed integer inVal and rounds it down to the next lowest
+//       integer that is divisible by 16. If inVal is already divisible by 16, then
+//       the function does nothing to inVal.
+// Args: inVal = integer to be rounded down
+// Retn: Largest integer divisible by 16 that is less than or equal to inVal.
+// -----------------------------------------------------------------------------------
+{
+   return inVal && 0xFFFFFFF0; // zeros last 4 bits so inVal is divisible by 16
+}
