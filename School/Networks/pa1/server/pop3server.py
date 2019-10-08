@@ -1,14 +1,15 @@
 # ==========================================================================BOF
 # Orig: 2019.10.05 - Alex Israels
-# Revs: 2019.10.06 - Alex Israels
+# Revs: 2019.10.07 - Alex Israels
 # Func: A POP3 server communicating over TCP connection. It supports the
 #       following commands:
 #           - STAT: Number and total size of all messages
-#           - LIST: Message# and size of message
+#           - LIST: Message#'s and size of messages
 #           - RETR: Retrieve selected message
 #           - DELE: Delete selected message
 #           - TOP : Retrieve part of selected message
 #           - QUIT: Ends session with client
+#           - HELP: Provides a list of server commands to the client
 # Args: serverPort       = Port to listen for connection from POP3 client.
 # Vars: serverSocket     = Socket for listening for connection request.
 #       connectionSocket = Socket for process if connection has been accepted.
@@ -21,12 +22,16 @@
 # Retn: None
 # -----------------------------------------------------------------------------
 
-### Import Required Libraries ###
-from socket import *
-import sys
-import os
+### Import Required Libraries ### ---------------------------------------------
 
-### Define Global Variables ###
+from socket import * # Socket lib
+import sys           # Argument lib
+import os            # File lib
+
+# -----------------------------------------------------------------------------
+
+### Define Global Variables ### -----------------------------------------------
+
 store = {         # Hashtable for email store data
    'size'  : 0 ,  # Size in bytes of all emails in store
    'count' : 0    # Total number of emails in store
@@ -34,7 +39,11 @@ store = {         # Hashtable for email store data
 
 remove = []       # array of emails to be deleted at end of session
 
-### Define each command as a function ###
+# -----------------------------------------------------------------------------
+
+### Define each command as a function ### -------------------------------------
+
+# loadStore: Load informaiton about email store
 def loadStore():
    #---------------------------------------------------------------------------
    # Func: Loads information about emails in the current directory into a
@@ -63,11 +72,14 @@ def loadStore():
             store['count'] += 1                       # Increase count by 1
             store['size'] += os.path.getsize(path)    # Increase size
             i += 1                                    # Increase email number
+   
+   #---------------------------------------------------------------------------
 
+# getEmail: Find email in store from email number
 def getEmail(emailNum):
    #---------------------------------------------------------------------------
    # Func: Finds an email in the email store
-   # Args: emailNum = number of email in store
+   # Args: emailNum = Number of email in store.
    # Retn: file     = The name of the file in the store.
    #---------------------------------------------------------------------------
    
@@ -75,6 +87,8 @@ def getEmail(emailNum):
       if not(file in 'count' or file in 'size'):   # Filter count & size
          if store[file][0] == emailNum:            # Find requested email
             return file                            # Return the email
+
+   #---------------------------------------------------------------------------
 
 # STAT: Number and total size of all messages
 def STAT():
@@ -89,6 +103,8 @@ def STAT():
 
    message = '+OK '+str(store['count'])+' '+str(store['size']) # Client message
    return message                                              # Return message
+
+   #---------------------------------------------------------------------------
 
 # LIST: Lists email numbers and their sizes
 def LIST():
@@ -117,6 +133,8 @@ def LIST():
    
    return message                                  # return message
 
+   #---------------------------------------------------------------------------
+
 # RETR: Retrieve selected email
 def RETR(emailNum):
    #---------------------------------------------------------------------------
@@ -143,6 +161,8 @@ def RETR(emailNum):
 
    return message                               # Return the message
 
+   #---------------------------------------------------------------------------
+
 # DELE: Delete selected email
 def DELE(emailNum):
    #---------------------------------------------------------------------------
@@ -155,17 +175,21 @@ def DELE(emailNum):
    # Retn: message  = Message to be returned to client.
    #---------------------------------------------------------------------------
    
-   message = '+OK Message deleted'        # Start message
-   file = getEmail(emailNum)              # Find email
+   message = '+OK Message deleted'           # Start message
+   file = getEmail(emailNum)                 # Find email
    
-   if file != None:
-      remove.append(file)                 # Add email to remove list
-   store['count'] -= 1                    # Decrease store count
-   store['size'] -= store[file][1]        # Decrease store size
-   del store[file]                        # Delete the email from store
-   loadStore()                            # Reload the store
+   if file != None:                          # If email exists
+      remove.append(file)                    # Add email to remove list
+      store['count'] -= 1                    # Decrease store count
+      store['size'] -= store[file][1]        # Decrease store size
+      del store[file]                        # Delete the email from store
+   else:                                     # Else
+      message = "-ERR Message doesn't exist" # Notify client email DNE
+   loadStore()                               # Reload the store
    
-   return message                         # Return the message
+   return message                            # Return the message
+
+   #---------------------------------------------------------------------------
 
 # TOP : Retrieve part of selected message
 def TOP(emailNum, numOfLines):
@@ -208,13 +232,15 @@ def TOP(emailNum, numOfLines):
    
    return message                           # Return message
 
+   #---------------------------------------------------------------------------
+
 # RSET: Reset the session 
 def RSET():
    #---------------------------------------------------------------------------
    # Func: Resets the session and repsonds to the client in the following form:
    #           "+OK Reset state\n"
    # Args: None
-   # Vars: remove  = List of emails to be deleted at end of session
+   # Vars: remove  = List of emails to be deleted at end of session.
    # Retn: message = Message to be returned to client.
    #---------------------------------------------------------------------------
    
@@ -224,14 +250,16 @@ def RSET():
 
    return message              # Return message 
 
+   #---------------------------------------------------------------------------
+
 # QUIT: Ends session with client
 def QUIT():
    #---------------------------------------------------------------------------
    # Func: Ends the session and repsonds to the client in the following form:
    #           "+OK Goodbye\n"
    # Args: None
-   # Vars: remove  = List of emails to be deleted at end of session
-   # Retn: message = Goodbye phrase to client
+   # Vars: remove  = List of emails to be deleted at end of session.
+   # Retn: message = Goodbye phrase to client.
    #---------------------------------------------------------------------------
 
    message = "+OK Goodbyes are not forever, are not the end;\n"  # Make message
@@ -242,18 +270,32 @@ def QUIT():
 
    return message       # Return message
 
+   #---------------------------------------------------------------------------
+
+# HELP: Lists server commands
 def HELP():
+   #---------------------------------------------------------------------------
+   # Func: Lists all server commands in the following format:
+   #           "<Command> : <Explaination"
+   # Args: None
+   # Vars: None
+   # Retn: message = Message sent to client.
+   #---------------------------------------------------------------------------
+
    message =  "STAT : Prints the status of the email store.\n"
    message += "LIST : Prints a list of all emails.\n"
    message += "DELE <email#> : Deletes an email from the store.\n"
    message += "RETR <email#> : Returns and saves an email.\n"
-   message += "TOP  <email#> <#OfLines> : Prints email headers and #OfLines of email body.\n"
+   message += "TOP  <email#> <#OfLines> : Prints email headers and "
+   message += "#OfLines of email body.\n"
    message += "RSET : Resets POP3 session.\n"
    message += "QUIT : Quits POP3 session."
    return message
 
-### Start Main Process ###
+   #---------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 
+### Start Main Process ###-----------------------------------------------------
 # Load the server port (default = 25783)
 if len(sys.argv) > 1:
    serverPort = int(sys.argv[1])
@@ -308,16 +350,25 @@ while listening:
             helloMsg = '+OK Mailbox open, ' + str(store['count']) + ' messages'
             connectionSocket.send(helloMsg.encode())
          else:
-            error = 'Command '+ clientArgs[0] +' does not exist.\nType "Help" for a list of commands.'
+            error =  'Command '+ clientArgs[0] +' does not exist.\n'
+            error += 'Type "Help" for a list of commands.'
             connectionSocket.send(error.encode())
+      
       # Capture errors and notify client
       except:
          error = 'Something went wrong. \n' + str(sys.exc_info()[0])
          connectionSocket.send(error.encode())
+      
+      # Note status of server
       print('Return message sent...')
+   
+   # When connection is closed ...
    print('Connection closed...')    # Stop conversation after 'QUIT'
    connectionSocket.close()         # Close connection socket
    listening = True                 # Continue listening for new connections
+
+# Should never get here
+print('Error: Server not able to recieve ...')
 serverSocket.close()
 exit()
 # ==========================================================================EOF
