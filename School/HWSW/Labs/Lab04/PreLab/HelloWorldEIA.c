@@ -30,10 +30,10 @@ void PutTerm(alt_u8 * strPtr)
     "   ldhuio r9,  2(%[Rcont])    \n\t" // load wspace
     "   beq    r9,  r0, Loop       \n\t" // If wspace == 0 go to Loop
     "   stwio  %[Rdata], r8        \n\t" // store char to data register
-    "   addi   %[Rstr], %[Rstr], 4 \n\t" // increment str ptr
+    "   addi   %[Rstr], %[Rstr], 1 \n\t" // increment str ptr
     "   br     Loop                \n\t" // go to loop
     "Done:                         \n\t"
-    "   addi   r8, r0, 0x0A        \n\t" // store <LF> to data register
+    "   addi   %[Rdata], r0, 10    \n\t" // store <LF> to data register
     : [Rdata] "=r" (dataReg)
     : [Rstr] "r" (strPtr), [Rcont] "r" (contReg)
     : "r8", "r9", "memory"
