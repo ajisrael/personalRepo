@@ -1,37 +1,41 @@
 // -----------------------------------------------------------------------------
 // Orig: 2019.10.06 - Alex Israels
+// Revs: 2019.10.08 - Alex Israels
 // Prog: HelloWorldDIY.c
-// Func: Output a Hello World char. string to terminal via JTAG UART.
-// Meth: Write char to data register after checking wspace is available.
-// Vars: baseAddr = base address of JTAG UART.
-//       dataReg = data register of JTAG UART.
-//       contReg = control register of JTAG UART.
+// Func: Writes Hello World string to terminal via JTAG UART.
+// Meth: Write string to data register after checking WSPACE is available.
+// Vars: outStr  = Hello World string.
+//       dataPtr = Pointer to data register.
+//       ctrlPtr = Pointer to control register. 
+//       dataVal = Value of the data register. Ensures data reg. is read once.
+// Defn: BASE_ADDR   0xDEADBEEF = Base address of JTAG UART
+//       WSPACE_MASK 0xFFFF0000 = Mask for the WSPACE bits of the cont. reg.
 // -----------------------------------------------------------------------------
 #  include <alt_types.h>
 
-volatile alt_u32 * baseAddr =  0xdeadbeef; // base address of JTAG UART
+# define BASE_ADDR   0xDEADBEEF // Base address of JTAG UART
+# define WSPACE_MASK 0xFFFF0000 // Mask for the WSPACE bits of the cont. reg.
 
-alt_u32   dataReg  =  * baseAddr;          // data register of JTAG UART
-alt_u32   contReg  = (* baseAddr + 1)''    // control register of JTAG UART
+volatile alt_u32 * dataPtr = (alt_u32*)  BASE_ADDR;      // Ptr to data reg.
+volatile alt_u32 * ctrlPtr = (alt_u32*) (BASE_ADDR + 1); // Ptr to cont. reg.
+
+alt_u32 dataVal = 0; // Value of data Register (Only read data reg. once)
 
 void PutTerm(alt_u8 *strPtr)
 // -----------------------------------------------------------------------------
 // Func: Print the argument pointer's char string to JTAG UART using pointer
 //       arithematic.
 // Args: strPtr = pointer to start of char string in memory.
-// Vars: wspace = upper half word of control register.
 // -----------------------------------------------------------------------------
 { 
-   while (*strPtr != 0x00)     // While current char != NULL
+   while (*strPtr != 0x00)                     // While current char != NULL
    {
-      alt_u16 * wspace = &contReg[16]; // get current wspace val
-      if (wspace > 0)
-      {
-         dataReg = *strPtr     // Write one char to data reg
-         strPtr++;             // Advance to next char
-      }
-   }
-   dataReg = 0x0A              // Ouptut newline char (^LF)
+      while ((*ctrlPtr & WSPACE_MASK) == 0) {} // Wait for WSPACE > 0
+      *dataPtr = (alt_u32) *strPtr;            // Write char to terminal
+      strPtr++;                                // Advance to next char
+   }                                           // When char = NULL
+   *strPtr = 0x0A                              // Ouptut newline char (^LF)
+   *dataPtr = (alt_u32) *strPtr;
 }
 
 // -----------------------------------------------------------------------------
