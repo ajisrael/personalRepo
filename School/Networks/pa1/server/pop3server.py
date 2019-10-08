@@ -219,9 +219,7 @@ def RSET():
    #---------------------------------------------------------------------------
    
    message = '+OK Reset state' # Create message
-   print(str(remove))
    del remove[:]               # Clear list of emails to be removed 
-   print(str(remove))
    loadStore()                 # Reload the email store
 
    return message              # Return message 
@@ -243,6 +241,16 @@ def QUIT():
       os.remove(file)
 
    return message       # Return message
+
+def HELP():
+   message =  "STAT : Prints the status of the email store.\n"
+   message += "LIST : Prints a list of all emails.\n"
+   message += "DELE <email#> : Deletes an email from the store.\n"
+   message += "RETR <email#> : Returns and saves an email.\n"
+   message += "TOP  <email#> <#OfLines> : Prints email headers and #OfLines of email body.\n"
+   message += "RSET : Resets POP3 session.\n"
+   message += "QUIT : Quits POP3 session."
+   return message
 
 ### Start Main Process ###
 
@@ -294,11 +302,13 @@ while listening:
             connected = False
          elif 'RSET' in clientArgs[0]:
             connectionSocket.send(RSET().encode())
+         elif 'HELP' in clientArgs[0]:
+            connectionSocket.send(HELP().encode())
          elif 'HI'   in clientArgs[0]:
             helloMsg = '+OK Mailbox open, ' + str(store['count']) + ' messages'
             connectionSocket.send(helloMsg.encode())
          else:
-            error = 'Command does not exist.'
+            error = 'Command '+ clientArgs[0] +' does not exist.\nType "Help" for a list of commands.'
             connectionSocket.send(error.encode())
       # Capture errors and notify client
       except:
