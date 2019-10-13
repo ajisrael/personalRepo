@@ -29,41 +29,48 @@
 // -----------------------------------------------------------------------------
 
 // Define Global Variables: ----------------------------------------------------
-char * dynamicMem = NULL;  // Global array of dynamic memory.
+//char * dynamicMem = NULL;  // Global array of dynamic memory.
+//int memSize = 0;           // Global count of dynamicMem length.
 // -----------------------------------------------------------------------------
 
-void testFile(char * filename)
+// void freeMem()
+// // -----------------------------------------------------------------------------
+// // Func: Frees all dynamically allocated memory.
+// // Args: mems = Array of ptrs to dynamically allocated memory.
+// // Vars: size = Number of ptrs to be freed.
+// // -----------------------------------------------------------------------------
+// {
+//     for (int i = 0; i < memSize; i++)   // Loop through ptrs
+//     {
+//         free((char*)*(dynamicMem + i));            // Free them
+//     }
+
+//     if (memSize > 0)                    // Check if there was any memory to free
+//     {                                   // If there was, then
+//         free(dynamicMem);               // Free array of ptrs
+//     }
+// }
+// // -----------------------------------------------------------------------------
+
+void testFile(char * filename, struct stat fileStat)
 // -----------------------------------------------------------------------------
 // Func: Tests to see if the file named filename exists in the same directory.
 // Args: filename = Name of file attempting to be opened.  
 // -----------------------------------------------------------------------------
 {
     // Test access of file:
-    if (access( filename, F_OK) == -1)
+    // Get stats:
+    if (lstat(filename, &fileStat) == -1)
+    {   
+        printf("Error: Getting stats for %s", filename);
+    }
+    // Test file:
+    if (S_ISREG(fileStat.st_mode) != 1)
     {   // If file DNE, then notify user and exit
         printf("%s does not exist.\n", filename);
-        freeMem();
+        //freeMem();
+        free(filename);
         exit(1);
-    }
-}
-// -----------------------------------------------------------------------------
-
-void freeMem()
-// -----------------------------------------------------------------------------
-// Func: Frees all dynamically allocated memory.
-// Args: mems = Array of ptrs to dynamically allocated memory.
-// Vars: size = Number of ptrs to be freed.
-// -----------------------------------------------------------------------------
-{
-    int size = length(dynamicMem);  // Get # of ptrs to free
-    for (int i = 0; i < size; i++)  // Loop through ptrs
-    {
-        free(dynamicMem[i]);        // Free them
-    }
-
-    if (size > 0)                   // Check if there was any memory to free
-    {                               // If there was, then
-        free(dynamicMem);           // Free array of ptrs
     }
 }
 // -----------------------------------------------------------------------------
@@ -78,10 +85,10 @@ void printStats(char * fileName, struct stat fileStat)
     // Print general informaiton about file:
     printf("Information for %s\n", fileName);
     printf("---------------------------\n");
-    printf("File Size: \t\t%d bytes\n", fileStat.st_size);
-    printf("Number of Links: \t%d\n", fileStat.st_nlink);
-    printf("File inode: \t\t%d\n", fileStat.st_ino);
-    printf("File Owner: \t\t%d\n", fileStat.st_uid);
+    printf("File Size: \t\t%d bytes\n", (int) fileStat.st_size);
+    printf("Number of Links: \t%d\n", (int) fileStat.st_nlink);
+    printf("File inode: \t\t%d\n", (int) fileStat.st_ino);
+    printf("File Owner: \t\t%d\n", (int) fileStat.st_uid);
 
     // Print file permissions:
     printf("File Permissions: \t");
@@ -99,23 +106,24 @@ void printStats(char * fileName, struct stat fileStat)
 }
 // -----------------------------------------------------------------------------
 
-void main(int argc, char ** argv)
+int main(int argc, char ** argv)
 // -----------------------------------------------------------------------------
 // Func: The main process of the program. Checks for correct number of arguments
 //       and proceeds to complete main functionality of the program as defined
 //       in the openning comment block.
 // Args: argc        = Number of arguments passed into program.
 //       argv        = Array of arguments passed into program.
-// Vars: aclFileName = Name of ACL file attempting to be accessed.
+// Vars: aclFilePtr  = Name of ACL file attempting to be accessed.
 //       aclFileStat = Stat structure of ACL file.
-//       euid        = UID of current running process.
+//       euid        = EUID of current running process.
 //       dynamicMem  = Array of pointers for all dynamically allocated memory.
 // -----------------------------------------------------------------------------
 {
     // Initialize local variables:
-    char * aclFileName = NULL;  // ptr to name of ACL file
+    char * aclFilePtr = NULL;  // ptr to name of ACL file
     struct stat aclFileStat;    // ptr to stat struct of ACL file stats
-    uid_t euid = geteuid();
+    // BAD
+    uid_t euid = geteuid();     // EUID of current process
 
     // Check for correct number of arguments:
     if (argc > 2 || argc < 2)
@@ -125,40 +133,54 @@ void main(int argc, char ** argv)
     }
 
     // Check if file exists: 
-    testFile(argv[1]);
+    testFile(argv[1], aclFileStat);
 
-    // Build aclFileName:
-    aclFileName = malloc(sizeof(char)*(length(argv[1]) + 4)); // +4 is for .acl
-    *aclFileName = argv[1] + '.acl';
+    // Build aclFilePtr:
+    aclFilePtr = malloc(strlen(argv[1]) + strlen(".acl")); // +4 is for .acl
+    strcat(aclFilePtr, argv[1]);
+    strcat(aclFilePtr, ".acl");
+    printf("ACL: %s\n", aclFilePtr);
 
     // Save dynamic memory to be freed:
-    dynamicMem = malloc(sizeof(char));
-    dynamicMem[0] = &aclFileName;
+    //dynamicMem = malloc(sizeof(char*));
+    //*dynamicMem = &aclFilePtr;
+    //memSize++;
 
     // Check if ACL file exists:
-    testFile(aclFileName);
+    testFile(aclFilePtr, aclFileStat);
 
     // Check if ACL file has correct permissions:
-    if (stat(aclFileName, &aclFileStat) < 0) // Get stats for ACL file
+    if (stat(aclFilePtr, &aclFileStat) < 0) // Get stats for ACL file
     {   // If something went wrong with getting stats, then notify user and exit
-        printf("Something went wrong when getting stats for %s.\n", aclFileStat);
-        freeMem();
+        printf("Something went wrong when getting stats for %s.\n", aclFilePtr);
+        free(aclFilePtr);
+        //freeMem();
         exit(1);
     }
 
     // Print stats to console for TESTING:
-    printStats(aclFileName, aclFileStat);
+    printStats(aclFilePtr, aclFileStat);
 
     // Compare file owners:
     if (euid != aclFileStat.st_uid)
     {
         printf("Access to ACL: Permission Denied\n");
-        freeMem();
+        //freeMem();
+        free(aclFilePtr);
+        exit(1);
+    }
+
+    // Verify ACL group and world bits not set:
+    if (aclFileStat.st_mode & 077)
+    {
+        printf("Group and world bits are set.\n");
+        printf("Access Denied: %s\n", aclFilePtr);
+        free(aclFilePtr);
         exit(1);
     }
 
     // Free dynamic memory:
-    freeMem();
+    free(aclFilePtr);
 
     // Exit program:
     exit(0);
