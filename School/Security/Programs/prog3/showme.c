@@ -124,6 +124,13 @@ int main(int argc, char ** argv)
     struct stat aclFileStat;    // ptr to stat struct of ACL file stats
     // BAD
     uid_t euid = geteuid();     // EUID of current process
+    int fd = 0;
+    int bytes = 0;
+    char buf[1] = ' ';
+    char usrBuf[256];
+
+    bzero(usrBuf, 256);
+
 
     // Check for correct number of arguments:
     if (argc > 2 || argc < 2)
@@ -178,6 +185,25 @@ int main(int argc, char ** argv)
         free(aclFilePtr);
         exit(1);
     }
+
+    // Read ACL file:
+    if ((fd = open(aclFilePtr, O_RDONLY)) == -1)
+    {
+        printf("Failed to open file %s.\n", aclFilePtr);
+        free(aclFilePtr);
+        exit(1);
+    }
+    int i = 0;
+    while (bytes = read(fd, &buf, 1) > 0)
+    {
+        if (buf[0] != ' ')
+        {
+            usrBuf[i] = buf[0];
+            i++;
+        }
+    }
+
+    printf("USRBUF: %s\n", usrBuf);
 
     // Free dynamic memory:
     free(aclFilePtr);
