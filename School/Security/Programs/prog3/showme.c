@@ -26,31 +26,8 @@
 #include <sys/wait.h>  // credential management
 #include <sys/types.h> // credential management
 #include <sys/stat.h>  // credential management
+#include <pwd.h>       // credential checking
 // -----------------------------------------------------------------------------
-
-// Define Global Variables: ----------------------------------------------------
-//char * dynamicMem = NULL;  // Global array of dynamic memory.
-//int memSize = 0;           // Global count of dynamicMem length.
-// -----------------------------------------------------------------------------
-
-// void freeMem()
-// // -----------------------------------------------------------------------------
-// // Func: Frees all dynamically allocated memory.
-// // Args: mems = Array of ptrs to dynamically allocated memory.
-// // Vars: size = Number of ptrs to be freed.
-// // -----------------------------------------------------------------------------
-// {
-//     for (int i = 0; i < memSize; i++)   // Loop through ptrs
-//     {
-//         free((char*)*(dynamicMem + i));            // Free them
-//     }
-
-//     if (memSize > 0)                    // Check if there was any memory to free
-//     {                                   // If there was, then
-//         free(dynamicMem);               // Free array of ptrs
-//     }
-// }
-// // -----------------------------------------------------------------------------
 
 void testFile(char * filename, struct stat fileStat)
 // -----------------------------------------------------------------------------
@@ -126,8 +103,13 @@ int main(int argc, char ** argv)
     uid_t euid = geteuid();     // EUID of current process
     int fd = 0;
     int bytes = 0;
-    char buf[1] = ' ';
+    char buf[1];
     char usrBuf[256];
+    char * userName = NULL;
+    char ** userNames = NULL;
+    int i = 0;
+    int usrCount = 0;
+    char * ptrNewLn = NULL;
 
     bzero(usrBuf, 256);
 
@@ -143,15 +125,10 @@ int main(int argc, char ** argv)
     testFile(argv[1], aclFileStat);
 
     // Build aclFilePtr:
-    aclFilePtr = malloc(strlen(argv[1]) + strlen(".acl")); // +4 is for .acl
+    aclFilePtr = malloc(strlen(argv[1]) + strlen(".acl") + 1); // +4 is for .acl
     strcat(aclFilePtr, argv[1]);
     strcat(aclFilePtr, ".acl");
     printf("ACL: %s\n", aclFilePtr);
-
-    // Save dynamic memory to be freed:
-    //dynamicMem = malloc(sizeof(char*));
-    //*dynamicMem = &aclFilePtr;
-    //memSize++;
 
     // Check if ACL file exists:
     testFile(aclFilePtr, aclFileStat);
@@ -193,8 +170,8 @@ int main(int argc, char ** argv)
         free(aclFilePtr);
         exit(1);
     }
-    int i = 0;
-    while (bytes = read(fd, &buf, 1) > 0)
+    i = 0;
+    while ((bytes = read(fd, &buf, 1)) > 0)
     {
         if (buf[0] != ' ')
         {
@@ -202,11 +179,64 @@ int main(int argc, char ** argv)
             i++;
         }
     }
+    close(fd);
 
-    printf("USRBUF: %s\n", usrBuf);
+    // Get number of usernames:
+    ptrNewLn=strchr(usrBuf,'\n');
+    while (ptrNewLn!=NULL) {
+        usrCount++;
+        ptrNewLn=strchr(ptrNewLn+1,'\n');
+    }
+
+    // Allocate memory for usernames:
+    userNames = malloc(sizeof(char*) * usrCount);
+
+    // Fill usernames array:
+    i = 0;
+    userName = strtok(usrBuf, "\n");
+    while (userName != NULL)
+    {
+        userNames[i] = userName;
+        userName = strtok(NULL, "\n");
+        i++;
+    }
+
+    // Compare ruid with acl uids:
+    struct passwd * ruid = getpwuid(getuid());
+    int permission = 0;
+    printf("RUID: \t\t%x\n", ruid->pw_name);
+    for (i=0; i < usrCount; i++)
+    {
+        printf("USRNAME: \t%x\n", userNames[i]);
+        if (strcmp((ruid->pw_name),userNames[i]) == 0)
+        {
+            printf("Permision Granted\n");
+            permission = 1;
+        }
+    }
+
+    // If the user has permision echo out file to console:
+    if (permission == 1)
+    {
+        fd = open(argv[1], O_RDONLY);
+         while ((bytes = read(fd, &buf, 1)) > 0)
+        {
+            printf("%c",buf[0]);
+        }
+        printf("\n");
+        close(fd);
+    }
+    else 
+    {
+        printf("Permission denied by ACL file.\n");
+        free(aclFilePtr);
+        free(userNames);
+        exit(1);
+    } 
 
     // Free dynamic memory:
     free(aclFilePtr);
+    free(userNames);
 
     // Exit program:
     exit(0);
