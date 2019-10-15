@@ -160,7 +160,9 @@ void main()
 
         // Stop the timer (0x8 sets stop bit to 1)
         *timCtrlPtr |= 0x8;
-
+        
+        // Calculate the change in time
+        stopVal.F = 0xFFFFFFFF - stopVal.F;
         
     }
 }
