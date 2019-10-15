@@ -25,6 +25,7 @@
 //       TIME_ADDR    0xDEADBEAD = Base address of timer.
 //       BUTN_ADDR    0xDEADFEED = Base address of pushbutton PIO.
 //       KEY3_MASK    0x00000004 = Mask for KEY[3] pin
+//       MAX_TIMER    0xFFFFFFFF = Max value for timer in Nios.
 // Vars: juDataPtr  = Pointer to data register of JTAG UART.
 //       juCtrlPtr  = Pointer to control register of JTAG UART.
 //       timStatPtr = Pointer to status register of timer.
@@ -45,6 +46,7 @@
 # define TIME_ADDR    0xDEADBEAD // Base address of timer
 # define BUTN_ADDR    0xDEADFEED // Base address of pushbutton PIO
 # define KEY3_MASK    0x00000004 // Mask for KEY[3] pin
+# define MAX_TIMER    0XFFFFFFFF // Max value for timer
 
 // Initialize registers to JTAG UART: Registers are 32-bits, offset = 4 bytes
 volatile alt_u32 * juDataPtr  = (alt_u32*)  JTUA_ADDR;      // Ptr to data  reg.
@@ -162,7 +164,12 @@ void main()
         *timCtrlPtr |= 0x8;
         
         // Calculate the change in time
-        stopVal.F = 0xFFFFFFFF - stopVal.F;
-        
+        stopVal.F = MAX_TIMER - stopVal.F;
+
+        // Convert time change to string
+        BinToDec(str, stopVal.F);
+
+        // Print to terminal
+        PutTerm(str);
     }
 }
