@@ -20,12 +20,14 @@
 //       7. Call PutTerm to write to the terminal screen.
 // Defn: FOREVER      1  = Infinite Loop.
 //       ASCII_OFFSET 48 = Decimal value offset btw a Dec# and its ASCII value.
-//       JTUA_ADDR    0xDEADBEEF = Base address of JTAG UART.
-//       WSPACE_MASK  0xFFFF0000 = Mask for the WSPACE bits of the cont. reg.
-//       TIME_ADDR    0xDEADBEAD = Base address of timer.
-//       BUTN_ADDR    0xDEADFEED = Base address of pushbutton PIO.
-//       KEY3_MASK    0x00000004 = Mask for KEY[3] pin
-//       MAX_TIMER    0xFFFFFFFF = Max value for timer in Nios.
+//       JTUA_ADDR    0xDEADBEEF   = Base address of JTAG UART.
+//       WSPACE_MASK  0xFFFF0000   = Mask for the WSPACE bits of the cont. reg.
+//       TIME_ADDR    0xDEADBEAD   = Base address of timer.
+//       BUTN_ADDR    0xDEADFEED   = Base address of pushbutton PIO.
+//       KEY3_MASK    0x00000004   = Mask for KEY[3] pin
+//       MAX_TIMER    0xFFFFFFFF   = Max value for timer in Nios.
+//       GO           0x484F       = ASCII value of "GO"
+//       CLEAR        0x434C454152 = ASCII value of "CLEAR"
 // Vars: juDataPtr  = Pointer to data register of JTAG UART.
 //       juCtrlPtr  = Pointer to control register of JTAG UART.
 //       timStatPtr = Pointer to status register of timer.
@@ -39,14 +41,18 @@
 //------------------------------------------------------------------------------
 #include <alt_types.h>
 
-# define FOREVER      1          // Infinite Loop
-# define ASCII_OFFSET 48         // Decimal value offset
-# define JTUA_ADDR    0xDEADBEEF // Base address of JTAG UART
-# define WSPACE_MASK  0xFFFF0000 // Mask for the WSPACE bits of the cont. reg.
-# define TIME_ADDR    0xDEADBEAD // Base address of timer
-# define BUTN_ADDR    0xDEADFEED // Base address of pushbutton PIO
-# define KEY3_MASK    0x00000004 // Mask for KEY[3] pin
-# define MAX_TIMER    0XFFFFFFFF // Max value for timer
+# define FOREVER      1             // Infinite Loop
+# define ASCII_OFFSET 48            // Decimal value offset
+# define JTUA_ADDR    0xDEADBEEF    // Base address of JTAG UART
+# define WSPACE_MASK  0xFFFF0000    // Mask for the WSPACE bits of the cont. reg.
+# define TIME_ADDR    0xDEADBEAD    // Base address of timer
+# define BUTN_ADDR    0xDEADFEED    // Base address of pushbutton PIO
+# define KEY3_MASK    0x00000004    // Mask for KEY[3] pin
+# define MAX_TIMER    0XFFFFFFFF    // Max value for timer
+
+// Fun definitions to write to timer registers
+# define GO           0x484F        // ASCII value of "GO"
+# define CLEAR        0x434C454152  // ASCII value of "CLEAR"
 
 // Initialize registers to JTAG UART: Registers are 32-bits, offset = 4 bytes
 volatile alt_u32 * juDataPtr  = (alt_u32*)  JTUA_ADDR;      // Ptr to data  reg.
@@ -67,7 +73,7 @@ volatile alt_u32 * pbEdgePtr  = (alt_u32*) (BUTN_ADDR +12); // Ptr to edgc. reg.
 // To be explicit initialize direction of all pins to input on PB PIO:
 *pbDircPtr = 0x00000000;
 
-void BinToDec (alt_u32 * strPtr, alt_u32 num)
+void BinToDec (alt_u8 * strPtr, alt_u32 num)
 //------------------------------------------------------------------------------
 // Func: Using a pointer to the first element of an ASCII Character string 
 //       buffer in memory, and a 32-bit unsigned integer. Converts the 32-bit
@@ -83,21 +89,29 @@ void BinToDec (alt_u32 * strPtr, alt_u32 num)
 // Args: strPtr = Pointer to first element in ASCII Character string buffer.
 //       num    = Unsigned integer to be converted to an ASCII Character.
 // Vars: digit  = Current digit of num being converted.
+//       pos    = Current position in strPtr. Set to 10 b/c strPtr will always
+//                point to a 12 element null terminated array.
+//       i      = Index variable for padding space characters.
 //------------------------------------------------------------------------------
 {
     alt_u8 digit = 0;                 // Current digit of num being converted
+    alt_u8 pos   = 10;                // Current position in strPtr
 
     while (num != 0)                  // While there are still digits to read
     {
         digit = num % 10;             // Calculate & store next decimal digit
         num = num / 10;               // Remove least significant digit
         digit = digit + ASCII_OFFSET; // Encode digit to ASCII
-        // Store digit to correct pos in buffer
-
-        // Null-Terminate character string
-
-        // Pad out leading characters with ' '
+        strPtr[pos] = digit;          // Store digit to correct pos in buffer
+        pos--;
     }
+
+    for (int i = 0; i <= pos, i++)    // Loop over remaining characters
+    {
+        strPtr[i] = ' ';              // Pad leading chars with ' '
+    }
+
+    strPtr[12] = 0x00;                // Null-Terminate character string
 }
 //------------------------------------------------------------------------------
 
@@ -127,18 +141,23 @@ void main()
 // Func: Print the argument pointer's char string to JTAG UART using pointer
 //       arithematic.
 // Vars: stopVal = Value of timer when stopped from seccond KEY3 press.
+//       str     = String to hold decimal values converted to ASCII
 // -----------------------------------------------------------------------------
 {
-    union
+    union // Holds value of timer when stopped by KEY3
     {
         alt_u32 F;
         alt_u16 H[2];
     } stopVal;
+
+    // Initialize string with all spaces and null terminator: 
+    // 2^32 = 11 digits max so str size is 12 for null terminator.
+    alt_u8 str[12] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',0x00};
     
     while (FOREVER)
     {
         // Initialize timer (0x484F = "GO")
-        *timPerLPtr = 0x484F;
+        *timPerLPtr = GO;
 
         // Wait for falling edge from KEY[3]     
         while ((*pbEdgePtr & KEY3_MASK) != 1) {}
@@ -147,13 +166,13 @@ void main()
         *timCtrlPtr |= 0x4;
 
         // Clear edge register (0x434C454152 = "CLEAR")
-        *pbEdgePtr = 0x434C454152;
+        *pbEdgePtr = CLEAR;
 
         // Wait for next falling edge from KEY[3]     
         while ((*pbEdgePtr & KEY3_MASK) != 1) {}
 
         // Clear edge register (0x434C454152 = "CLEAR")
-        *pbEdgePtr = 0x434C454152;
+        *pbEdgePtr = CLEAR;
 
         // Snapshot the timer (0x534E4150 = "SNAP")
         *timSnpLPtr  = 0x534E4150;
@@ -173,3 +192,4 @@ void main()
         PutTerm(str);
     }
 }
+// -----------------------------------------------------------------------------

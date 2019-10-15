@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Revs: 2019.10.14 - Alex Israels
+// Revs: 2019.10.15 - Alex Israels
 // Prog: BlinkEIA.c
 // Func: Given a Nios Timer module in continous run mode with a fixed period,
 //       Toggle all 18 DE2-115 LEDs every time the timer rolls over past zero.
@@ -21,17 +21,18 @@ void main ()
   *(timPtr + 1) |= 0x6;               // Set timr's CONT bit to continuous mode
                                       // & set the START bit to start timr 
 
-  while (1)                              // Do forever
+  while (1)                           // Do forever
   { 
     volatile asm(
         "SPIN:                          \n\t" // Spin while TO bit = 0
         "   orhi   r8, %[Rtim], 0x0000  \n\t" // Load addr of timer
-        "   addi   r8, r8,      0x0000  \n\t"
+        "   ori    r8, r8,      0x0000  \n\t"
         "   ldbuio r8, 0(r8)            \n\t" // Load first byte of status reg.
         "   andi   r8, r8, 0x01         \n\t" // Mask out TO bit
         "   beq    r8, r0, SPIN         \n\t" // Spin if TO bit = 0
         "orhi  r9, %[Rled], 0x0000      \n\t" // Load addr of led PIO
-        "addi  r9, r9,      0x0000      \n\t" 
+        "ori   r9, r9,      0x0000      \n\t" 
+        "ldwio r9, 0(r9)                \n\t" // Load state of LEDs
         "xorhi r9, r9, 0xFFFF           \n\t" // Toggle all LEDs
         "xori  r9, r9, 0xFFFF           \n\t"
         "andi  r8, r8, 0x00             \n\t" // Clear timr TO bit
