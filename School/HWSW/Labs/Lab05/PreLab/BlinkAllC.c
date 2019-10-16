@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 // Revs: 2019.10.14 - Alex Israels
+// Revs: 2019.10.15 - Alex Israels - Logan Wilkerson
 // Prog: BlinkAllC.c
 // Func: Given a Nios Timer module in continous run mode with a fixed period,
 //       Toggle all 18 DE2-115 LEDs every time the timer rolls over past zero.
@@ -9,8 +10,9 @@
 //       timPtr = Pointer to 16-bit register for base address of timer.
 //------------------------------------------------------------------------------
 #include <alt_types.h>
-#define  LEDS_BASE 0xDEADBEEF       // LED PIO Base address. Value TBD by Qsys.
-#define  TIMR_BASE 0xBEADBEEF       // TIMER   Base address. Value TBD by Qsys. 
+
+#define  LEDS_BASE 0x00081070       // LED PIO Base address. Value TBD by Qsys.
+#define  TIMR_BASE 0x00081020       // TIMER   Base address. Value TBD by Qsys. 
 
 void main ()
 {
@@ -18,14 +20,14 @@ void main ()
   volatile alt_u16 * timPtr = (alt_u16 *) TIMR_BASE;    // init ptr to timr
 
   *ledPtr = 0x00000000;               // Set all LEDs to OFF
-  *(timPtr + 1) |= 0x6;               // Set timr's CONT bit to continuous mode
+  *(timPtr + 2) |= 0x06;              // Set timr's CONT bit to continuous mode
                                       // & set the START bit to start timr 
 
   while (1)                              // Do forever
   { 
-    while(~(*timPtr & 0x1)) {}           // spin while TO bit=0 (=> no rollover)
+    while(!(*timPtr & 0x1)) {}           // spin while TO bit=0 (=> no rollover)
     *ledPtr ^= 0xFFFFFFFF;               // Toggle all LEDs     
-    *timPtr &= 0xFFFE;                   // Clear timr TO bit
+    *timPtr = 0xFFFE;                         // Clear timr TO bit
   }
 }
 //------------------------------------------------------------------------------

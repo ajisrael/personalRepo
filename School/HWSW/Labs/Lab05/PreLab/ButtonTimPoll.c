@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 // Orig: 2019.10.15 - Alex Israels
+// Revs: 2019.10.15 - Alex Israels - Logan Wilkerson
 // Prog: ButtonTimPoll.c
 // Func: Calculates the number of clock cycles between button presses.
 // Asum: A Nios system with an input pIO for the four DE2 pushbuttons, and a
@@ -24,10 +25,11 @@
 //       WSPACE_MASK  0xFFFF0000   = Mask for the WSPACE bits of the cont. reg.
 //       TIME_ADDR    0xDEADBEAD   = Base address of timer.
 //       BUTN_ADDR    0xDEADFEED   = Base address of pushbutton PIO.
-//       KEY3_MASK    0x00000004   = Mask for KEY[3] pin
+//       KEY3_MASK    0x00000001   = Mask for KEY[3] pin.
 //       MAX_TIMER    0xFFFFFFFF   = Max value for timer in Nios.
 //       GO           0x484F       = ASCII value of "GO"
-//       CLEAR        0x434C454152 = ASCII value of "CLEAR"
+//       CLEAR        0x434C454152 = ASCII value of "CL"
+//       SNAP         0x534E       = ASCII value of "SN"
 // Vars: juDataPtr  = Pointer to data register of JTAG UART.
 //       juCtrlPtr  = Pointer to control register of JTAG UART.
 //       timStatPtr = Pointer to status register of timer.
@@ -43,16 +45,17 @@
 
 # define FOREVER      1             // Infinite Loop
 # define ASCII_OFFSET 48            // Decimal value offset
-# define JTUA_ADDR    0xDEADBEEF    // Base address of JTAG UART
+# define JTUA_ADDR    0x00081088	// Base address of JTAG UART
 # define WSPACE_MASK  0xFFFF0000    // Mask for the WSPACE bits of the cont. reg.
-# define TIME_ADDR    0xDEADBEAD    // Base address of timer
-# define BUTN_ADDR    0xDEADFEED    // Base address of pushbutton PIO
-# define KEY3_MASK    0x00000004    // Mask for KEY[3] pin
+# define TIME_ADDR    0x00081020    // Base address of timer
+# define BUTN_ADDR    0x00081060    // Base address of pushbutton PIO
+# define KEY3_MASK    0x00000001    // Mask for KEY[3] pin
 # define MAX_TIMER    0XFFFFFFFF    // Max value for timer
 
 // Fun definitions to write to timer registers
-# define GO           0x484F        // ASCII value of "GO"
-# define CLEAR        0x434C454152  // ASCII value of "CLEAR"
+# define GO           0x484F    // ASCII value of "GO"
+# define CLEAR        0x434C    // ASCII value of "CL"
+# define SNAP         0x534E    // ASCII value of "SN"
 
 // Initialize registers to JTAG UART: Registers are 32-bits, offset = 4 bytes
 volatile alt_u32 * juDataPtr  = (alt_u32*)  JTUA_ADDR;      // Ptr to data  reg.
@@ -60,18 +63,18 @@ volatile alt_u32 * juCtrlPtr  = (alt_u32*) (JTUA_ADDR + 4); // Ptr to ctrl. reg.
 
 // Initialize registers to Timer: Registers are 16-bits, offset = 2 bytes
 volatile alt_u16 * timStatPtr = (alt_u16*)  TIME_ADDR;      // Ptr to stat  reg.
-volatile alt_u16 * timCtrlPtr = (alt_u16*) (TIME_ADDR + 2); // Ptr to ctrl. reg. 
-volatile alt_u16 * timPerLPtr = (alt_u16*) (TIME_ADDR + 4); // Ptr to perL. reg.
-volatile alt_u16 * timPerHPtr = (alt_u16*) (TIME_ADDR + 6); // Ptr to perH. reg.
-volatile alt_u16 * timSnpLPtr = (alt_u16*) (TIME_ADDR + 8); // Ptr to snpL. reg.
-volatile alt_u16 * timSnpHPtr = (alt_u16*) (TIME_ADDR +10); // Ptr to snpH. reg.
+volatile alt_u16 * timCtrlPtr = (alt_u16*) (TIME_ADDR + 4); // Ptr to ctrl. reg. 
+volatile alt_u16 * timPerLPtr = (alt_u16*) (TIME_ADDR + 8); // Ptr to perL. reg.
+volatile alt_u16 * timPerHPtr = (alt_u16*) (TIME_ADDR +12); // Ptr to perH. reg.
+volatile alt_u16 * timSnpLPtr = (alt_u16*) (TIME_ADDR +16); // Ptr to snpL. reg.
+volatile alt_u16 * timSnpHPtr = (alt_u16*) (TIME_ADDR +20); // Ptr to snpH. reg.
 
 // Initialize registers to PushButton PIO: 32-bit reg., offset = 4 bytes
 volatile alt_u32 * pbDircPtr  = (alt_u32*) (BUTN_ADDR + 4); // Ptr to dirc. reg.
 volatile alt_u32 * pbEdgePtr  = (alt_u32*) (BUTN_ADDR +12); // Ptr to edgc. reg.
 
 // To be explicit initialize direction of all pins to input on PB PIO:
-*pbDircPtr = 0x00000000;
+//*pbDircPtr = 0x00000000;
 
 void BinToDec (alt_u8 * strPtr, alt_u32 num)
 //------------------------------------------------------------------------------
@@ -103,15 +106,15 @@ void BinToDec (alt_u8 * strPtr, alt_u32 num)
         num = num / 10;               // Remove least significant digit
         digit = digit + ASCII_OFFSET; // Encode digit to ASCII
         strPtr[pos] = digit;          // Store digit to correct pos in buffer
-        pos--;
+        pos--;						  // Decrement the index of the array
     }
 
-    for (int i = 0; i <= pos, i++)    // Loop over remaining characters
+    for (int i = 0; i <= pos; i++)    // Loop over remaining characters
     {
         strPtr[i] = ' ';              // Pad leading chars with ' '
     }
 
-    strPtr[12] = 0x00;                // Null-Terminate character string
+    strPtr[11] = 0x00;                // Null-Terminate character string
 }
 //------------------------------------------------------------------------------
 
@@ -160,7 +163,7 @@ void main()
         *timPerLPtr = GO;
 
         // Wait for falling edge from KEY[3]     
-        while ((*pbEdgePtr & KEY3_MASK) != 1) {}
+        while ((*pbEdgePtr & KEY3_MASK) != KEY3_MASK) {}
 
         // Start the timer (0x4 sets start bit to 1)
         *timCtrlPtr |= 0x4;
@@ -169,13 +172,13 @@ void main()
         *pbEdgePtr = CLEAR;
 
         // Wait for next falling edge from KEY[3]     
-        while ((*pbEdgePtr & KEY3_MASK) != 1) {}
+        while ((*pbEdgePtr & KEY3_MASK) != KEY3_MASK) {}
 
         // Clear edge register (0x434C454152 = "CLEAR")
         *pbEdgePtr = CLEAR;
 
         // Snapshot the timer (0x534E4150 = "SNAP")
-        *timSnpLPtr  = 0x534E4150;
+        *timSnpLPtr  = SNAP;
         stopVal.H[0] = *timSnpLPtr;
         stopVal.H[1] = *timSnpHPtr;
 
