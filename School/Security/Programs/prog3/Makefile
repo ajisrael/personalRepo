@@ -1,7 +1,7 @@
 CC = gcc
 SRC_FILES = showme.c
 OBJ_FILES = *.o
-OPTS = -pedantic -Wall -g
+OPTS = -std=c99 -pedantic -Wall -g
 EXE = showme
 
 build: $(SRC_FILE)

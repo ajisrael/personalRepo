@@ -53,37 +53,6 @@ void testFile(char * fileName, struct stat fileStat)
 }
 // -----------------------------------------------------------------------------
 
-void printStats(char * fileName, struct stat fileStat)
-// -----------------------------------------------------------------------------
-// Func: Prints the stats of a file to stdout.
-// Args: fileName = Name of the file in question.
-//       fileStat = Pointer to stat structure for a file.  
-// -----------------------------------------------------------------------------
-{
-    // Print general informaiton about file:
-    printf("Information for %s\n", fileName);
-    printf("---------------------------\n");
-    printf("File Size: \t\t%d bytes\n", (int) fileStat.st_size);
-    printf("Number of Links: \t%d\n", (int) fileStat.st_nlink);
-    printf("File inode: \t\t%d\n", (int) fileStat.st_ino);
-    printf("File Owner: \t\t%d\n", (int) fileStat.st_uid);
-
-    // Print file permissions:
-    printf("File Permissions: \t");
-    printf( (S_ISDIR(fileStat.st_mode)) ? "d" : "-");
-    printf( (fileStat.st_mode & S_IRUSR) ? "r" : "-");
-    printf( (fileStat.st_mode & S_IWUSR) ? "w" : "-");
-    printf( (fileStat.st_mode & S_IXUSR) ? "x" : "-");
-    printf( (fileStat.st_mode & S_IRGRP) ? "r" : "-");
-    printf( (fileStat.st_mode & S_IWGRP) ? "w" : "-");
-    printf( (fileStat.st_mode & S_IXGRP) ? "x" : "-");
-    printf( (fileStat.st_mode & S_IROTH) ? "r" : "-");
-    printf( (fileStat.st_mode & S_IWOTH) ? "w" : "-");
-    printf( (fileStat.st_mode & S_IXOTH) ? "x" : "-");
-    printf("\n\n");
-}
-// -----------------------------------------------------------------------------
-
 int main(int argc, char ** argv)
 // -----------------------------------------------------------------------------
 // Func: The main process of the program. Checks for correct number of arguments
@@ -172,8 +141,6 @@ int main(int argc, char ** argv)
     // End - Error Checking ----------------------------------------------------
 
     // Begin - Access ACL  -----------------------------------------------------
-    // Print stats to console for TESTING:
-    printStats(aclFilePtr, aclFileStat);
 
     // Compare file owners:
     if (euid != aclFileStat.st_uid)
@@ -282,13 +249,10 @@ int main(int argc, char ** argv)
 
     // Begin - Compare Permissions ---------------------------------------------
     // Compare ruid with acl uids:
-    printf("RUID: \t\t%s\n", ruid->pw_name);
     for (i = 0; i < (usrCount - 1); i++)
     {
-        printf("USERS: \t%s\n", userNames[i]);
         if (strcmp((ruid->pw_name),userNames[i]) == 0)
         {
-            printf("USRNAME: \t%s\n", userNames[i]);
             permission = 1;
         }
     }
@@ -299,7 +263,6 @@ int main(int argc, char ** argv)
         /*=== BEGIN PRIVILEGE ===*/
         seteuid(euid);
         fd = open(argv[1], O_RDONLY);
-        printf("Opened: \t%s\n\n", argv[1]);
         while ((bytes = read(fd, &buf, 1)) > 0)
         {
             printf("%c",buf[0]);
