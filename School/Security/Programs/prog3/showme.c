@@ -126,7 +126,6 @@ int main(int argc, char ** argv)
     aclFilePtr = malloc(strlen(argv[1]) + strlen(".acl") + 1); // +4 is for .acl
     strcat(aclFilePtr, argv[1]);
     strcat(aclFilePtr, ".acl");
-    printf("ACL: %s\n", aclFilePtr);
 
     // Check if ACL file exists:
     testFile(aclFilePtr, aclFileStat);
