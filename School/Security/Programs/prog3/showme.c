@@ -107,6 +107,8 @@ int main(int argc, char ** argv)
 //       ptrNewLn     = Ptr to \n in ACL to count # of users.
 //       usrInLn      = Number of users per line in the ACL file.
 //       spc          = Marks last char as a space.
+//       fl           = Boolean for first line.
+//       nl           = Boolean for new line.
 // -----------------------------------------------------------------------------
 {
     // Initialize local variables ----------------------------------------------
@@ -126,6 +128,8 @@ int main(int argc, char ** argv)
     char * ptrNewLn = NULL;                    // Ptr to \n in ACL for #of users
     int usrInLn = 0;                           // # of users/line in ACL file
     int spc = 0;                               // Marks last char of ACL as ' '
+    int fl = 1;                                // Boolean for first line
+    int nl = 0;                                // Boolean for new line
 
     bzero(userBuf, 256);                       // Clear userBuf
     // -------------------------------------------------------------------------
@@ -198,26 +202,26 @@ int main(int argc, char ** argv)
         free(aclFilePtr);
         exit(1);
     }
-    int fl = 1;
-    int nl = 0;
+
     i = 0;
     while ((bytes = read(fd, &buf, 1)) > 0)
     {
         if (buf[0] == '\n')       // If new line
         {
-            fl = 0;
-            nl = 1;
+            
+            nl = 1;               // Mark new line
             usrInLn = 0;          // Clear flags
             spc = 0;
+            fl = 0;
             userBuf[i] = buf[0];  // Save '\n' to parse later
             i++;
         }
         else if (buf[0] != ' ')   // Ignore all spaces
         {
-            if ((spc > 1) || (fl > 0) || (nl > 0)) // If previous char was ' '
+            if ((spc > 0) || (fl > 0) || (nl > 0)) // If previous char was ' '
             {
-                spc = 0;          // Reset spc flag
                 usrInLn ++;       // Increase # of users per ln
+                spc = 0;          // Clear flags
                 nl = 0;
                 fl = 0;
             }
