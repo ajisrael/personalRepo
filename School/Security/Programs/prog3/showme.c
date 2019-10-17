@@ -242,7 +242,7 @@ int main(int argc, char ** argv)
     }
     close(fd);
 
-    if (buf[0] != '\n')
+    if (userBuf[i-2] != '\n')
     {
         printf("Error ACL file format: %s\n", aclFilePtr);
         free(aclFilePtr);
