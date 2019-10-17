@@ -267,8 +267,9 @@ int main(int argc, char ** argv)
     // Begin - Compare Permissions ---------------------------------------------
     // Compare ruid with acl uids:
     printf("RUID: \t\t%s\n", ruid->pw_name);
-    for (i=0; i < (usrCount - 1); i++)
+    for (i = 0; i < (usrCount - 1); i++)
     {
+        printf("USERS: \t%s\n", userNames[i]);
         if (strcmp((ruid->pw_name),userNames[i]) == 0)
         {
             printf("USRNAME: \t%s\n", userNames[i]);
