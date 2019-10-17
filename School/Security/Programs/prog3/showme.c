@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // Orig: 2019.10.12 - Alex Israels & Collin Palmer
-// Revs: 2019.10.16 - Alex Israels & Collin Palmer
+// Revs: 2019.10.17 - Alex Israels & Collin Palmer
 // Prog: showme.c
 // Func: Takes a fileName as an argument and checks for an Access Control List
 //       (ACL) with the fileName and a .acl extension. The ACL specifies what
@@ -127,6 +127,12 @@ int main(int argc, char ** argv)
     // -------------------------------------------------------------------------
 
     // Begin - Main Process ====================================================
+    
+    /*=== BEGIN PRIVILEGE ===*/
+    // Process begins with privilege, not required for lstating files and error
+    // checking:
+    seteuid(getuid());
+    /*=== END PRIVILEGE ===*/
 
     // Begin - Error Checking --------------------------------------------------
     // Check for correct number of arguments:
@@ -178,6 +184,9 @@ int main(int argc, char ** argv)
         exit(1);
     }
 
+    /*=== BEGIN PRIVILEGE ===*/
+    seteuid(euid);
+
     // Read ACL file:
     if ((fd = open(aclFilePtr, O_RDONLY)) == -1)
     {
@@ -195,6 +204,10 @@ int main(int argc, char ** argv)
         }
     }
     close(fd);
+
+    /*=== END PRIVILEGE ===*/
+    seteuid(getuid());
+
     // End - Access ACL --------------------------------------------------------
 
     // Begin - Build Usernames -------------------------------------------------
@@ -224,10 +237,9 @@ int main(int argc, char ** argv)
     printf("RUID: \t\t%s\n", ruid->pw_name);
     for (i=0; i < (usrCount - 1); i++)
     {
-        printf("USRNAME: \t%s\n", userNames[i]);
         if (strcmp((ruid->pw_name),userNames[i]) == 0)
         {
-            printf("Permision Granted\n");
+            printf("USRNAME: \t%s\n", userNames[i]);
             permission = 1;
         }
     }
@@ -235,6 +247,8 @@ int main(int argc, char ** argv)
     // If the user has permision echo out file to console:
     if (permission == 1)
     {
+        /*=== BEGIN PRIVILEGE ===*/
+        seteuid(euid);
         fd = open(argv[1], O_RDONLY);
         printf("Opened File %s\n", argv[1]);
         while ((bytes = read(fd, &buf, 1)) > 0)
@@ -243,6 +257,8 @@ int main(int argc, char ** argv)
         }
         printf("\n");
         close(fd);
+        /*=== END PRIVILEGE ===*/
+        seteuid(getuid());
     }
     else // Else deny user access to file
     {
