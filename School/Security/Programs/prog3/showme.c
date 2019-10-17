@@ -198,6 +198,7 @@ int main(int argc, char ** argv)
         free(aclFilePtr);
         exit(1);
     }
+
     i = 0;
     while ((bytes = read(fd, &buf, 1)) > 0)
     {
@@ -219,6 +220,7 @@ int main(int argc, char ** argv)
             if (usrInLn > 1)      // If more than one user/line
             {                     // Exit process
                 printf("Error ACL file format: %s.\n", aclFilePtr);
+                close(fd);
                 free(aclFilePtr);
                 exit(1);
             }
