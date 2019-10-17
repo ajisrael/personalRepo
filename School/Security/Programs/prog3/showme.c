@@ -250,7 +250,7 @@ int main(int argc, char ** argv)
         /*=== BEGIN PRIVILEGE ===*/
         seteuid(euid);
         fd = open(argv[1], O_RDONLY);
-        printf("Opened File %s\n", argv[1]);
+        printf("Opened: \t%s\n\n", argv[1]);
         while ((bytes = read(fd, &buf, 1)) > 0)
         {
             printf("%c",buf[0]);
