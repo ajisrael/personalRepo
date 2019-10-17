@@ -198,12 +198,15 @@ int main(int argc, char ** argv)
         free(aclFilePtr);
         exit(1);
     }
-
+    int fl = 1;
+    int nl = 0;
     i = 0;
     while ((bytes = read(fd, &buf, 1)) > 0)
     {
         if (buf[0] == '\n')       // If new line
         {
+            fl = 0;
+            nl = 1;
             usrInLn = 0;          // Clear flags
             spc = 0;
             userBuf[i] = buf[0];  // Save '\n' to parse later
@@ -211,15 +214,17 @@ int main(int argc, char ** argv)
         }
         else if (buf[0] != ' ')   // Ignore all spaces
         {
-            if (spc == 1)         // If previous char was ' '
+            if ((spc > 1) || (fl > 0) || (nl > 0)) // If previous char was ' '
             {
                 spc = 0;          // Reset spc flag
                 usrInLn ++;       // Increase # of users per ln
+                nl = 0;
+                fl = 0;
             }
 
             if (usrInLn > 1)      // If more than one user/line
             {                     // Exit process
-                printf("Error ACL file format: %s.\n", aclFilePtr);
+                printf("Error ACL file format: %s\n", aclFilePtr);
                 close(fd);
                 free(aclFilePtr);
                 exit(1);
@@ -232,10 +237,16 @@ int main(int argc, char ** argv)
         }
         else 
         {
-            spc = 1;              // Mark last char as space
+            spc++;                // Mark last char as space
         }
     }
     close(fd);
+
+    int offset = 1;
+    if (userBuf[i-1] != '\n')
+    {
+        offset = 0;
+    }
 
     /*=== END PRIVILEGE ===*/
     seteuid(getuid());
@@ -267,7 +278,7 @@ int main(int argc, char ** argv)
     // Begin - Compare Permissions ---------------------------------------------
     // Compare ruid with acl uids:
     printf("RUID: \t\t%s\n", ruid->pw_name);
-    for (i = 0; i < (usrCount - 1); i++)
+    for (i = 0; i < (usrCount - offset); i++)
     {
         printf("USERS: \t%s\n", userNames[i]);
         if (strcmp((ruid->pw_name),userNames[i]) == 0)
