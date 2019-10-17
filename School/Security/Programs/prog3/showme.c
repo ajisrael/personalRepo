@@ -105,6 +105,8 @@ int main(int argc, char ** argv)
 //       i            = Index variable for loops.
 //       userCount    = Number of usernames in ACL file.
 //       ptrNewLn     = Ptr to \n in ACL to count # of users.
+//       usrInLn      = Number of users per line in the ACL file.
+//       spc          = Marks last char as a space.
 // -----------------------------------------------------------------------------
 {
     // Initialize local variables ----------------------------------------------
@@ -122,6 +124,8 @@ int main(int argc, char ** argv)
     int i = 0;                                 // Index var for loops
     int usrCount = 0;                          // Keep track of # of usrn in ACL
     char * ptrNewLn = NULL;                    // Ptr to \n in ACL for #of users
+    int usrInLn = 0;                           // # of users/line in ACL file
+    int spc = 0;                               // Marks last char of ACL as ' '
 
     bzero(userBuf, 256);                       // Clear userBuf
     // -------------------------------------------------------------------------
@@ -197,10 +201,36 @@ int main(int argc, char ** argv)
     i = 0;
     while ((bytes = read(fd, &buf, 1)) > 0)
     {
+        if (buf[0] == '\n')       // If new line
+        {
+            usrInLn = 0;          // Clear flags
+            spc = 0;
+            userBuf[i] = buf[0];  // Save '\n' to parse later
+            i++;
+        }
         if (buf[0] != ' ')        // Ignore all spaces
         {
-            userBuf[i] = buf[0];  // Save everything including '\n' to parse ltr
-            i++;
+            if (spc == 1)         // If previous char was ' '
+            {
+                spc = 0;          // Reset spc flag
+                usrInLn ++;       // Increase # of users per ln
+            }
+
+            if (usrInLn > 1)      // If more than one user/line
+            {                     // Exit process
+                printf("Error ACL file format: %s.\n", aclFilePtr);
+                free(aclFilePtr);
+                exit(1);
+            }
+            else                  // Else save char
+            {
+                userBuf[i] = buf[0];
+                i++;
+            }
+        }
+        else 
+        {
+            spc = 1;              // Mark last char as space
         }
     }
     close(fd);
