@@ -242,10 +242,11 @@ int main(int argc, char ** argv)
     }
     close(fd);
 
-    int offset = 1;
     if (userBuf[i-1] != '\n')
     {
-        offset = 0;
+        printf("Error ACL file format: %s\n", aclFilePtr);
+        free(aclFilePtr);
+        exit(1);
     }
 
     /*=== END PRIVILEGE ===*/
@@ -278,7 +279,7 @@ int main(int argc, char ** argv)
     // Begin - Compare Permissions ---------------------------------------------
     // Compare ruid with acl uids:
     printf("RUID: \t\t%s\n", ruid->pw_name);
-    for (i = 0; i < (usrCount - offset); i++)
+    for (i = 0; i < (usrCount - 1); i++)
     {
         printf("USERS: \t%s\n", userNames[i]);
         if (strcmp((ruid->pw_name),userNames[i]) == 0)
