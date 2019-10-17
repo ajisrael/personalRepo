@@ -209,7 +209,7 @@ int main(int argc, char ** argv)
             userBuf[i] = buf[0];  // Save '\n' to parse later
             i++;
         }
-        if (buf[0] != ' ')        // Ignore all spaces
+        else if (buf[0] != ' ')   // Ignore all spaces
         {
             if (spc == 1)         // If previous char was ' '
             {
