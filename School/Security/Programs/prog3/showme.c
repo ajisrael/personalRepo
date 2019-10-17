@@ -222,7 +222,7 @@ int main(int argc, char ** argv)
     // Begin - Compare Permissions ---------------------------------------------
     // Compare ruid with acl uids:
     printf("RUID: \t\t%s\n", ruid->pw_name);
-    for (i=0; i < usrCount; i++)
+    for (i=0; i < (usrCount - 1); i++)
     {
         printf("USRNAME: \t%s\n", userNames[i]);
         if (strcmp((ruid->pw_name),userNames[i]) == 0)
@@ -236,7 +236,8 @@ int main(int argc, char ** argv)
     if (permission == 1)
     {
         fd = open(argv[1], O_RDONLY);
-         while ((bytes = read(fd, &buf, 1)) > 0)
+        printf("Opened File %s\n", argv[1]);
+        while ((bytes = read(fd, &buf, 1)) > 0)
         {
             printf("%c",buf[0]);
         }
