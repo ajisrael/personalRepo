@@ -53,37 +53,6 @@ void testFile(char * fileName, struct stat fileStat)
 }
 // -----------------------------------------------------------------------------
 
-void printStats(char * fileName, struct stat fileStat)
-// -----------------------------------------------------------------------------
-// Func: Prints the stats of a file to stdout.
-// Args: fileName = Name of the file in question.
-//       fileStat = Pointer to stat structure for a file.  
-// -----------------------------------------------------------------------------
-{
-    // Print general informaiton about file:
-    printf("Information for %s\n", fileName);
-    printf("---------------------------\n");
-    printf("File Size: \t\t%d bytes\n", (int) fileStat.st_size);
-    printf("Number of Links: \t%d\n", (int) fileStat.st_nlink);
-    printf("File inode: \t\t%d\n", (int) fileStat.st_ino);
-    printf("File Owner: \t\t%d\n", (int) fileStat.st_uid);
-
-    // Print file permissions:
-    printf("File Permissions: \t");
-    printf( (S_ISDIR(fileStat.st_mode)) ? "d" : "-");
-    printf( (fileStat.st_mode & S_IRUSR) ? "r" : "-");
-    printf( (fileStat.st_mode & S_IWUSR) ? "w" : "-");
-    printf( (fileStat.st_mode & S_IXUSR) ? "x" : "-");
-    printf( (fileStat.st_mode & S_IRGRP) ? "r" : "-");
-    printf( (fileStat.st_mode & S_IWGRP) ? "w" : "-");
-    printf( (fileStat.st_mode & S_IXGRP) ? "x" : "-");
-    printf( (fileStat.st_mode & S_IROTH) ? "r" : "-");
-    printf( (fileStat.st_mode & S_IWOTH) ? "w" : "-");
-    printf( (fileStat.st_mode & S_IXOTH) ? "x" : "-");
-    printf("\n\n");
-}
-// -----------------------------------------------------------------------------
-
 int main(int argc, char ** argv)
 // -----------------------------------------------------------------------------
 // Func: The main process of the program. Checks for correct number of arguments
@@ -105,6 +74,10 @@ int main(int argc, char ** argv)
 //       i            = Index variable for loops.
 //       userCount    = Number of usernames in ACL file.
 //       ptrNewLn     = Ptr to \n in ACL to count # of users.
+//       usrInLn      = Number of users per line in the ACL file.
+//       spc          = Marks last char as a space.
+//       fl           = Boolean for first line.
+//       nl           = Boolean for new line.
 // -----------------------------------------------------------------------------
 {
     // Initialize local variables ----------------------------------------------
@@ -122,6 +95,10 @@ int main(int argc, char ** argv)
     int i = 0;                                 // Index var for loops
     int usrCount = 0;                          // Keep track of # of usrn in ACL
     char * ptrNewLn = NULL;                    // Ptr to \n in ACL for #of users
+    int usrInLn = 0;                           // # of users/line in ACL file
+    int spc = 0;                               // Marks last char of ACL as ' '
+    int fl = 1;                                // Boolean for first line
+    int nl = 0;                                // Boolean for new line
 
     bzero(userBuf, 256);                       // Clear userBuf
     // -------------------------------------------------------------------------
@@ -149,7 +126,6 @@ int main(int argc, char ** argv)
     aclFilePtr = malloc(strlen(argv[1]) + strlen(".acl") + 1); // +4 is for .acl
     strcat(aclFilePtr, argv[1]);
     strcat(aclFilePtr, ".acl");
-    printf("ACL: %s\n", aclFilePtr);
 
     // Check if ACL file exists:
     testFile(aclFilePtr, aclFileStat);
@@ -164,8 +140,6 @@ int main(int argc, char ** argv)
     // End - Error Checking ----------------------------------------------------
 
     // Begin - Access ACL  -----------------------------------------------------
-    // Print stats to console for TESTING:
-    printStats(aclFilePtr, aclFileStat);
 
     // Compare file owners:
     if (euid != aclFileStat.st_uid)
@@ -194,16 +168,56 @@ int main(int argc, char ** argv)
         free(aclFilePtr);
         exit(1);
     }
+
     i = 0;
     while ((bytes = read(fd, &buf, 1)) > 0)
     {
-        if (buf[0] != ' ')        // Ignore all spaces
+        if (buf[0] == '\n')       // If new line
         {
-            userBuf[i] = buf[0];  // Save everything including '\n' to parse ltr
+            
+            nl = 1;               // Mark new line
+            usrInLn = 0;          // Clear flags
+            spc = 0;
+            fl = 0;
+            userBuf[i] = buf[0];  // Save '\n' to parse later
             i++;
+        }
+        else if (buf[0] != ' ')   // Ignore all spaces
+        {
+            if ((spc > 0) || (fl > 0) || (nl > 0)) // If previous char was ' '
+            {
+                usrInLn ++;       // Increase # of users per ln
+                spc = 0;          // Clear flags
+                nl = 0;
+                fl = 0;
+            }
+
+            if (usrInLn > 1)      // If more than one user/line
+            {                     // Exit process
+                printf("Error ACL file format: %s\n", aclFilePtr);
+                close(fd);
+                free(aclFilePtr);
+                exit(1);
+            }
+            else                  // Else save char
+            {
+                userBuf[i] = buf[0];
+                i++;
+            }
+        }
+        else 
+        {
+            spc++;                // Mark last char as space
         }
     }
     close(fd);
+
+    if (userBuf[i-2] != '\n')
+    {
+        printf("Error ACL file format: %s\n", aclFilePtr);
+        free(aclFilePtr);
+        exit(1);
+    }
 
     /*=== END PRIVILEGE ===*/
     seteuid(getuid());
@@ -234,12 +248,10 @@ int main(int argc, char ** argv)
 
     // Begin - Compare Permissions ---------------------------------------------
     // Compare ruid with acl uids:
-    printf("RUID: \t\t%s\n", ruid->pw_name);
-    for (i=0; i < (usrCount - 1); i++)
+    for (i = 0; i < (usrCount - 1); i++)
     {
         if (strcmp((ruid->pw_name),userNames[i]) == 0)
         {
-            printf("USRNAME: \t%s\n", userNames[i]);
             permission = 1;
         }
     }
@@ -250,7 +262,6 @@ int main(int argc, char ** argv)
         /*=== BEGIN PRIVILEGE ===*/
         seteuid(euid);
         fd = open(argv[1], O_RDONLY);
-        printf("Opened File %s\n", argv[1]);
         while ((bytes = read(fd, &buf, 1)) > 0)
         {
             printf("%c",buf[0]);
