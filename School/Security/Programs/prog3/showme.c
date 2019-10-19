@@ -82,6 +82,7 @@ int main(int argc, char ** argv)
 {
     // Initialize local variables ----------------------------------------------
     char * aclFilePtr = NULL;                  // ptr to name of ACL file
+    struct stat fileStat;                      // ptr to stat struct of fileName
     struct stat aclFileStat;                   // ptr to stat struct of ACL file
     uid_t euid = geteuid();                    // EUID of current process
     struct passwd * ruid = getpwuid(getuid()); // RUID of user running proc.
@@ -120,7 +121,7 @@ int main(int argc, char ** argv)
     }
 
     // Check if file exists: 
-    testFile(argv[1], aclFileStat);
+    testFile(argv[1], fileStat);
 
     // Build aclFilePtr:
     aclFilePtr = malloc(strlen(argv[1]) + strlen(".acl") + 1); // +4 is for .acl
@@ -137,14 +138,23 @@ int main(int argc, char ** argv)
         free(aclFilePtr);
         exit(1);
     }
+
     // End - Error Checking ----------------------------------------------------
 
     // Begin - Access ACL  -----------------------------------------------------
 
-    // Compare file owners:
+    // Compare ACL file owner:
     if (euid != aclFileStat.st_uid)
     {
         printf("Access to ACL: Permission Denied\n");
+        free(aclFilePtr);
+        exit(1);
+    }
+
+    // Compare owners between files:
+    if (fileStat.st_uid != aclFileStat.st_uid)
+    {
+        printf("ACL File not created by %s owner: Permission Denied\n",argv[1]);
         free(aclFilePtr);
         exit(1);
     }
