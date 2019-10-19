@@ -13,23 +13,22 @@
 
 void IrqParser(void) // called by global exception handler
 {
-    // Declare any C variables you need
-    alt_u32 irqPend = 0;
+    alt_u32 irqPend = 0;          // Contents of ctrl reg 4
 
-    irqPend = __builtin_rdctl(4);
+    irqPend = __builtin_rdctl(4); // Read pending irqs
 
-    if (irqPend & 0x81)
+    if (irqPend & 0x81)           // If both are pending
     {
-        IsrTimr();
-        IsrJtag();
+        IsrTimr();		  // Run timer irq first
+        IsrJtag();		  // Then JTAG irq
     }
-    else if (irqPend & 0x1)
+    else if (irqPend & 0x1)	  // Else if timer pending
     {
-        IsrTimr();
+        IsrTimr();		  // Run timer irq
     }
-    else if (irqPend & 0x80)
+    else if (irqPend & 0x80)      // Else if JTAG pending
     {
-        IsrJtag();
+        IsrJtag();		  // Run JTAG
     }
     return;     // Return to global exception handler
 }
