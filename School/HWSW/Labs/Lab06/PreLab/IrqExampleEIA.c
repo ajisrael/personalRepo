@@ -45,16 +45,26 @@ void IrqParser(void)             // called by global exception handler
         // Then return (Since only 1 IRQ is enabled, this would be a bug)
         "beq    r8, r0, RETURN  \n\t"
         // Else do all the following to service the buttons IRQ:
-            // Create a stack frame &
-            // Push your return address and any registers you have altered.
+        // Create a stack frame &
+        // Push your return address and any registers you have altered.
+        "subi r27, r27, 4   \n\t"
+        "stw  r31, 0(r27)   \n\t"
 
-            // Call the pushbutton ISR.
+        // Call the pushbutton ISR.
+        "br   PBISR         \n\t"
 
-            // Pop any registers you have altered & your return address.
-            // Delete the stack frame.
+        // Pop any registers you have altered & your return address.
+        // Delete the stack frame.
+        "ldw  r31, 0(r27)   \n\t"
+        "addi r27, r27, 4   \n\t"
 
         // Return
+        "RETURN:                \n\t"
+
         // Don't forget the output, input, and/or clobber lists as needed
+        :
+        :
+        : "r8", "r27", "r31", "memory"
     );
 }
 
