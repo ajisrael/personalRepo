@@ -39,14 +39,14 @@ void IrqParser(void)             // called by global exception handler
     asm volatile
     (
         // Get the ipending control reg & test the butttons IRQ bit
-        "ldw    r8, 0(ctrl4)            \n\t"
-        "andi   r8, r8, 0x2             \n\t"
+        "ldw    r8, 0(ctrl4)    \n\t"
+        "andi   r8, r8, 0x2     \n\t"
         // If the buttons IRQ bit is not set,
         // Then return (Since only 1 IRQ is enabled, this would be a bug)
+        "beq    r8, r0, RETURN  \n\t"
         // Else do all the following to service the buttons IRQ:
-
             // Create a stack frame &
-            // Push your return address and any registres you have altered.
+            // Push your return address and any registers you have altered.
 
             // Call the pushbutton ISR.
 
