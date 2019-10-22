@@ -27,7 +27,7 @@ void main ()
   { 
     while(!(*timPtr & 0x1)) {}           // spin while TO bit=0 (=> no rollover)
     *ledPtr ^= 0xFFFFFFFF;               // Toggle all LEDs     
-    *timPtr = 0xFFFE;                         // Clear timr TO bit
+    *timPtr = 0xFFFE;                    // Clear timr TO bit
   }
 }
 //------------------------------------------------------------------------------

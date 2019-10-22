@@ -47,16 +47,16 @@ void IrqParser(void)             // called by global exception handler
         // Else do all the following to service the buttons IRQ:
         // Create a stack frame &
         // Push your return address and any registers you have altered.
-        "subi r27, r27, 4   \n\t"
-        "stw  r31, 0(r27)   \n\t"
+        "subi r27, r27, 4       \n\t"
+        "stw  r31, 0(r27)       \n\t"
 
         // Call the pushbutton ISR.
-        "br   PBISR         \n\t"
+        "br   PBISR             \n\t"
 
         // Pop any registers you have altered & your return address.
         // Delete the stack frame.
-        "ldw  r31, 0(r27)   \n\t"
-        "addi r27, r27, 4   \n\t"
+        "ldw  r31, 0(r27)       \n\t"
+        "addi r27, r27, 4       \n\t"
 
         // Return
         "RETURN:                \n\t"

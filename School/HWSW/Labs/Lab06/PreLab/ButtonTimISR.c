@@ -1,24 +1,15 @@
 //------------------------------------------------------------------------------
 // Orig: 2019.10.15 - Alex Israels
 // Revs: 2019.10.15 - Alex Israels - Logan Wilkerson
-// Prog: ButtonTimPoll.c
+// Prog: ButtonTimISR.c
 // Func: Calculates the number of clock cycles between button presses.
 // Asum: A Nios system with an input pIO for the four DE2 pushbuttons, and a
 //       fixed period timer (i.e., Qsys defined the period, with the "Writable
 //       Period" option set to OFF).
-// Meth: In an infinite loop:
-//       1. Initialize the timer to its preset max value by writing (anything) 
-//          to a period register. 
-//       2. Wait for a falling edge on pushbutton KEY[3]
-//          a. Poll the edge capture reg. of the pushbutton PIO
-//          b. NEED to set edge capture reg. to "falling edge" in QSys.
-//          c. Clear register after detecting an edge.
-//       3. Start the timer.
-//       4. Wait for another falling edge on KEY[3].
-//       5. Snapshot the timer value and stop the timer.
-//       6. Call BinToDec() to convert number of cycles into Null-Terminated
-//          ASCII string of decimal digits.
-//       7. Call PutTerm to write to the terminal screen.
+// Meth: Uses an IRQ when Key 3 is pressed. On the first press it starts the
+//       timer. On the second it calculates the difference between the max value
+//       of the timer and the current value, stops the timer, and writes the
+//       time out to the terminal.  
 // Defn: FOREVER      1  = Infinite Loop.
 //       ASCII_OFFSET 48 = Decimal value offset btw a Dec# and its ASCII value.
 //       JTUA_ADDR    0xDEADBEEF   = Base address of JTAG UART.
@@ -28,7 +19,7 @@
 //       KEY3_MASK    0x00000001   = Mask for KEY[3] pin.
 //       MAX_TIMER    0xFFFFFFFF   = Max value for timer in Nios.
 //       GO           0x484F       = ASCII value of "GO"
-//       CLEAR        0x434C454152 = ASCII value of "CL"
+//       CLEAR        0x434C       = ASCII value of "CL"
 //       SNAP         0x534E       = ASCII value of "SN"
 // Vars: juDataPtr  = Pointer to data register of JTAG UART.
 //       juCtrlPtr  = Pointer to control register of JTAG UART.
@@ -39,6 +30,7 @@
 //       timSnpLPtr = Pointer to snapl register of timer.
 //       timSnpHPtr = Pointer to snaph register of timer.
 //       pbDircPtr  = Pointer to direction register of pushbutton PIO.
+//       pbInMsPtr  = Pointer to inturrupt mask resgister of pushbutton PIO.
 //       pbEdgePtr  = Pointer to edge capture register of pushbutton PIO.
 //------------------------------------------------------------------------------
 #include <alt_types.h>
@@ -71,10 +63,18 @@ volatile alt_u16 * timSnpHPtr = (alt_u16*) (TIME_ADDR +20); // Ptr to snpH. reg.
 
 // Initialize registers to PushButton PIO: 32-bit reg., offset = 4 bytes
 volatile alt_u32 * pbDircPtr  = (alt_u32*) (BUTN_ADDR + 4); // Ptr to dirc. reg.
+volatile alt_u32 * pbInMsPtr  = (alt_u32*) (BUTN_ADDR + 8); // Ptr to irq mask
 volatile alt_u32 * pbEdgePtr  = (alt_u32*) (BUTN_ADDR +12); // Ptr to edgc. reg.
 
 // Global variable for button press history
 volatile alt_u8 bHist = 0;
+
+// Global variable for timer value
+union // Holds value of timer when stopped by KEY3
+    {
+        alt_u32 F;
+        alt_u16 H[2];
+    } stopVal;
 
 void BinToDec (alt_u8 * strPtr, alt_u32 num)
 //------------------------------------------------------------------------------
@@ -139,44 +139,56 @@ void PutTerm(alt_u8 *strPtr)
 }
 //------------------------------------------------------------------------------
 
-void main()
+
+void IrqParser(void)             // called by global exception handler
 // -----------------------------------------------------------------------------
-// Func: Print the argument pointer's char string to JTAG UART using pointer
-//       arithematic.
-// Vars: stopVal = Value of timer when stopped from seccond KEY3 press.
-//       str     = String to hold decimal values converted to ASCII
+// IRQ Source Parser for all external interrupts. 
+// Func: Examine reg ctrl4 (ipending) to determine which device caused the IRQ,
+//       then call the correct ISR to service that device. 
+// Note: 1. In this example application, there is ONLY the Pushbutton ISR, 
+//          but others can easily be edited into this function for other apps.
+//       2. This example ASSUMES pushbutton IRQ is mapped to bit 1 of ctrl regs
+//          ctl3 & ctl4. The ACTUAL mapping will be done by QSYS.
 // -----------------------------------------------------------------------------
 {
-    union // Holds value of timer when stopped by KEY3
-    {
-        alt_u32 F;
-        alt_u16 H[2];
-    } stopVal;
+    alt_u32 irqPend;
+    irqPend = __builtin_rdctl(4);  // Read ipending reg (ctl4) into a C variable
+    if (irqPend & 0x2)             // If ipending reg [bit 1] = 1,
+        IsrButtons();               // then call Pushbutton ISR to service the IRQ
 
+    return;                        // Return to global exception handler
+}
+
+
+void IsrButtons(void)           // called by IRQ Source Parser (IrqParser)
+// -----------------------------------------------------------------------------
+// Application dependent Interrupt Service Routine (ISR) for Pushbutton IRQ.
+// Func: Starts the timer when Key3 is pressed and saves the timer when Key3 is
+//       pressed again.
+// Vars: str     = String to hold decimal values converted to ASCII
+// -----------------------------------------------------------------------------
+{
     // Initialize string with all spaces and null terminator: 
     // 2^32 = 11 digits max so str size is 12 for null terminator.
     alt_u8 str[12] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',0x00};
+
     
-    while (FOREVER)
+    *(pbEdgePtr) = 0;           // Clear IRQ signal by writing to the
+                                // edgecapture reg of the pushbutton PIO
+
+    if (bHist == 0)
     {
         // Initialize timer (0x484F = "GO")
         *timPerLPtr = GO;
-
-        // Wait for falling edge from KEY[3]     
-        while ((*pbEdgePtr & KEY3_MASK) != KEY3_MASK) {}
-
+        
         // Start the timer (0x4 sets start bit to 1)
         *timCtrlPtr |= 0x4;
 
-        // Clear edge register (0x434C454152 = "CLEAR")
-        *pbEdgePtr = CLEAR;
-
-        // Wait for next falling edge from KEY[3]     
-        while ((*pbEdgePtr & KEY3_MASK) != KEY3_MASK) {}
-
-        // Clear edge register (0x434C454152 = "CLEAR")
-        *pbEdgePtr = CLEAR;
-
+        // Mark bHist as pressed
+        bHist = 1;
+    }
+    else
+    {
         // Snapshot the timer (0x534E4150 = "SNAP")
         *timSnpLPtr  = SNAP;
         stopVal.H[0] = *timSnpLPtr;
@@ -193,6 +205,28 @@ void main()
 
         // Print to terminal
         PutTerm(str);
+
+        // Reset bHist
+        bHist = 0;
     }
+
+    return;
+}
+
+void main()
+// -----------------------------------------------------------------------------
+// Func: Print the argument pointer's char string to JTAG UART using pointer
+//       arithematic.
+// Vars: stopVal = Value of timer when stopped from seccond KEY3 press.
+//       
+// -----------------------------------------------------------------------------
+{
+    // Enable IRQs
+    __builtin_wrctl(0, 5); // Write 101 to status reg to enable all excps & IRQs
+    __builtin_wrctl(3, 2); // Write 10  to ienable reg to enable buttons IRQ
+
+    * (pbInMsPtr) = 0x8;   // Enable button 3 "KEY3" to cause an IRQ
+    
+    while (FOREVER) {}     // Sleep
 }
 // -----------------------------------------------------------------------------
