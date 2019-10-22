@@ -1,18 +1,14 @@
 // ========================================================================= BOF
-// Prog: IrqExampleV3.c
-// Func: This file contains a simple program to perform a trivial function
-//       in response to a pushbutton interrupt. It contains:
-//       - func main      : Init. relevant port IRQs & go to sleep (that's all)
-//       - func IrqParser : Identifies the IRQ source & calls the correct ISR
-//       - func IsrButtons: ISR to service a pushbutton IRQ for this App.
-//
-// Revs: 2014.11.18 RMK: Cosmetic cleanups
-//       2017.03.22 RMK: More Cosmetic Cleanups
-//       2017.04.04 SWO: Added includes, prototypes, & Altera data types
-//                       Updated pointers & properly configured interrupts
-//       2017.08.23 RMK: Clarified previously cryptic func names & comments
-//       2018.02.22 RMK: Fixed a missing "volatile". When did that happen?
-//       2018.10.18 RMK: Cleaned up some ambiguities. Set version = V3.c
+// Orig: Roger M. Kieckhafer
+// Revs: 2019.10.22 - Alex Israels
+// Prog: IrqExampleEIA.c
+// Func: Implements an ISR resulting from an IRQ from the pushbuttons on the 
+//       Nios II.
+// Meth: The IRQ is parsed using EIA to verify the IRQ came from the pushbutton
+//       and manages the stack accordingly.
+// Defn: SWITCHES_BASE_ADDRESS = Base address of the switch PIO.
+//       RED_LED_BASE_ADDRESS  = Base address of the RLED PIO.
+//       BUTTONS_BASE_ADDRESS  = Base address of the buttion PIO.
 // -----------------------------------------------------------------------------
 #include <alt_types.h>
 #include "GenericExcepHndlr.c"     // Needed by Nios C compiler - DO NOT EDIT!
@@ -39,27 +35,29 @@ void IrqParser(void)             // called by global exception handler
     asm volatile
     (
         // Get the ipending control reg & test the butttons IRQ bit
-        "ldw    r8, 0(ctrl4)    \n\t"
-        "andi   r8, r8, 0x2     \n\t"
+        "ldw    r8, 0(ctrl4)    \n\t"   // Get ipending contents
+        "andi   r8, r8, 0x2     \n\t"   // Check if buttons IRQ pending
         // If the buttons IRQ bit is not set,
         // Then return (Since only 1 IRQ is enabled, this would be a bug)
-        "beq    r8, r0, RETURN  \n\t"
+        "beq    r8, r0, RETURN  \n\t"   // Return
         // Else do all the following to service the buttons IRQ:
         // Create a stack frame &
         // Push your return address and any registers you have altered.
-        "subi r27, r27, 4       \n\t"
-        "stw  r31, 0(r27)       \n\t"
+        "subi r27, r27, 8       \n\t"   // Make space for stack frame
+        "stw  r31, 4(r27)       \n\t"   // Save return address
+        "stw  r8,  0(r27)       \n\t"   // Save r8 (JIC)
 
         // Call the pushbutton ISR.
-        "br   PBISR             \n\t"
+        "call IsrButtons        \n\t"   // call ISR
 
         // Pop any registers you have altered & your return address.
         // Delete the stack frame.
-        "ldw  r31, 0(r27)       \n\t"
-        "addi r27, r27, 4       \n\t"
+        "ldw  r31, 4(r27)       \n\t"   // Load return address
+        "stw  r8,  0(r27)       \n\t"   // Load r8 (JIC)
+        "addi r27, r27, 8       \n\t"   // Delete stack frame
 
-        // Return
-        "RETURN:                \n\t"
+        // Return to regularly scheduled program.
+        "RETURN:                \n\t"   // Finish
 
         // Don't forget the output, input, and/or clobber lists as needed
         :

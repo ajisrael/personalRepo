@@ -1,6 +1,5 @@
 //------------------------------------------------------------------------------
-// Revs: 2019.10.14 - Alex Israels
-// Revs: 2019.10.15 - Alex Israels - Logan Wilkerson
+// Orig: 2019.10.22 - Alex Israels
 // Prog: BlinkIRQ.c
 // Func: Given a Nios Timer module in continous run mode with a fixed period,
 //       Toggle all 18 DE2-115 LEDs every time the timer rolls over past zero 
@@ -11,6 +10,7 @@
 //       timPtr = Pointer to 16-bit register for base address of timer.
 //------------------------------------------------------------------------------
 #include <alt_types.h>
+#include "GenericExcepHndlr.c"      // Needed by Nios C compiler - DO NOT EDIT!
 
 #define  LEDS_BASE 0x00081070       // LED PIO Base address. Value TBD by Qsys.
 #define  TIMR_BASE 0x00081020       // TIMER   Base address. Value TBD by Qsys.
@@ -31,7 +31,7 @@ void IrqParser(void)             // called by global exception handler
 {
     alt_u32 irqPend;
     irqPend = __builtin_rdctl(4);  // Read ipending reg (ctl4) into a C variable
-    if (irqPend & 0x2)             // If ipending reg [bit 1] = 1,
+    if (irqPend & 0x1)             // If ipending reg [bit 1] = 1,
         IsrTimerOver();            // then call Timer ISR to service the IRQ
 
     return;                        // Return to global exception handler

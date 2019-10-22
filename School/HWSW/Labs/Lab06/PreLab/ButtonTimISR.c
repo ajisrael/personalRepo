@@ -32,8 +32,10 @@
 //       pbDircPtr  = Pointer to direction register of pushbutton PIO.
 //       pbInMsPtr  = Pointer to inturrupt mask resgister of pushbutton PIO.
 //       pbEdgePtr  = Pointer to edge capture register of pushbutton PIO.
+//       stopVal    = Union variable to hold timer delay.
 //------------------------------------------------------------------------------
 #include <alt_types.h>
+#include "GenericExcepHndlr.c"      // Needed by Nios C compiler - DO NOT EDIT!
 
 # define FOREVER      1             // Infinite Loop
 # define ASCII_OFFSET 48            // Decimal value offset
