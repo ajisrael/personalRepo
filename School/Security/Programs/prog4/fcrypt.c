@@ -114,9 +114,9 @@ int main (int argc, char* argv[])
     }
 
     // Turn off terminal echo
-    tcgetattr(STDIN_FD, &termInfo);
-    termInfo.c_lflag &= ~ECHO;
-    tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo);
+    // tcgetattr(STDIN_FD, &termInfo);
+    // termInfo.c_lflag &= ~ECHO;
+    // tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo);
 
     // Loop for getting valid passphrase
     while (prompting = 1)
@@ -142,9 +142,9 @@ int main (int argc, char* argv[])
     }
 
     // Turn on terminal echo
-    tcgetattr(STDIN_FD, &termInfo);
-    termInfo.c_lflag |= ECHO;
-    tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo);
+    // tcgetattr(STDIN_FD, &termInfo);
+    // termInfo.c_lflag |= ECHO;
+    // tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo);
 
     // Once a valid passphrase is accepted run SHA1 over phrase to make Kpass
     shactx = EVP_MD_CTX_create();
