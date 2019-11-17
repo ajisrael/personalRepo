@@ -58,7 +58,7 @@ void encryptAndPrint(EVP_CIPHER_CTX * ectx, char *msg, int mlen,
 	*olen += extlen;
 
 	fprintf(f, "Encrypted result <");
-	fprint_string_as_hex(f, res, *olen);
+	printHex(f, res, *olen);
 	fprintf(f, ">\n");
 }
 
