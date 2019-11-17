@@ -70,12 +70,12 @@ int main (int argc, char* argv[])
     EVP_CIPHER_CTX * ctx;           // Context of ecryption
     EVP_CIPHER     * cipher;        // Resulting Cipher
 
+    char phrase1[80];        // Holds the 1st passphrase from the user
+    char phrase2[80];        // Holds the 2nd passphrase from the user
     char ** digest;          // Digest generated from passphrase
 
     char ivec[EVP_MAX_IV_LENGTH] = {0}; // Initialization vector for BF algo
 
-    unsigned char phrase1[80];      // Holds the 1st passphrase from the user
-    unsigned char phrase2[80];      // Holds the 2nd passphrase from the user
     unsigned char kPass[KEYLEN];    // Kpass generated from SHA1
     unsigned char kEnc[KEYLEN];     // Kenc generated from /dev/urandom
     
@@ -123,11 +123,13 @@ int main (int argc, char* argv[])
     {
         // Prompt user for passphrase
         printf("Enter a passphrase: ");
-        gets(phrase1);
+        scanf("%s", phrase1);
+        printf("\n");
 
         // Prompt user for second passphrase
         printf("Verify passphrase: ");
-        gets(phrase2);
+        scanf("%s", phrase2);
+        printf("\n");
 
         // If equal then check length
         if (strcmp(phrase1, phrase2) == 0)
@@ -139,6 +141,7 @@ int main (int argc, char* argv[])
                 prompting = 0;
             }
         }
+        printf("Phrase not valid. Please try again.\n");
     }
 
     // Turn on terminal echo
