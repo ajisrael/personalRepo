@@ -301,7 +301,7 @@ int main (int argc, char* argv[])
         messLen += outLen;
         EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen);
         messLen += outLen;
-        kEnc = (unsigned char[16]) res;
+        &kEnc =  &res;
         
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Decrypted Kenc: <");
