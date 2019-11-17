@@ -296,12 +296,11 @@ int main (int argc, char* argv[])
         EVP_CIPHER_CTX_set_key_length(ctx, fstats.st_size);
         EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec);
         messLen = 0;
-        res = (unsigned char *) malloc(ctLen);
-        EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen);
+        //res = (unsigned char *) malloc(ctLen);
+        EVP_DecryptUpdate(ctx, kEnc, &outLen, ciphertext, ctLen);
         messLen += outLen;
-        EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen);
+        EVP_DecryptFinal_ex(ctx, &kEnc[outLen], &outLen);
         messLen += outLen;
-        &kEnc =  &res;
         
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Decrypted Kenc: <");
@@ -309,7 +308,7 @@ int main (int argc, char* argv[])
         fprintf(stdout, ">\n");
 
         // Clean up memory
-        free(res);
+        //free(res);
         close(keyFile);
         free(ciphertext);
         EVP_CIPHER_CTX_cleanup(ctx);
