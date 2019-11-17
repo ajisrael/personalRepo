@@ -191,6 +191,7 @@ int main (int argc, char* argv[])
 
         // Open encyrpted dataFile
         encFile = open(encFileName, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, S_IRUSR | S_IWUSR);
+        free(encFileName);
 
         // Set up Blow Fish algorithm
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
@@ -215,31 +216,53 @@ int main (int argc, char* argv[])
             // Write the encrypted data to dataFile.enc
             write(encFile, ciphertext, ctLen);
 
-            printf("Wrote %d bytes of ciphertext <",ctLen);
+            printf("Wrote %d bytes of ciphertext <", ctLen);
             printHex(stdout, ciphertext, ctLen);
             printf(">\n");
         }
 
         // Encrypt and write last block of data
         ctLen = 0;
-        EVP_EncryptFinal_ex(ctx,ciphertext, &ctLen);
+        EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
         write(encFile, ciphertext, ctLen);
-        printf("Wrote %d bytes of ciphertext <",ctLen);
+        printf("Wrote %d bytes of ciphertext <", ctLen);
         printHex(stdout, ciphertext, ctLen);
         printf(">\n");
 
-        // Use Kpass to encrypt Kenc
+        // Clean up memory
+        EVP_CIPHER_CTX_cleanup(ctx);
+        free(ctx);
+        close(dataFile);
+        close(encFile);
 
         // If keyfile doesn't exist it is created
+        keyFile = open(argv[3], O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, S_IRUSR | S_IWUSR);
 
-        // If it does exist it is truncated to zero before writing
+        // Use Kpass to encrypt Kenc
+        // Set up Blow Fish algorithm
+        cipher = (EVP_CIPHER *) EVP_bf_cbc();
+        ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
+        EVP_CIPHER_CTX_init(ctx);
+        EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL);
+        EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
+        EVP_EncryptInit_ex(ctx, NULL, NULL, kPass, ivec);
+        ciphertext = allocateCiphertext(KEYLEN);
+        ctLen = 0;
+        messLen = KEYLEN;
 
-        // Make sure the file is not a symbolic link & the permission bits are 0400
+        // Encrypt Kenc
+        EVP_EncryptUpdate(ctx, ciphertext, &ctLen, kEnc, messLen);
+        EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
 
         // Write encrypted Kenc to keyfile
+        write(keyFile, ciphertext, ctLen);
+        printf("Wrote %d bytes of ciphertext <", ctLen);
+        printHex(stdout, ciphertext, ctLen);
+        printf(">\n");
 
-        // Free memory
-        free(encFileName);
+        // Clean up memory
+        close(keyFile);
+        EVP_CIPHER_CTX_cleanup(ctx);
         free(ctx);
 
         /// Testing
