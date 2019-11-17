@@ -174,17 +174,19 @@ int main (int argc, char* argv[])
 
     // Print out Kpass in hexadecimal
     fprintf(stdout, "Kpass: ");
-    printHex(stdout, kPass, KEYLEN);
+    printHex(stdout, kPass, messLen);
     fprintf(stdout, "\n");
 
     // Determine invocation and run accordingly
     if (mode == 1) // Encrypt
     {
+        /// Testing
+        printf("Beginning Encryption.\n");
         // Generate 128 bit random number Kenc from /dev/urandom
-        initializeKey(kEnc, KEYLEN);
+        initializeKey(kEnc, messLen);
 
         // Print out Kenc in hexadecimal
-        printHex(stdout, kEnc, KEYLEN);
+        printHex(stdout, kEnc, messLen);
 
         // Encrypt datafile using Blowfish in CBC mode
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
@@ -208,6 +210,9 @@ int main (int argc, char* argv[])
         // Make sure the file is not a symbolic link & the permission bits are 0400
 
         // Write encrypted Kenc to keyfile
+
+        /// Testing
+        printf("Encryption complete.\n");
 
     }
     else if (mode == -1) // Decrpyt
