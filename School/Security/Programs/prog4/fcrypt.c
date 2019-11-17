@@ -15,10 +15,11 @@
 #include <stdlib.h>
 #include <termios.h>
 
-#define KEYLEN      16
-#define DIGLEN      20
-#define BLOCKSIZE    8
-#define STDIN_FD     0
+#define KEYLEN     16
+#define DIGLEN     20
+#define BLOCKSIZE   8
+#define STDIN_FD    0
+#define BUFSIZE    10
 
 void initializeKey(unsigned char *key, int length)
 {
@@ -47,21 +48,6 @@ unsigned char * allocateCiphertext(int mlen)
 	return (unsigned char *) malloc(mlen+BLOCKSIZE);
 }
 
-void encryptAndPrint(EVP_CIPHER_CTX * ectx, char *msg, int mlen,
-		  char *res, int *olen, FILE * f)
-{
-	int extlen;
-
-	EVP_EncryptUpdate(ectx, res, olen, msg, mlen);
-	EVP_EncryptFinal_ex(ectx, &res[*olen], &extlen);
-
-	*olen += extlen;
-
-	fprintf(f, "Encrypted result <");
-	printHex(f, res, *olen);
-	fprintf(f, ">\n");
-}
-
 int main (int argc, char* argv[])
 {
     struct termios termInfo;        // Struct for terminal echo
@@ -73,6 +59,8 @@ int main (int argc, char* argv[])
     char phrase1[80];        // Holds the 1st passphrase from the user
     char phrase2[80];        // Holds the 2nd passphrase from the user
     char ** digest;          // Digest generated from passphrase
+    char *  encFileName;     // Name of datafile.enc
+    char buf[BUFSIZE];       // Buffer of BUFSIZE for reading and writing
 
     char ivec[EVP_MAX_IV_LENGTH] = {0}; // Initialization vector for BF algo
 
@@ -83,12 +71,13 @@ int main (int argc, char* argv[])
 
     int messLen = KEYLEN; // Length of message to encrypt
     int prompting  = 1;   // Boolean for prompting loop
-    int passLen = 0;      // Length of passphrase
-    int mode = 0;         // Mode of application 1 = encrypt, -1 = decrypt
-    int dataFile = 0;     // File descriptor for dataFile
-    int keyFile = 0;      // File descriptor for keyFile
-    int sha1Len = 0;      // Length of kPass generated from SHA1
-    int ctLen  = 0;       // Length of ciphertext
+    int passLen    = 0;   // Length of passphrase
+    int mode       = 0;   // Mode of application 1 = encrypt, -1 = decrypt
+    int dataFile   = 0;   // File descriptor for dataFile
+    int encFile    = 0;   // File descriptor for dataFile.enc
+    int keyFile    = 0;   // File descriptor for keyFile
+    int sha1Len    = 0;   // Length of kPass generated from SHA1
+    int ctLen      = 0;   // Length of ciphertext
 
     // Error checking for invocation
     if (argc != 4)
@@ -191,17 +180,53 @@ int main (int argc, char* argv[])
         fprintf(stdout, "\n");
 
         // Encrypt datafile using Blowfish in CBC mode
+        // Open datafile
+        dataFile = open(argv[2], O_RDONLY);
+
+        // Create encrypted dataFile name
+        encFileName = malloc(strlen(argv[2]) + 5);
+        strcpy(encFileName, argv[2]);
+        strcat(encFileName, ".enc");
+        printf("Writing encrypted file content to <%s>\n", encFileName);
+
+        // Open encyrpted dataFile
+        encFile = open(encFileName, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, S_IRUSR | S_IWUSR);
+
+        // Set up Blow Fish algorithm
+        cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
         EVP_CIPHER_CTX_init(ctx);
-        cipher = (EVP_CIPHER *) EVP_bf_cbc();
-        EVP_EncryptInit_ex(ctx, cipher, NULL, kEnc, ivec);
-        ciphertext = allocateCiphertext(messLen);
-        encryptAndPrint(ctx, kEnc, messLen, ciphertext, &ctLen, stdout);
+        EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL);
+        EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
+        EVP_EncryptInit_ex(ctx, NULL, NULL, kEnc, ivec);
+        ciphertext = allocateCiphertext(BUFSIZE);
 
         // Write encrypted data to <datafile>.enc
+        while ((messLen = read(dataFile, buf, BUFSIZE)) > 0)
+        {
+            // Read from datafile
+            printf("Read %d bytes of plaintext <", messLen);
+            printHex(stdout, buf, messLen);
+            printf(">\n");
 
+            // Encrypt the data
+            EVP_EncryptUpdate(ctx, ciphertext, &ctLen, buf, messLen);
 
-        // Make sure permission bits are set to 0400 for encrypted file
+            // Write the encrypted data to dataFile.enc
+            write(encFile, ciphertext, ctLen);
+
+            printf("Wrote %d bytes of ciphertext <",ctlen);
+            printHex(stdout, ciphertext, ctLen);
+            printf(">\n");
+        }
+
+        // Encrypt and write last block of data
+        ctLen = 0;
+        EVP_EncryptFinal_ex(ctx,ciphertext, &ctlen);
+        write(encFile, ciphertext, ctLen);
+        printf("Wrote %d bytes of ciphertext <",ctLen);
+        printHex(stdout, ciphertext, ctLen);
+        printf(">\n");
 
         // Use Kpass to encrypt Kenc
 
@@ -212,6 +237,10 @@ int main (int argc, char* argv[])
         // Make sure the file is not a symbolic link & the permission bits are 0400
 
         // Write encrypted Kenc to keyfile
+
+        // Free memory
+        free(encFileName);
+        free(ctx);
 
         /// Testing
         printf("Encryption complete.\n");
