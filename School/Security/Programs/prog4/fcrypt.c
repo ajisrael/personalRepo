@@ -119,7 +119,7 @@ int main (int argc, char* argv[])
     tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo);
 
     // Loop for getting valid passphrase
-    while (prompting = 1)
+    while (prompting == 1)
     {
         // Prompt user for passphrase
         printf("Enter a passphrase: ");
