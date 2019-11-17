@@ -140,8 +140,17 @@ int main (int argc, char* argv[])
             {
                 prompting = 0;
             }
+            else
+            {
+                printf("Phrase <%s> is not valid.\n", phrase1);
+                printf("The phrase must be between 10 and 80 characters.\n");
+            }
         }
-        printf("Phrases <%s>, and <%s> not valid. Please try again.\n", phrase1, phrase2);
+        else 
+        {
+            printf("Phrases <%s>, and <%s> are not Equal.\n", phrase1, phrase2);
+            printf("Please try again.\n");
+        }
     }
 
     // Turn on terminal echo
