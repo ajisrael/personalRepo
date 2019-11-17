@@ -88,7 +88,7 @@ int main (int argc, char* argv[])
     int dataFile = 0;     // File descriptor for dataFile
     int keyFile = 0;      // File descriptor for keyFile
     int sha1Len = 0;      // Length of kPass generated from SHA1
-    int ctxLen  = 0;      // Length of ciphertext
+    int ctLen  = 0;       // Length of ciphertext
 
     // Error checking for invocation
     if (argc != 4)
@@ -186,7 +186,7 @@ int main (int argc, char* argv[])
         initializeKey(kEnc, messLen);
 
         // Print out Kenc in hexadecimal
-        fprintf(stdout, "Kenc: ");
+        fprintf(stdout, "Kenc:  ");
         printHex(stdout, kEnc, messLen);
         fprintf(stdout, "\n");
 
@@ -196,7 +196,7 @@ int main (int argc, char* argv[])
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         EVP_EncryptInit_ex(ctx, cipher, NULL, kEnc, ivec);
         ciphertext = allocateCiphertext(messLen);
-        //encryptAndPrint(ctx, kPass, messLen)
+        encryptAndPrint(ctx, kEnc, messLen, ciphertext, &ctLen, stdout);
 
         // Write encrypted data to <datafile>.enc
 
