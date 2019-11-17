@@ -123,12 +123,12 @@ int main (int argc, char* argv[])
     {
         // Prompt user for passphrase
         printf("Enter a passphrase: ");
-        scanf("%s", phrase1);
+        scanf("%[^\n]%*c", phrase1);
         printf("\n");
 
         // Prompt user for second passphrase
         printf("Verify passphrase: ");
-        scanf("%s", phrase2);
+        scanf("%[^\n]%*c", phrase2);
         printf("\n");
 
         // If equal then check length
