@@ -15,9 +15,9 @@
 #include <stdlib.h>
 #include <termios.h>
 
-#define KEYLEN    16
-#define DIGLEN    20
-#define BLOCKSIZE  8
+#define KEYLEN      16
+#define DIGLEN      20
+#define BLOCKSIZE    8
 
 void initializeKey(unsigned char *key, int length)
 {
@@ -65,7 +65,7 @@ int main (int argc, char* argv[])
 {
     struct termios termInfo;        // Struct for terminal echo
 
-    EVP_SHA1_CTX   * shactx;        // Context of SHA1
+    EVP_MD_CTX     * shactx;        // Context of SHA1
     EVP_CIPHER_CTX * ctx;           // Context of ecryption
     EVP_CIPHER     * cipher;        // Resulting Cipher
 
@@ -111,9 +111,9 @@ int main (int argc, char* argv[])
     }
 
     // Turn off terminal echo
-    tcgetattr(STDIN_FILENO, &termInfo);
+    tcgetattr(stdin, &termInfo);
     termInfo.c_flag &= ~ECHO;
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &termInfo);
+    tcsetattr(stdin, TCSAFLUSH, &termInfo);
 
     // Loop for getting valid passphrase
     while (prompting = 1)
@@ -139,9 +139,9 @@ int main (int argc, char* argv[])
     }
 
     // Turn on terminal echo
-    tcgetattr(STDIN_FILENO, &termInfo);
+    tcgetattr(stdin, &termInfo);
     termInfo.c_flag |= ECHO;
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &termInfo);
+    tcsetattr(stdin, TCSAFLUSH, &termInfo);
 
     // Once a valid passphrase is accepted run SHA1 over phrase to make Kpass
     shactx = EVP_MD_CTX_create();
