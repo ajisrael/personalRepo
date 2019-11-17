@@ -65,18 +65,21 @@ int main (int argc, char* argv[])
 {
     struct termios termInfo;        // Struct for terminal echo
 
+    EVP_SHA1_CTX   * shactx;        // Context of SHA1
     EVP_CIPHER_CTX * ctx;           // Context of ecryption
     EVP_CIPHER     * cipher;        // Resulting Cipher
 
-    char phrase1[80] = NULL;        // Holds the 1st passphrase from the user
-    char phrase2[80] = NULL;        // Holds the 2nd passphrase from the user
-    char ** digest   = NULL;        // Digest generated from passphrase
+    char phrase1[80];        // Holds the 1st passphrase from the user
+    char phrase2[80];        // Holds the 2nd passphrase from the user
+    char ** digest;          // Digest generated from passphrase
+
+    char ivec[EVP_MAX_IV_LENGTH] = {0}; // Initialization vector for BF algo
 
     unsigned char kPass[KEYLEN];    // Kpass generated from SHA1
     unsigned char kEnc[KEYLEN];     // Kenc generated from /dev/urandom
 
     int messLen = KEYLEN; // Length of message to encrypt
-    int promting  = 1;    // Boolean for prompting loop
+    int prompting  = 1;   // Boolean for prompting loop
     int passLen = 0;      // Length of passphrase
     int mode = 0;         // Mode of application 1 = encrypt, -1 = decrypt
     int dataFile = 0;     // File descriptor for dataFile
@@ -141,11 +144,11 @@ int main (int argc, char* argv[])
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &termInfo);
 
     // Once a valid passphrase is accepted run SHA1 over phrase to make Kpass
-    mdctx = EVP_MD_CTX_create();
-    EVP_MD_CTX_init(mdctx);
-    EVP_DigestInit_ex(mdctx, EVP_sha1(), NULL);
-    EVP_DigestUpdate(mdctx, phrase1, passLen);
-    EVP_DigestFinal_ex(mdctx, kPass, &sha1Len);
+    shactx = EVP_MD_CTX_create();
+    EVP_MD_CTX_init(shactx);
+    EVP_DigestInit_ex(shactx, EVP_sha1(), NULL);
+    EVP_DigestUpdate(shactx, phrase1, passLen);
+    EVP_DigestFinal_ex(shactx, kPass, &sha1Len);
 
     // Check if SHA1 Length is valid
     if (sha1Len != DIGLEN)
@@ -173,12 +176,11 @@ int main (int argc, char* argv[])
         EVP_CIPHER_CTX_init(ctx);
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         EVP_EncryptInit_ex(ctx, cipher, NULL, kEnc, ivec);
-        mlen = KEYLEN;
-        ciphertext = allocateCiphertext(mlen);
-        encryptAndPrint(ctx, kPass, messLen)
+        ciphertext = allocateCiphertext(messLen);
+        //encryptAndPrint(ctx, kPass, messLen)
 
         // Write encrypted data to <datafile>.enc
-        
+
 
         // Make sure permission bits are set to 0400 for encrypted file
 
