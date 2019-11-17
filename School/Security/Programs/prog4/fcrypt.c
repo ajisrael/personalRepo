@@ -186,7 +186,9 @@ int main (int argc, char* argv[])
         initializeKey(kEnc, messLen);
 
         // Print out Kenc in hexadecimal
+        fprintf(stdout, "Kenc: ");
         printHex(stdout, kEnc, messLen);
+        fprintf(stdout, "\n");
 
         // Encrypt datafile using Blowfish in CBC mode
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
