@@ -293,15 +293,15 @@ int main (int argc, char* argv[])
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
         EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL);
-        EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
+        EVP_CIPHER_CTX_set_key_length(ctx, fstats.st_size);
         EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec);
         messLen = 0;
-        res = (unsinged char * ) malloc(ctLen);
+        res = (unsigned char *) malloc(ctLen);
         EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen);
         messLen += outLen;
         EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen);
-        messLen += outlen;
-        kEnc = res;
+        messLen += outLen;
+        kEnc = (unsigned char[16]) res;
         
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Decrypted Kenc: <");
@@ -319,7 +319,7 @@ int main (int argc, char* argv[])
         encFile = open(argv[2], O_RDONLY | O_NOFOLLOW);
         fstat(encFile, &fstats);
         ciphertext = malloc(fstats.st_size);
-        read()
+        read(encFile, ciphertext, fstats.st_size);
 
         // Decrypt dataFile.enc with Kenc
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
@@ -330,11 +330,11 @@ int main (int argc, char* argv[])
         EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
         EVP_DecryptInit_ex(ctx, NULL, NULL, kEnc, ivec);
         messLen = 0;
-        res = (unsinged char * ) malloc(ctLen);
+        res = (unsigned char *) malloc(ctLen);
         EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen);
         messLen += outLen;
         EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen);
-        messLen += outlen;
+        messLen += outLen;
 
         // Print out decrypted datafile in hexadecimal
         fprintf(stdout, "Decrypted Datafile (HEX): <\n");
