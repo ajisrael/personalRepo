@@ -215,14 +215,14 @@ int main (int argc, char* argv[])
             // Write the encrypted data to dataFile.enc
             write(encFile, ciphertext, ctLen);
 
-            printf("Wrote %d bytes of ciphertext <",ctlen);
+            printf("Wrote %d bytes of ciphertext <",ctLen);
             printHex(stdout, ciphertext, ctLen);
             printf(">\n");
         }
 
         // Encrypt and write last block of data
         ctLen = 0;
-        EVP_EncryptFinal_ex(ctx,ciphertext, &ctlen);
+        EVP_EncryptFinal_ex(ctx,ciphertext, &ctLen);
         write(encFile, ciphertext, ctLen);
         printf("Wrote %d bytes of ciphertext <",ctLen);
         printHex(stdout, ciphertext, ctLen);
