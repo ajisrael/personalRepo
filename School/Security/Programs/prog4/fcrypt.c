@@ -336,9 +336,9 @@ int main (int argc, char* argv[])
         }
         messLen += outLen;
 
-        // printf("Kenc @ Outlen %d: <", outLen);
-        // printHex(stdout, &res[outLen], KEYLEN);
-        // printf(">\n");
+        printf("Kenc @ Outlen %d: <", outLen);
+        printHex(stdout, &res[outLen], KEYLEN);
+        printf(">\n");
 
         if (EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen) == 0)
         {
