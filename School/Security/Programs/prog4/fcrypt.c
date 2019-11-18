@@ -325,14 +325,14 @@ int main (int argc, char* argv[])
         close(keyFile);
         free(ciphertext);
         free(res);
-        EVP_CIPHER_CTX_cleanup(keyCtx);
-        free(keyCtx);
+        EVP_CIPHER_CTX_free(keyCtx);
 
         // Open dataFile.enc
         encFile = open(argv[2], O_RDONLY | O_NOFOLLOW);
         fstat(encFile, &fstats);
         ciphertext = malloc(fstats.st_size);
         read(encFile, ciphertext, fstats.st_size);
+        close(encFile);
 
         /// Testing
         fprintf(stdout, "Encrypted Datafile (HEX) %d Bytes: <\n", fstats.st_size);
@@ -351,7 +351,7 @@ int main (int argc, char* argv[])
         messLen = 0;
         outLen = 0;
         res = (unsigned char *) malloc(ctLen);
-        
+
         EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen);
         messLen += outLen;
         EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen);
@@ -368,10 +368,8 @@ int main (int argc, char* argv[])
 
         // Clean up memory
         free(res);
-        close(encFile);
         free(ciphertext);
-        EVP_CIPHER_CTX_cleanup(ctx);
-        free(ctx);
+        EVP_CIPHER_CTX_free(ctx);
     }
     else
     {
