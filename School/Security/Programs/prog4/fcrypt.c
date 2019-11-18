@@ -354,7 +354,7 @@ int main (int argc, char* argv[])
         // Open dataFile.enc
         encFile = open(argv[2], O_RDONLY | O_NOFOLLOW);
         fstat(encFile, &fstats);
-        ciphertext = malloc(fstats.st_size);
+        ciphertext = (unsigned char *) malloc(fstats.st_size);
         read(encFile, ciphertext, fstats.st_size);
 
         /// Testing
