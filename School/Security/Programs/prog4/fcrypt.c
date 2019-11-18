@@ -348,7 +348,7 @@ int main (int argc, char* argv[])
         messLen += outLen;
 
         // Print out Kenc in hexadecimal
-        fprintf(stdout, "Decrypted Kenc: <");
+        fprintf(stdout, "Decrypted Kenc: %d Bytes<", messLen);
         printHex(stdout, res, messLen);
         fprintf(stdout, ">\n");
 
