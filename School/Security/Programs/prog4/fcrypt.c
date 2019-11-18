@@ -251,7 +251,7 @@ int main (int argc, char* argv[])
         EVP_EncryptInit_ex(ctx, NULL, NULL, kPass, ivec);
         ciphertext = allocateCiphertext(KEYLEN);
         ctLen = 0;
-        messLen = ;
+        messLen = 0;
 
         while (messLen <= KEYLEN)
         {
@@ -259,7 +259,7 @@ int main (int argc, char* argv[])
             EVP_EncryptUpdate(ctx, ciphertext, &ctLen, kEnc, BUFSIZE);
             EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
             messLen += BUFSIZE;
-            
+
             // Write encrypted Kenc to keyfile
             write(keyFile, ciphertext, ctLen);
             printf("Wrote %d bytes of ciphertext <", ctLen);
