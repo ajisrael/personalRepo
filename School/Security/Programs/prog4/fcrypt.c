@@ -313,7 +313,10 @@ int main (int argc, char* argv[])
         }
         messLen += outLen;
 
-        EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen);
+        if (EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen) == 0)
+        {
+            printf("Final Decryption of Kenc Failed.\n");
+        }
         messLen += outLen;
 
         // Print out Kenc in hexadecimal
