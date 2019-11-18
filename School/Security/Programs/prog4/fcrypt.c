@@ -54,7 +54,8 @@ int main (int argc, char* argv[])
     struct stat    fstats;          // Struct for file stats
 
     EVP_MD_CTX     * shactx;        // Context of SHA1
-    EVP_CIPHER_CTX * ctx;           // Context of ecryption
+    EVP_CIPHER_CTX * ctx;           // Context of file d/ecryption
+    EVP_CIPHER_CTX * keyCtx;        // Context of key  d/ecryption
     EVP_CIPHER     * cipher;        // Resulting Cipher
 
     char phrase1[80];        // Holds the 1st passphrase from the user
@@ -302,25 +303,25 @@ int main (int argc, char* argv[])
         fprintf(stdout, ">\n");
 
         // Decrypt Kenc
-        ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
-        EVP_CIPHER_CTX_init(ctx);
+        keyCtx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
+        EVP_CIPHER_CTX_init(keyCtx);
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
-        if (EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL) == 0)
+        if (EVP_DecryptInit_ex(keyCtx, cipher, NULL, NULL, NULL) == 0)
         {
             printf("Initial Decryption of Kenc Failed.\n");
         }
         
-        if (EVP_CIPHER_CTX_set_key_length(ctx, DIGLEN) == 0)
+        if (EVP_CIPHER_CTX_set_key_length(keyCtx, DIGLEN) == 0)
         {
             printf("Setting Key Length Failed.\n");
             exit(1);
         }
 
         /// Testing set key length
-        printf("Set Key Length: %d bytes\n", EVP_CIPHER_CTX_key_length(ctx));
+        printf("Set Key Length: %d bytes\n", EVP_CIPHER_CTX_key_length(keyCtx));
 
-        if (EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec) == 0)
+        if (EVP_DecryptInit_ex(keyCtx, NULL, NULL, kPass, ivec) == 0)
         {
             printf("Initial Decryption of Kenc Failed.\n");
             exit(1);
@@ -328,7 +329,7 @@ int main (int argc, char* argv[])
         messLen = 0;
         res = (unsigned char *) malloc(ctLen);
 
-        if (EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen) == 0)
+        if (EVP_DecryptUpdate(keyCtx, res, &outLen, ciphertext, ctLen) == 0)
         {
             printf("Update Decryption of Kenc Failed.\n");
             exit(1);
@@ -339,23 +340,24 @@ int main (int argc, char* argv[])
         printHex(stdout, &res[outLen], KEYLEN);
         printf(">\n");
 
-        if (EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen) == 0)
+        if (EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen) == 0)
         {
             printf("Final Decryption of Kenc Failed.\n");
             exit(1);
         }
+        messLen += outLen;
 
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Decrypted Kenc: <");
-        printHex(stdout, res, ctLen);
+        printHex(stdout, res, messLen);
         fprintf(stdout, ">\n");
 
         // Clean up memory
         close(keyFile);
         free(ciphertext);
         free(res);
-        EVP_CIPHER_CTX_cleanup(ctx);
-        free(ctx);
+        EVP_CIPHER_CTX_cleanup(keyCtx);
+        free(keyCtx);
 
         // Open dataFile.enc
         encFile = open(argv[2], O_RDONLY | O_NOFOLLOW);
