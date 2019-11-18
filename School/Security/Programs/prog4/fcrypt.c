@@ -311,7 +311,7 @@ int main (int argc, char* argv[])
             printf("Initial Decryption of Kenc Failed.\n");
         }
         
-        if (EVP_CIPHER_CTX_set_key_length(ctx, ctLen) == 0)
+        if (EVP_CIPHER_CTX_set_key_length(ctx, DIGLEN) == 0)
         {
             printf("Setting Key Length Failed.\n");
             exit(1);
