@@ -24,9 +24,16 @@
 
 void initializeKey(unsigned char *key, int length)
 {
-	FILE *rng;
+	FILE * rng;
 	int  num = 0;
+
 	rng = fopen("/dev/urandom", "r");
+
+    if (rng == NULL)
+    {
+        printf("Error: Unable to initialize key.\n");
+        exit(1);
+    }
 
 	while (num < length) {
 		num += fread(&key[num], 1, length - num, rng);
@@ -47,6 +54,23 @@ unsigned char * allocateCiphertext(int mlen)
 {
 	/* Alloc enough space for any possible padding. */
 	return (unsigned char *) malloc(mlen+BLOCKSIZE);
+}
+
+void secureCoreDump()
+{  
+    struct rlimit plimits;
+    if (getrlimit(RLIMIT_CORE, &plimits) < 0)
+    {
+        printf("Error: Unable to get current core properties.\n");
+        exit(1);
+    }
+    plimits.rlim_cur = 0;
+    plimits.rlim_max = 0;
+    if (setrlimit(RLIMIT_CORE, &plimits) < 0)
+    {
+        printf("Error: Unable to set current core properties.\n");
+        exit(1);
+    }
 }
 
 int main (int argc, char* argv[])
@@ -91,10 +115,13 @@ int main (int argc, char* argv[])
     // Error checking for invocation
     if (argc != 4)
     {
-        printf("Invalid invocation. Please run with following format:\n");
-        printf("fcrypt <mode> <datafile> <keyfile>\n");
+        printf("Error: Invalid invocation. Please run with following format:\n");
+        printf("./fcrypt <mode> <datafile> <keyfile>\n");
         exit(1);
     }
+
+    // Secure Core
+    secureCoreDump();
 
     // Assign mode
     if (strcmp(argv[1], "-e") == 0)
@@ -107,14 +134,22 @@ int main (int argc, char* argv[])
     }
     else
     {
-        printf("Invalid mode. Mode must be '-e' or '-d'.\n");
+        printf("Error: Invalid mode. Mode must be '-e' or '-d'.\n");
         exit(1);
     }
 
     // Turn off terminal echo
-    tcgetattr(STDIN_FD, &termInfo);
+    if (tcgetattr(STDIN_FD, &termInfo) == -1)
+    {
+        printf("Error: Unable to get terminal info.\n");
+        exit(1);
+    }
     termInfo.c_lflag &= ~ECHO;
-    tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo);
+    if (tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo) == -1)
+    {
+        printf("Error: Unable to set terminal info.\n");
+        exit(1);
+    }
 
     // Loop for getting valid passphrase
     while (prompting == 1)
@@ -130,10 +165,10 @@ int main (int argc, char* argv[])
         printf("\n");
 
         // If equal then check length
-        if (phrase1 == "" | phrase2 == "")
+        if (strcmp(phrase1, "") == 0 || strcmp(phrase2, "") == 0)
         {
-            printf("Phrases <%s>, and <%s> are not Equal.\n", phrase1, phrase2);
-            printf("Please try again.\n");
+            printf("Error: No phrase entered.\n");
+            exit(1);
         } 
         else if (strcmp(phrase1, phrase2) == 0)
         {
@@ -145,21 +180,28 @@ int main (int argc, char* argv[])
             }
             else
             {
-                printf("Phrase <%s> is not valid.\n", phrase1);
+                printf("Phrase invalid phrase length.\n");
                 printf("The phrase must be between 10 and 80 characters.\n");
             }
         }
         else 
         {
-            printf("Phrases <%s>, and <%s> are not Equal.\n", phrase1, phrase2);
-            printf("Please try again.\n");
+            printf("Phrases are not equal. Please try again.\n");
         }
     }
 
     // Turn on terminal echo
-    tcgetattr(STDIN_FD, &termInfo);
+    if (tcgetattr(STDIN_FD, &termInfo) == -1)
+    {
+        printf("Error: Unable to get terminal info.\n");
+        exit(1);
+    }
     termInfo.c_lflag |= ECHO;
-    tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo);
+    if (tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo) == -1)
+    {
+        printf("Error: Unable to set terminal info.\n");
+        exit(1);
+    }
 
     // Once a valid passphrase is accepted run SHA1 over phrase to make Kpass
     shactx = EVP_MD_CTX_create();
@@ -171,14 +213,14 @@ int main (int argc, char* argv[])
     // Check if SHA1 Length is valid
     if (sha1Len != DIGLEN)
     {
-        printf("Error generating digest. Unexpected digest length %d.", sha1Len);
+        printf("Error: Unexpected digest length %d.", sha1Len);
         exit(1);
     }
 
     // Print out Kpass in hexadecimal
-    fprintf(stdout, "Kpass: ");
+    printf("Kpass: <");
     printHex(stdout, kPass, sha1Len);
-    fprintf(stdout, "\n");
+    printf(">\n");
 
     // Determine invocation and run accordingly
     if (mode == 1) // Encrypt
@@ -187,9 +229,9 @@ int main (int argc, char* argv[])
         initializeKey(kEnc, messLen);
 
         // Print out Kenc in hexadecimal
-        fprintf(stdout, "Kenc:  ");
+        printf("Kenc:  <");
         printHex(stdout, kEnc, messLen);
-        fprintf(stdout, "\n");
+        printf(">\n");
 
         // Encrypt datafile using Blowfish in CBC mode
         // Open datafile
@@ -201,7 +243,7 @@ int main (int argc, char* argv[])
         strcat(encFileName, ".enc");
 
         // Open encyrpted dataFile
-        encFile = open(encFileName, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, S_IRUSR | S_IWUSR);
+        encFile = open(encFileName, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, 0400);
         free(encFileName);
 
         // Set up Blow Fish algorithm
@@ -236,8 +278,7 @@ int main (int argc, char* argv[])
         // If keyfile doesn't exist it is created
         keyFile = open(argv[3], O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, 0400);
 
-        // Use Kpass to encrypt Kenc -------------------------------------
-
+        // Use Kpass to encrypt Kenc
         // Set up Blow Fish algorithm
         keyCtx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
         EVP_CIPHER_CTX_init(keyCtx);
@@ -262,9 +303,9 @@ int main (int argc, char* argv[])
     else if (mode == -1) // Decrpyt
     {
         // Print out Kpass in hexadecimal
-        fprintf(stdout, "Kpass: ");
+        printf("Kpass: <");
         printHex(stdout, kPass, sha1Len);
-        fprintf(stdout, "\n");
+        printf(">\n");
 
         // Get encrypted Kenc
         keyFile = open(argv[3], O_RDONLY | O_NOFOLLOW);
@@ -272,6 +313,7 @@ int main (int argc, char* argv[])
         fstat(keyFile, &fstats);
         ciphertext = malloc(fstats.st_size);
         read(keyFile, ciphertext, fstats.st_size);
+        close(keyFile);
 
         // Decrypt Kenc
         keyCtx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
@@ -297,12 +339,11 @@ int main (int argc, char* argv[])
         messLen += outLen;
 
         // Print out Kenc in hexadecimal
-        fprintf(stdout, "Decrypted Kenc: %d <");
+        fprintf(stdout, "Kenc: <");
         printHex(stdout, res, messLen);
         fprintf(stdout, ">\n");
 
         // Clean up memory
-        close(keyFile);
         free(ciphertext);
         EVP_CIPHER_CTX_free(keyCtx);
 
@@ -339,12 +380,12 @@ int main (int argc, char* argv[])
         messLen += outLen;
 
         // Print out decrypted datafile in hexadecimal
-        fprintf(stdout, "Decrypted Datafile (HEX): <");
+        printf("Datafile    (HEX): <");
         printHex(stdout, fileResult, messLen);
-        fprintf(stdout, ">\n");
+        printf(">\n");
 
         // Print out decrypted datafile in ascii
-        printf("Decrypted Datafile (ASCII): <");
+        printf("Datafile (ASCII): <");
         for (i = 0; i < messLen; i++)
         {
             printf("%c", fileResult[i]);
@@ -352,8 +393,8 @@ int main (int argc, char* argv[])
         printf(">\n");
 
         // Clean up memory
-        free(fileResult);
         free(res);
+        free(fileResult);
         free(ciphertext);
         EVP_CIPHER_CTX_free(ctx);
     }
