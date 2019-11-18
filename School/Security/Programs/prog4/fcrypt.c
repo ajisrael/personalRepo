@@ -356,7 +356,7 @@ int main (int argc, char* argv[])
         messLen += outLen;
 
         // Print out decrypted datafile in hexadecimal
-        fprintf(stdout, "Decrypted Datafile (HEX): <\n");
+        fprintf(stdout, "Decrypted Datafile (HEX) %d Bytes: <\n", messLen);
         printHex(stdout, res, messLen);
         fprintf(stdout, "\n>\n");
 
