@@ -319,24 +319,23 @@ int main (int argc, char* argv[])
 
         EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen);
         messLen += outLen;
+
         printf("Kenc @ Outlen %d: <", outLen);
-        printHex(stdout, &kEnc[outLen], KEYLEN - outLen);
+        printHex(stdout, &res[outLen], KEYLEN - outLen);
         printf(">\n");
+
         EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen);
         messLen += outLen;
 
-        /// Tessting
-        printf("OutLen:  %d\n", outLen);
-        printf("MessLen: %d\n", messLen);
-
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Decrypted Kenc: <");
-        printHex(stdout, res, KEYLEN);
+        printHex(stdout, res, ctLen);
         fprintf(stdout, ">\n");
 
         // Clean up memory
         close(keyFile);
         free(ciphertext);
+        free(res);
         EVP_CIPHER_CTX_cleanup(ctx);
         free(ctx);
 
