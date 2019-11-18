@@ -308,7 +308,11 @@ int main (int argc, char* argv[])
         ctLen = fstats.st_size;
         EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL);
         EVP_CIPHER_CTX_set_key_length(ctx, fstats.st_size);
-        EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec);
+        if (EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec) == 0)
+        {
+            printf("Initial Decryption of Kenc Failed.\n");
+            exit(1);
+        }
         messLen = 0;
         res = (unsigned char *) malloc(ctLen);
 
@@ -317,14 +321,22 @@ int main (int argc, char* argv[])
         printHex(stdout, res, ctLen);
         fprintf(stdout, ">\n");
 
-        EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen);
+        if (EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen) == 0)
+        {
+            printf("Update Decryption of Kenc Failed.\n");
+            exit(1);
+        }
         messLen += outLen;
 
         printf("Kenc @ Outlen %d: <", outLen);
         printHex(stdout, &res[outLen], KEYLEN - outLen);
         printf(">\n");
 
-        EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen);
+        if (EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen) == 0)
+        {
+            printf("Final Decryption of Kenc Failed.\n");
+            exit(1);
+        }
         messLen += outLen;
 
         // Print out Kenc in hexadecimal
