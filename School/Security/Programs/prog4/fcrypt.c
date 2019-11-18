@@ -125,12 +125,17 @@ int main (int argc, char* argv[])
         printf("\n");
 
         // Prompt user for second passphrase
-        printf("Verify passphrase: ");
+        printf("Verify  passphrase: ");
         scanf("%[^\n]%*c", phrase2);
         printf("\n");
 
         // If equal then check length
-        if (strcmp(phrase1, phrase2) == 0)
+        if (phrase1 == "" | prase2 == "")
+        {
+            printf("Phrases <%s>, and <%s> are not Equal.\n", phrase1, phrase2);
+            printf("Please try again.\n");
+        } 
+        else if (strcmp(phrase1, phrase2) == 0)
         {
             // If in range of 10 to 80 characters break loop
             passLen = strlen(phrase1);
@@ -194,7 +199,6 @@ int main (int argc, char* argv[])
         encFileName = malloc(strlen(argv[2]) + 5);
         strcpy(encFileName, argv[2]);
         strcat(encFileName, ".enc");
-        printf("Writing encrypted file content to <%s>\n", encFileName);
 
         // Open encyrpted dataFile
         encFile = open(encFileName, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, S_IRUSR | S_IWUSR);
@@ -212,28 +216,16 @@ int main (int argc, char* argv[])
         // Write encrypted data to <datafile>.enc
         while ((messLen = read(dataFile, buf, BUFSIZE)) > 0)
         {
-            // Read from datafile
-            printf("Read %d bytes of plaintext <", messLen);
-            printHex(stdout, buf, messLen);
-            printf(">\n");
-
             // Encrypt the data
             EVP_EncryptUpdate(ctx, ciphertext, &ctLen, buf, messLen);
 
             // Write the encrypted data to dataFile.enc
             write(encFile, ciphertext, ctLen);
-
-            printf("Wrote %d bytes of ciphertext <", ctLen);
-            printHex(stdout, ciphertext, ctLen);
-            printf(">\n");
         }
 
         // Encrypt and write last block of data
         EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
         write(encFile, ciphertext, ctLen);
-        printf("Wrote %d bytes of ciphertext <", ctLen);
-        printHex(stdout, ciphertext, ctLen);
-        printf(">\n");
 
         // Clean up memory
         free(ciphertext);
@@ -242,11 +234,11 @@ int main (int argc, char* argv[])
         close(encFile);
 
         // If keyfile doesn't exist it is created
-        keyFile = open(argv[3], O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, S_IRUSR | S_IWUSR);
+        keyFile = open(argv[3], O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, 0400);
 
-        // Use Kpass to encrypt Kenc
+        // Use Kpass to encrypt Kenc -------------------------------------
+
         // Set up Blow Fish algorithm
-        
         keyCtx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
         EVP_CIPHER_CTX_init(keyCtx);
         keyCipher = (EVP_CIPHER *) EVP_bf_cbc();
@@ -261,9 +253,6 @@ int main (int argc, char* argv[])
         EVP_EncryptFinal_ex(keyCtx, &ciphertext[*(&ctLen)], &messLen);
         ctLen += messLen;
         write(keyFile, ciphertext, ctLen);
-        printf("Wrote %d bytes of ciphertext <", ctLen);
-        printHex(stdout, ciphertext, ctLen);
-        printf(">\n");
 
         // Clean up memory
         close(keyFile);
@@ -272,6 +261,11 @@ int main (int argc, char* argv[])
     }
     else if (mode == -1) // Decrpyt
     {
+        // Print out Kpass in hexadecimal
+        fprintf(stdout, "Kpass: ");
+        printHex(stdout, kPass, sha1Len);
+        fprintf(stdout, "\n");
+
         // Get encrypted Kenc
         keyFile = open(argv[3], O_RDONLY | O_NOFOLLOW);
         
@@ -288,17 +282,14 @@ int main (int argc, char* argv[])
         {
             printf("Initial Decryption of Kenc Failed.\n");
         }
-
         messLen = 0;
         res = (unsigned char *) malloc(ctLen);
-
         if (EVP_DecryptUpdate(keyCtx, res, &outLen, ciphertext, ctLen) == 0)
         {
             printf("Update Decryption of Kenc Failed.\n");
             exit(1);
         }
         messLen += outLen;
-
         if (EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen) == 0)
         {
             printf("Final Decryption of Kenc Failed.\n");
@@ -306,7 +297,7 @@ int main (int argc, char* argv[])
         messLen += outLen;
 
         // Print out Kenc in hexadecimal
-        fprintf(stdout, "Decrypted Kenc: %d Bytes<", messLen);
+        fprintf(stdout, "Decrypted Kenc: %d <");
         printHex(stdout, res, messLen);
         fprintf(stdout, ">\n");
 
@@ -348,17 +339,17 @@ int main (int argc, char* argv[])
         messLen += outLen;
 
         // Print out decrypted datafile in hexadecimal
-        fprintf(stdout, "Decrypted Datafile (HEX) %d Bytes: <\n", messLen);
+        fprintf(stdout, "Decrypted Datafile (HEX): <");
         printHex(stdout, fileResult, messLen);
-        fprintf(stdout, "\n>\n");
+        fprintf(stdout, ">\n");
 
         // Print out decrypted datafile in ascii
-        printf("Decrypted Datafile (ASCII): <\n");
+        printf("Decrypted Datafile (ASCII): <");
         for (i = 0; i < messLen; i++)
         {
             printf("%c", fileResult[i]);
         }
-        printf("\n>\n");
+        printf(">\n");
 
         // Clean up memory
         free(fileResult);
