@@ -166,7 +166,7 @@ int main (int argc, char* argv[])
 
     // Print out Kpass in hexadecimal
     fprintf(stdout, "Kpass: ");
-    printHex(stdout, kPass, messLen);
+    printHex(stdout, kPass, sha1Len);
     fprintf(stdout, "\n");
 
     // Determine invocation and run accordingly
@@ -250,7 +250,7 @@ int main (int argc, char* argv[])
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
         EVP_CIPHER_CTX_init(ctx);
         EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL);
-        EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
+        EVP_CIPHER_CTX_set_key_length(ctx, DIGLEN);
         EVP_EncryptInit_ex(ctx, NULL, NULL, kPass, ivec);
         ciphertext = allocateCiphertext(KEYLEN);
         ctLen = 0;
