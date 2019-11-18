@@ -256,8 +256,8 @@ int main (int argc, char* argv[])
         ctLen = 0;
         messLen = 0;
 
-        while (messLen < KEYLEN)
-        {
+        //while (messLen < KEYLEN)
+        //{
             // Encrypt Kenc
             EVP_EncryptUpdate(ctx, ciphertext, &ctLen, kEnc, BUFSIZE);
             messLen += BUFSIZE;
@@ -267,7 +267,7 @@ int main (int argc, char* argv[])
             printf("Wrote %d bytes of ciphertext <", ctLen);
             printHex(stdout, ciphertext, ctLen);
             printf(">\n");
-        }
+        //}
 
         ctLen = 0;
         EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
@@ -317,12 +317,12 @@ int main (int argc, char* argv[])
         printHex(stdout, kEnc, KEYLEN);
         fprintf(stdout, ">\n");
 
-        while (messLen < KEYLEN)
-        {
+        //while (messLen < KEYLEN)
+        //{
             EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, BLOCKSIZE);
             messLen += BLOCKSIZE;
             printf("MessLen: %d\n", messLen);
-        }
+        //}
 
         EVP_DecryptFinal_ex(ctx, &kEnc[outLen], &outLen);
         messLen += outLen;
