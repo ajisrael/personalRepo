@@ -256,7 +256,7 @@ int main (int argc, char* argv[])
         ctLen = 0;
         messLen = 0;
 
-        while (messLen <= KEYLEN)
+        while (messLen < KEYLEN)
         {
             // Encrypt Kenc
             EVP_EncryptUpdate(ctx, ciphertext, &ctLen, kEnc, BUFSIZE);
@@ -313,11 +313,11 @@ int main (int argc, char* argv[])
         messLen = 0;
 
         /// Print out Kenc in hexadecimal
-        fprintf(stdout, "Pre- Decrypted Kenc: <");
+        fprintf(stdout, "Pre- Decrypted Kenc: Length %d <", fstats.st_size);
         printHex(stdout, kEnc, KEYLEN);
         fprintf(stdout, ">\n");
 
-        while (messLen <= KEYLEN)
+        while (messLen < KEYLEN)
         {
             EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, BLOCKSIZE);
             messLen += BLOCKSIZE;
@@ -326,7 +326,8 @@ int main (int argc, char* argv[])
 
         EVP_DecryptFinal_ex(ctx, &kEnc[outLen], &outLen);
         messLen += outLen;
-        
+        printf("MessLen: %d\n", messLen);
+
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Decrypted Kenc: <");
         printHex(stdout, kEnc, messLen);
