@@ -341,11 +341,7 @@ int main (int argc, char* argv[])
         // printHex(stdout, &res[outLen], KEYLEN);
         // printf(">\n");
 
-        if (EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen) == 0)
-        {
-            printf("Final Decryption of Kenc Failed.\n");
-            exit(1);
-        }
+        EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen);
         messLen += outLen;
 
         // Print out Kenc in hexadecimal
