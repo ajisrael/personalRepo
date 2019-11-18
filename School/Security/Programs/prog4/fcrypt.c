@@ -260,7 +260,6 @@ int main (int argc, char* argv[])
         {
             // Encrypt Kenc
             EVP_EncryptUpdate(ctx, ciphertext, &ctLen, kEnc, BUFSIZE);
-            EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
             messLen += BUFSIZE;
 
             // Write encrypted Kenc to keyfile
@@ -269,6 +268,12 @@ int main (int argc, char* argv[])
             printHex(stdout, ciphertext, ctLen);
             printf(">\n");
         }
+
+        ctLen = 0;
+        EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
+        printf("Wrote %d bytes of ciphertext <", ctLen);
+        printHex(stdout, ciphertext, ctLen);
+        printf(">\n");
 
         printf("Kenc Length: %d\n", KEYLEN);
 
@@ -291,6 +296,7 @@ int main (int argc, char* argv[])
         read(keyFile, ciphertext, fstats.st_size);
 
         /// Testing
+        printf("Decrypting Kenc: Length = %d bytes\n", fstats.st_size);
         fprintf(stdout, "Encrypted Kenc: <");
         printHex(stdout, ciphertext, fstats.st_size);
         fprintf(stdout, ">\n");
