@@ -317,7 +317,7 @@ int main (int argc, char* argv[])
             exit(1);
         }
 
-        printf("Set Key Length: %d\n", EVP_CIPHER_CTX_key_length(cipher));
+        printf("Set Key Length: %d\n", EVP_CIPHER_CTX_key_length(ctx));
 
         if (EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec) == 0)
         {
