@@ -262,7 +262,7 @@ int main (int argc, char* argv[])
         printf("Wrote %d bytes of ciphertext <", ctLen);
         printHex(stdout, ciphertext, ctLen);
         printf(">\n");
-        printf("Encrypted Kenc: %s", ciphertext);
+        printf("Kenc Length: %d", ctLen);
 
         // Clean up memory
         close(keyFile);
