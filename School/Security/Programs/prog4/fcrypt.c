@@ -265,8 +265,9 @@ int main (int argc, char* argv[])
             printf("Wrote %d bytes of ciphertext <", ctLen);
             printHex(stdout, ciphertext, ctLen);
             printf(">\n");
-            printf("Kenc Length: %d\n", ctLen);
         }
+
+        printf("Kenc Length: %d\n", KEYLEN);
 
         // Clean up memory
         close(keyFile);
