@@ -271,6 +271,7 @@ int main (int argc, char* argv[])
 
         ctLen = 0;
         EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
+        write(keyFile, ciphertext, ctLen);
         printf("Wrote %d bytes of ciphertext <", ctLen);
         printHex(stdout, ciphertext, ctLen);
         printf(">\n");
