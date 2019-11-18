@@ -355,6 +355,7 @@ int main (int argc, char* argv[])
         messLen = 0;
         outLen = 0;
         res = (unsigned char *) malloc(ctLen);
+        bzero(res, ctLen);
 
         if (EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen) == 0)
         {
