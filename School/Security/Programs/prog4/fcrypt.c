@@ -237,8 +237,7 @@ int main (int argc, char* argv[])
         printf(">\n");
 
         // Clean up memory
-        EVP_CIPHER_CTX_cleanup(ctx);
-        free(ctx);
+        EVP_CIPHER_CTX_free(ctx);
         close(dataFile);
         close(encFile);
 
@@ -272,7 +271,6 @@ int main (int argc, char* argv[])
         // Clean up memory
         close(keyFile);
         EVP_CIPHER_CTX_free(keyCtx);
-        EVP_CIPHER_CTX_free(ctx);
 
         /// Testing
         printf("Encryption complete.\n");
