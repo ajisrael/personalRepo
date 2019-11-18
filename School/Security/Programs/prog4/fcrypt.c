@@ -316,18 +316,19 @@ int main (int argc, char* argv[])
         printHex(stdout, kEnc, KEYLEN);
         fprintf(stdout, ">\n");
 
-        while ((messLen = read(keyFile, ciphertext, 16)) > 0)
+        while ((messLen = read(keyFile, ciphertext, ctLen)) > 0)
         {
             EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, ctLen);
-            messLen += outLen;
-            printf("MessLen: %d\n", messLen);
             printf("OutLen:  %d\n", outLen);
         }
 
+        messLen += outLen;
         EVP_DecryptFinal_ex(ctx, &kEnc[outLen], &outLen);
         messLen += outLen;
-        printf("MessLen: %d\n", messLen);
+
+        /// Tessting
         printf("OutLen:  %d\n", outLen);
+        printf("MessLen: %d\n", messLen);
 
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Decrypted Kenc: <");
