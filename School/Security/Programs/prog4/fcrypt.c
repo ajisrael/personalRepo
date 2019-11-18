@@ -306,8 +306,19 @@ int main (int argc, char* argv[])
         EVP_CIPHER_CTX_init(ctx);
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
-        EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL);
-        printf("RET SETKEYLEN: %d\n", (EVP_CIPHER_CTX_set_key_length(ctx, ctLen)));
+        if (EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL) == 0)
+        {
+            printf("Initial Decryption of Kenc Failed.\n");
+        }
+        
+        if (EVP_CIPHER_CTX_set_key_length(ctx, ctLen) == 0)
+        {
+            printf("Setting Key Length Failed.\n");
+            exit(1);
+        }
+
+        printf("Set Key Length: %d\n", EVP_CIPHER_CTX_key_length(cipher));
+
         if (EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec) == 0)
         {
             printf("Initial Decryption of Kenc Failed.\n");
