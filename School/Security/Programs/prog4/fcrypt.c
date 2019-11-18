@@ -315,6 +315,7 @@ int main (int argc, char* argv[])
         {
             EVP_DecryptUpdate(ctx, kEnc, &outLen, ciphertext, ctLen);
             messLen += outLen;
+            printf("MessLen: %d", messLen);
         }
 
         EVP_DecryptFinal_ex(ctx, &kEnc[outLen], &outLen);
