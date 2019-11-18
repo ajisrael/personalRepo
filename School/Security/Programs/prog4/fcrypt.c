@@ -178,8 +178,6 @@ int main (int argc, char* argv[])
     // Determine invocation and run accordingly
     if (mode == 1) // Encrypt
     {
-        /// Testing
-        printf("Beginning Encryption.\n");
         // Generate 128 bit random number Kenc from /dev/urandom
         initializeKey(kEnc, messLen);
 
@@ -243,9 +241,6 @@ int main (int argc, char* argv[])
         close(dataFile);
         close(encFile);
 
-        /// Testing output
-        printf("Encrypting Kenc:\n");
-
         // If keyfile doesn't exist it is created
         keyFile = open(argv[3], O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, S_IRUSR | S_IWUSR);
 
@@ -274,10 +269,6 @@ int main (int argc, char* argv[])
         close(keyFile);
         free(ciphertext);
         EVP_CIPHER_CTX_free(keyCtx);
-
-        /// Testing
-        printf("Encryption complete.\n");
-
     }
     else if (mode == -1) // Decrpyt
     {
@@ -287,12 +278,6 @@ int main (int argc, char* argv[])
         fstat(keyFile, &fstats);
         ciphertext = malloc(fstats.st_size);
         read(keyFile, ciphertext, fstats.st_size);
-
-        /// Testing
-        printf("Decrypting Kenc: %d bytes\n", fstats.st_size);
-        fprintf(stdout, "Encrypted Kenc: <");
-        printHex(stdout, ciphertext, fstats.st_size);
-        fprintf(stdout, ">\n");
 
         // Decrypt Kenc
         keyCtx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
@@ -336,11 +321,6 @@ int main (int argc, char* argv[])
         ciphertext = malloc(fstats.st_size);
         read(encFile, ciphertext, fstats.st_size);
         close(encFile);
-
-        /// Testing
-        fprintf(stdout, "Encrypted Datafile (HEX) %d Bytes: <\n", fstats.st_size);
-        printHex(stdout, ciphertext, fstats.st_size);
-        fprintf(stdout, "\n>\n");
 
         // Decrypt dataFile.enc with Kenc
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
