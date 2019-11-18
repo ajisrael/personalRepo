@@ -292,7 +292,7 @@ int main (int argc, char* argv[])
         keyFile = open(argv[3], O_RDONLY | O_NOFOLLOW);
         
         fstat(keyFile, &fstats);
-        ciphertext = malloc(fstats.st_size);
+        ciphertext = (unsigned char *) malloc(fstats.st_size);
         read(keyFile, ciphertext, fstats.st_size);
 
         /// Testing
