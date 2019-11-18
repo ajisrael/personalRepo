@@ -16,6 +16,7 @@
 #include <termios.h>
 
 #define KEYLEN     16
+#define MAXKEYLEN  16
 #define DIGLEN     20
 #define BLOCKSIZE   8
 #define STDIN_FD    0
@@ -200,10 +201,10 @@ int main (int argc, char* argv[])
         free(encFileName);
 
         // Set up Blow Fish algorithm
-        keyCipher = (EVP_CIPHER *) EVP_bf_cbc();
+        cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
         EVP_CIPHER_CTX_init(ctx);
-        EVP_EncryptInit_ex(ctx, keyCipher, NULL, NULL, NULL);
+        EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL);
         EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
         EVP_EncryptInit_ex(ctx, NULL, NULL, kEnc, ivec);
         ciphertext = allocateCiphertext(BUFSIZE);
@@ -228,7 +229,6 @@ int main (int argc, char* argv[])
         }
 
         // Encrypt and write last block of data
-        ctLen = 0;
         EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
         write(encFile, ciphertext, ctLen);
         printf("Wrote %d bytes of ciphertext <", ctLen);
@@ -249,41 +249,29 @@ int main (int argc, char* argv[])
 
         // Use Kpass to encrypt Kenc
         // Set up Blow Fish algorithm
-        cipher = (EVP_CIPHER *) EVP_bf_cbc();
-        ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
-        EVP_CIPHER_CTX_init(ctx);
-        EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL);
-        EVP_CIPHER_CTX_set_key_length(ctx, DIGLEN);
-        EVP_EncryptInit_ex(ctx, NULL, NULL, kPass, ivec);
-        ciphertext = allocateCiphertext(KEYLEN);
+        
+        keyCtx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
+        EVP_CIPHER_CTX_init(keyCtx);
+        keyCipher = (EVP_CIPHER *) EVP_bf_cbc();
+        EVP_EncryptInit_ex(keyCtx, keyCipher, NULL, kpass, ivec);
+        ciphertext = allocateCiphertext(MAXKEYLEN);
+        keyMLen = MAXKEYLEN;
         ctLen = 0;
         messLen = 0;
             
         // Encrypt Kenc
-        EVP_EncryptUpdate(ctx, ciphertext, &ctLen, kEnc, BLOCKSIZE);
-
-        // Write encrypted Kenc to keyfile
+        EVP_EncryptUpdate(keyCtx, ciphertext, &ctLen, kEnc, keyMLen);
+        EVP_EncryptFinal_ex(keyCtx, &ciphertext[*(&ctLen)], &messLen);
+        ctLen += messLen;
         write(keyFile, ciphertext, ctLen);
         printf("Wrote %d bytes of ciphertext <", ctLen);
         printHex(stdout, ciphertext, ctLen);
         printf(">\n");
-        messLen += ctLen;
-
-        ctLen = 0;
-        EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
-        write(keyFile, ciphertext, ctLen);
-        printf("Wrote %d bytes of ciphertext <", ctLen);
-        printHex(stdout, ciphertext, ctLen);
-        printf(">\n");
-        messLen += ctLen;
-
-        /// Testing
-        printf("Kenc Length: %d\n", messLen);
 
         // Clean up memory
         close(keyFile);
-        EVP_CIPHER_CTX_cleanup(ctx);
-        free(ctx);
+        EVP_CIPHER_CTX_free(keyCtx);
+        EVP_CIPHER_CTX_free(ctx);
 
         /// Testing
         printf("Encryption complete.\n");
@@ -307,9 +295,9 @@ int main (int argc, char* argv[])
         // Decrypt Kenc
         keyCtx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
         EVP_CIPHER_CTX_init(keyCtx);
-        cipher = (EVP_CIPHER *) EVP_bf_cbc();
+        keyCipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
-        if (EVP_DecryptInit_ex(keyCtx, cipher, NULL, kPass, ivec) == 0)
+        if (EVP_DecryptInit_ex(keyCtx, keyCipher, NULL, kPass, ivec) == 0)
         {
             printf("Initial Decryption of Kenc Failed.\n");
         }
