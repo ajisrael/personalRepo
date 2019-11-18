@@ -364,7 +364,7 @@ int main (int argc, char* argv[])
 
         /// Print out decrypted datafile in hexadecimal
         fprintf(stdout, "Decrypted Datafile (HEX) %d Bytes: <\n", messLen);
-        printHex(stdout, res, messLen);
+        printHex(stdout, res, ctLen);
         fprintf(stdout, "\n>\n");
 
         if (EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen) == 0)
