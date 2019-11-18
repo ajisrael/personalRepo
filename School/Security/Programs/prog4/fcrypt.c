@@ -56,7 +56,8 @@ int main (int argc, char* argv[])
     EVP_MD_CTX     * shactx;        // Context of SHA1
     EVP_CIPHER_CTX * ctx;           // Context of file d/ecryption
     EVP_CIPHER_CTX * keyCtx;        // Context of key  d/ecryption
-    EVP_CIPHER     * cipher;        // Resulting Cipher
+    EVP_CIPHER     * cipher;        // Resulting File Cipher
+    EVP_CIPHER     * keyCipher;     // Resulting Key Cipher
 
     char phrase1[80];        // Holds the 1st passphrase from the user
     char phrase2[80];        // Holds the 2nd passphrase from the user
@@ -198,10 +199,10 @@ int main (int argc, char* argv[])
         free(encFileName);
 
         // Set up Blow Fish algorithm
-        cipher = (EVP_CIPHER *) EVP_bf_cbc();
+        keyCipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
         EVP_CIPHER_CTX_init(ctx);
-        EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL);
+        EVP_EncryptInit_ex(ctx, keyCipher, NULL, NULL, NULL);
         EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
         EVP_EncryptInit_ex(ctx, NULL, NULL, kEnc, ivec);
         ciphertext = allocateCiphertext(BUFSIZE);
@@ -293,11 +294,11 @@ int main (int argc, char* argv[])
         keyFile = open(argv[3], O_RDONLY | O_NOFOLLOW);
         
         fstat(keyFile, &fstats);
-        ciphertext = (unsigned char *) malloc(fstats.st_size);
+        ciphertext = malloc(fstats.st_size);
         read(keyFile, ciphertext, fstats.st_size);
 
         /// Testing
-        printf("Decrypting Kenc: %d bytes\n");
+        printf("Decrypting Kenc: %d bytes\n", fstats.st_size);
         fprintf(stdout, "Encrypted Kenc: <");
         printHex(stdout, ciphertext, fstats.st_size);
         fprintf(stdout, ">\n");
