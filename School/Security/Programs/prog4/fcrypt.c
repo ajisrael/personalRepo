@@ -255,19 +255,15 @@ int main (int argc, char* argv[])
         ciphertext = allocateCiphertext(KEYLEN);
         ctLen = 0;
         messLen = 0;
+            
+        // Encrypt Kenc
+        EVP_EncryptUpdate(ctx, ciphertext, &ctLen, kEnc, KEYLEN);
 
-        //while (messLen < KEYLEN)
-        //{
-            // Encrypt Kenc
-            EVP_EncryptUpdate(ctx, ciphertext, &ctLen, kEnc, BUFSIZE);
-            messLen += BUFSIZE;
-
-            // Write encrypted Kenc to keyfile
-            write(keyFile, ciphertext, ctLen);
-            printf("Wrote %d bytes of ciphertext <", ctLen);
-            printHex(stdout, ciphertext, ctLen);
-            printf(">\n");
-        //}
+        // Write encrypted Kenc to keyfile
+        write(keyFile, ciphertext, ctLen);
+        printf("Wrote %d bytes of ciphertext <", ctLen);
+        printHex(stdout, ciphertext, ctLen);
+        printf(">\n");
 
         ctLen = 0;
         EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen);
@@ -318,16 +314,18 @@ int main (int argc, char* argv[])
         printHex(stdout, kEnc, KEYLEN);
         fprintf(stdout, ">\n");
 
-        //while (messLen < KEYLEN)
-        //{
-            EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, BLOCKSIZE);
-            messLen += BLOCKSIZE;
+        while ((messLen = read(keyFile, ciphertext, 16)) > 0)
+        {
+            EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, ctLen);
+            messLen += outLen;
             printf("MessLen: %d\n", messLen);
-        //}
+            printf("OutLen:  %d\n", outLen);
+        }
 
         EVP_DecryptFinal_ex(ctx, &kEnc[outLen], &outLen);
         messLen += outLen;
         printf("MessLen: %d\n", messLen);
+        printf("OutLen:  %d\n", outLen);
 
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Decrypted Kenc: <");
