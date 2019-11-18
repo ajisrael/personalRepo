@@ -312,16 +312,11 @@ int main (int argc, char* argv[])
         messLen = 0;
 
         /// Print out Kenc in hexadecimal
-        fprintf(stdout, "Pre- Decrypted Kenc: Length %d <", fstats.st_size);
+        fprintf(stdout, "Pre-Decrypted Kenc: Length %d <", fstats.st_size);
         printHex(stdout, kEnc, KEYLEN);
         fprintf(stdout, ">\n");
 
-        while ((messLen = read(keyFile, ciphertext, ctLen)) > 0)
-        {
-            EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, ctLen);
-            printf("OutLen:  %d\n", outLen);
-        }
-
+        EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, ctLen);
         messLen += outLen;
         EVP_DecryptFinal_ex(ctx, &kEnc[outLen], &outLen);
         messLen += outLen;
