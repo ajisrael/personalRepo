@@ -316,7 +316,7 @@ int main (int argc, char* argv[])
         messLen = 0;
         res = (unsigned char *) malloc(ctLen);
 
-        if (EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, KEYLEN) == 0)
+        if (EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen) == 0)
         {
             printf("Update Decryption of Kenc Failed.\n");
             exit(1);
