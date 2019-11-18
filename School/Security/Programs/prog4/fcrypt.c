@@ -237,6 +237,7 @@ int main (int argc, char* argv[])
         printf(">\n");
 
         // Clean up memory
+        free(ciphertext);
         EVP_CIPHER_CTX_free(ctx);
         close(dataFile);
         close(encFile);
@@ -270,6 +271,7 @@ int main (int argc, char* argv[])
 
         // Clean up memory
         close(keyFile);
+        free(ciphertext);
         EVP_CIPHER_CTX_free(keyCtx);
 
         /// Testing
@@ -300,21 +302,7 @@ int main (int argc, char* argv[])
         {
             printf("Initial Decryption of Kenc Failed.\n");
         }
-        
-        // if (EVP_CIPHER_CTX_set_key_length(keyCtx, DIGLEN) == 0)
-        // {
-        //     printf("Setting Key Length Failed.\n");
-        //     exit(1);
-        // }
 
-        /// Testing set key length
-        //printf("Set Key Length: %d bytes\n", EVP_CIPHER_CTX_key_length(keyCtx));
-
-        // if (EVP_DecryptInit_ex(keyCtx, NULL, NULL, kPass, ivec) == 0)
-        // {
-        //     printf("Initial Decryption of Kenc Failed.\n");
-        //     exit(1);
-        // }
         messLen = 0;
         res = (unsigned char *) malloc(ctLen);
 
@@ -324,10 +312,6 @@ int main (int argc, char* argv[])
             exit(1);
         }
         messLen += outLen;
-
-        // printf("Kenc @ Outlen %d: <", outLen);
-        // printHex(stdout, &res[outLen], KEYLEN);
-        // printf(">\n");
 
         EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen);
         messLen += outLen;
@@ -347,7 +331,7 @@ int main (int argc, char* argv[])
         // Open dataFile.enc
         encFile = open(argv[2], O_RDONLY | O_NOFOLLOW);
         fstat(encFile, &fstats);
-        ciphertext = (unsigned char *) malloc(fstats.st_size);
+        ciphertext = malloc(fstats.st_size);
         read(encFile, ciphertext, fstats.st_size);
 
         /// Testing
@@ -361,8 +345,9 @@ int main (int argc, char* argv[])
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
         EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL);
-        printf("RET SETKEYLEN: %d\n", (EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN)));
+        EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
         EVP_DecryptInit_ex(ctx, NULL, NULL, kEnc, ivec);
+    
         messLen = 0;
         res = (unsigned char *) malloc(ctLen);
         EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen);
