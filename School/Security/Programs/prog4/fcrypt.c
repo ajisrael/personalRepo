@@ -347,6 +347,7 @@ int main (int argc, char* argv[])
         EVP_CIPHER_CTX_init(ctx);
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
+        EVP_CIPHER_CTX_set_padding(ctx, 0);
         EVP_DecryptInit_ex(ctx, cipher, NULL, kEnc, ivec);
     
         messLen = 0;
