@@ -84,6 +84,7 @@ int main (int argc, char* argv[])
     int sha1Len    = 0;   // Length of kPass generated from SHA1
     int ctLen      = 0;   // Length of ciphertext
     int outLen     = 0;   // Length of decrypted result
+    int keyMLen    = 0;   // Length of kEnc
 
     // Error checking for invocation
     if (argc != 4)
@@ -253,7 +254,7 @@ int main (int argc, char* argv[])
         keyCtx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
         EVP_CIPHER_CTX_init(keyCtx);
         keyCipher = (EVP_CIPHER *) EVP_bf_cbc();
-        EVP_EncryptInit_ex(keyCtx, keyCipher, NULL, kpass, ivec);
+        EVP_EncryptInit_ex(keyCtx, keyCipher, NULL, kPass, ivec);
         ciphertext = allocateCiphertext(MAXKEYLEN);
         keyMLen = MAXKEYLEN;
         ctLen = 0;
