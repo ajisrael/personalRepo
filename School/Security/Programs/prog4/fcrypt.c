@@ -318,6 +318,9 @@ int main (int argc, char* argv[])
 
         EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, ctLen);
         messLen += outLen;
+        printf("Kenc @ Outlen %d: <", outLen);
+        printHex(stdout, &kEnc[outLen], KEYLEN - outLen);
+        printf(">\n");
         EVP_DecryptFinal_ex(ctx, &kEnc[outLen], &outLen);
         messLen += outLen;
 
