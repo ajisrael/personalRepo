@@ -361,6 +361,12 @@ int main (int argc, char* argv[])
             printf("UPDATE ERROR\n");
         }
         messLen += outLen;
+
+        /// Print out decrypted datafile in hexadecimal
+        fprintf(stdout, "Decrypted Datafile (HEX) %d Bytes: <\n", messLen);
+        printHex(stdout, res, messLen);
+        fprintf(stdout, "\n>\n");
+
         if (EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen) == 0)
         {
             printf("FINAL ERROR\n");
