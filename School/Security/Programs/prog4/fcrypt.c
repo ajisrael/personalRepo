@@ -320,6 +320,11 @@ int main (int argc, char* argv[])
         ciphertext = malloc(fstats.st_size);
         read(encFile, ciphertext, fstats.st_size);
 
+        /// Testing
+        fprintf(stdout, "Encrypted Datafile (HEX): <\n");
+        printHex(stdout, ciphertext, fstats.st_size);
+        fprintf(stdout, "\n>\n");
+
         // Decrypt dataFile.enc with Kenc
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
         EVP_CIPHER_CTX_init(ctx);
