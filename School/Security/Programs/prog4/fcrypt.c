@@ -130,7 +130,7 @@ int main (int argc, char* argv[])
         printf("\n");
 
         // If equal then check length
-        if (phrase1 == "" | prase2 == "")
+        if (phrase1 == "" | phrase2 == "")
         {
             printf("Phrases <%s>, and <%s> are not Equal.\n", phrase1, phrase2);
             printf("Please try again.\n");
