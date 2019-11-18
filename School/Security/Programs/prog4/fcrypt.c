@@ -307,25 +307,25 @@ int main (int argc, char* argv[])
         EVP_CIPHER_CTX_init(keyCtx);
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
-        if (EVP_DecryptInit_ex(keyCtx, cipher, NULL, NULL, NULL) == 0)
+        if (EVP_DecryptInit_ex(keyCtx, cipher, NULL, kPass, ivec) == 0)
         {
             printf("Initial Decryption of Kenc Failed.\n");
         }
         
-        if (EVP_CIPHER_CTX_set_key_length(keyCtx, DIGLEN) == 0)
-        {
-            printf("Setting Key Length Failed.\n");
-            exit(1);
-        }
+        // if (EVP_CIPHER_CTX_set_key_length(keyCtx, DIGLEN) == 0)
+        // {
+        //     printf("Setting Key Length Failed.\n");
+        //     exit(1);
+        // }
 
         /// Testing set key length
-        printf("Set Key Length: %d bytes\n", EVP_CIPHER_CTX_key_length(keyCtx));
+        //printf("Set Key Length: %d bytes\n", EVP_CIPHER_CTX_key_length(keyCtx));
 
-        if (EVP_DecryptInit_ex(keyCtx, NULL, NULL, kPass, ivec) == 0)
-        {
-            printf("Initial Decryption of Kenc Failed.\n");
-            exit(1);
-        }
+        // if (EVP_DecryptInit_ex(keyCtx, NULL, NULL, kPass, ivec) == 0)
+        // {
+        //     printf("Initial Decryption of Kenc Failed.\n");
+        //     exit(1);
+        // }
         messLen = 0;
         res = (unsigned char *) malloc(ctLen);
 
