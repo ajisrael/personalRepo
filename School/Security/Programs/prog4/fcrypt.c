@@ -311,9 +311,12 @@ int main (int argc, char* argv[])
         EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec);
         messLen = 0;
 
-        EVP_DecryptUpdate(ctx, kEnc, &outLen, ciphertext, ctLen);
-        messLen += outLen;
-        printf("KENC C: %c\n", &kEnc[outLen]);
+        while (messLen <= KEYLEN)
+        {
+            EVP_DecryptUpdate(ctx, kEnc, &outLen, ciphertext, ctLen);
+            messLen += outLen;
+        }
+
         EVP_DecryptFinal_ex(ctx, &kEnc[outLen], &outLen);
         messLen += outLen;
         
