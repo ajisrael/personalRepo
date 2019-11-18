@@ -350,9 +350,15 @@ int main (int argc, char* argv[])
         outLen = 0;
         res = (unsigned char *) malloc(ctLen);
 
-        EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen);
+        if ((EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen) == 0)
+        {
+            printf("UPDATE ERROR\n");
+        }
         messLen += outLen;
-        EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen);
+        if ((EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen) == 0)
+        {
+            printf("FINAL ERROR\n");
+        }
         messLen += outLen;
         
 
