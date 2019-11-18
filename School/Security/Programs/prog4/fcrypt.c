@@ -86,6 +86,7 @@ int main (int argc, char* argv[])
     int ctLen      = 0;   // Length of ciphertext
     int outLen     = 0;   // Length of decrypted result
     int keyMLen    = 0;   // Length of kEnc
+    int i          = 0;   // Iterator for loops
 
     // Error checking for invocation
     if (argc != 4)
