@@ -322,19 +322,21 @@ int main (int argc, char* argv[])
         ctLen = fstats.st_size;
         if (EVP_DecryptInit_ex(keyCtx, keyCipher, NULL, kPass, ivec) == 0)
         {
-            printf("Initial Decryption of Kenc Failed.\n");
+            printf("Error: Initial Decryption of Kenc Failed.\n");
+            exit(1);
         }
         messLen = 0;
         res = (unsigned char *) malloc(ctLen);
         if (EVP_DecryptUpdate(keyCtx, res, &outLen, ciphertext, ctLen) == 0)
         {
-            printf("Update Decryption of Kenc Failed.\n");
+            printf("Error: Update Decryption of Kenc Failed.\n");
             exit(1);
         }
         messLen += outLen;
         if (EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen) == 0)
         {
-            printf("Final Decryption of Kenc Failed.\n");
+            printf("Error; Final Decryption of Kenc Failed.\n");
+            exit(1);
         }
         messLen += outLen;
 
@@ -361,7 +363,11 @@ int main (int argc, char* argv[])
         ctLen = fstats.st_size;
         EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL);
         EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
-        EVP_DecryptInit_ex(ctx, NULL, NULL, res, ivec);
+        if (EVP_DecryptInit_ex(ctx, NULL, NULL, res, ivec) == 0)
+        {
+            printf("Error: Initial Decryption of %s Failed.\n", argv[2]);
+            exit(1);
+        }
     
         messLen = 0;
         outLen = 0;
@@ -369,13 +375,15 @@ int main (int argc, char* argv[])
 
         if (EVP_DecryptUpdate(ctx, fileResult, &outLen, ciphertext, ctLen) == 0)
         {
-            printf("UPDATE ERROR\n");
+            printf("Error: Update Decryption of %s Failed.\n", argv[2]);
+            exit(1);
         }
         messLen += outLen;
 
         if (EVP_DecryptFinal_ex(ctx, &fileResult[outLen], &outLen) == 0)
         {
-            printf("FINAL ERROR\n");
+            printf("Error: Final Decryption of %s Failed.\n", argv[2]);
+            exit(1);
         }
         messLen += outLen;
 
