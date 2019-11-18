@@ -314,7 +314,7 @@ int main (int argc, char* argv[])
             exit(1);
         }
         messLen = 0;
-        res = (unsigned char *) malloc(ctLen);
+        res = (unsigned char *) malloc(ctLen*2);
 
         /// Print out Kenc in hexadecimal
         fprintf(stdout, "Pre-Decrypted Kenc: Length %d <", ctLen);
