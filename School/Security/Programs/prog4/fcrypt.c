@@ -238,6 +238,9 @@ int main (int argc, char* argv[])
         close(dataFile);
         close(encFile);
 
+        /// Testing output
+        printf("Encrypting Kenc:\n");
+
         // If keyfile doesn't exist it is created
         keyFile = open(argv[3], O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, S_IRUSR | S_IWUSR);
 
