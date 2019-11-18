@@ -372,7 +372,12 @@ int main (int argc, char* argv[])
         fprintf(stdout, "\n>\n");
 
         // Print out decrypted datafile in ascii
-        fprintf(stdout, "Decrypted Datafile (ASCII): <\n%s\n>\n", fileResult);
+        printf("Decrypted Datafile (ASCII): <\n");
+        for (i = 0; i < messLen; i++)
+        {
+            printf("%c", fileResult[i]);
+        }
+        printf("\n>\n");
 
         // Clean up memory
         free(fileResult);
