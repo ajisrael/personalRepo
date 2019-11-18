@@ -14,6 +14,8 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <termios.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #define KEYLEN     16
 #define MAXKEYLEN  16
