@@ -307,7 +307,7 @@ int main (int argc, char* argv[])
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
         EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL);
-        EVP_CIPHER_CTX_set_key_length(ctx, fstats.st_size);
+        printf("RET SETKEYLEN: %d\n", (EVP_CIPHER_CTX_set_key_length(ctx, ctLen)));
         if (EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec) == 0)
         {
             printf("Initial Decryption of Kenc Failed.\n");
