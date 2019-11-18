@@ -335,7 +335,7 @@ int main (int argc, char* argv[])
         read(encFile, ciphertext, fstats.st_size);
 
         /// Testing
-        fprintf(stdout, "Encrypted Datafile (HEX): <\n");
+        fprintf(stdout, "Encrypted Datafile (HEX) %d Bytes: <\n", fstats.st_size);
         printHex(stdout, ciphertext, fstats.st_size);
         fprintf(stdout, "\n>\n");
 
@@ -349,11 +349,14 @@ int main (int argc, char* argv[])
         EVP_DecryptInit_ex(ctx, NULL, NULL, kEnc, ivec);
     
         messLen = 0;
+        outLen = 0;
         res = (unsigned char *) malloc(ctLen);
+        
         EVP_DecryptUpdate(ctx, res, &outLen, ciphertext, ctLen);
         messLen += outLen;
         EVP_DecryptFinal_ex(ctx, &res[outLen], &outLen);
         messLen += outLen;
+        
 
         // Print out decrypted datafile in hexadecimal
         fprintf(stdout, "Decrypted Datafile (HEX) %d Bytes: <\n", messLen);
