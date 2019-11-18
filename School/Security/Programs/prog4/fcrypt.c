@@ -296,14 +296,14 @@ int main (int argc, char* argv[])
         read(keyFile, ciphertext, fstats.st_size);
 
         /// Testing
-        printf("Decrypting Kenc: Length = %d bytes\n", fstats.st_size);
+        printf("Decrypting Kenc: %d bytes\n");
         fprintf(stdout, "Encrypted Kenc: <");
         printHex(stdout, ciphertext, fstats.st_size);
         fprintf(stdout, ">\n");
 
         // Decrypt Kenc
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
-        EVP_CIPHER_CTX_init(ctx);
+        printf("CTX INIT RET: %d\n", EVP_CIPHER_CTX_init(ctx));
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
         if (EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL) == 0)
@@ -317,7 +317,8 @@ int main (int argc, char* argv[])
             exit(1);
         }
 
-        printf("Set Key Length: %d\n", EVP_CIPHER_CTX_key_length(ctx));
+        /// Testing set key length
+        printf("Set Key Length: %d bytes\n", EVP_CIPHER_CTX_key_length(ctx));
 
         if (EVP_DecryptInit_ex(ctx, NULL, NULL, kPass, ivec) == 0)
         {
