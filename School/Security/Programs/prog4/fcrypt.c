@@ -319,8 +319,8 @@ int main (int argc, char* argv[])
 
         while (messLen <= KEYLEN)
         {
-            EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, BUFSIZE);
-            messLen += BUFSIZE;
+            EVP_DecryptUpdate(ctx, &kEnc[outLen], &outLen, ciphertext, BLOCKSIZE);
+            messLen += BLOCKSIZE;
             printf("MessLen: %d\n", messLen);
         }
 
