@@ -327,7 +327,7 @@ int main (int argc, char* argv[])
 
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Decrypted Kenc: <");
-        printHex(stdout, kEnc, messLen);
+        printHex(stdout, kEnc, KEYLEN);
         fprintf(stdout, ">\n");
 
         // Clean up memory
