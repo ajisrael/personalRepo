@@ -177,7 +177,8 @@ int main (int argc, char* argv[])
         /// Testing
         printf("Beginning Encryption.\n");
         // Generate 128 bit random number Kenc from /dev/urandom
-        initializeKey(kEnc, messLen);
+        //initializeKey(kEnc, messLen);
+        memset(kEnc,1,16);
 
         // Print out Kenc in hexadecimal
         fprintf(stdout, "Kenc:  ");
