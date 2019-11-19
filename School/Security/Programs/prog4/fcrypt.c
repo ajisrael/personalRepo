@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 #define KEYLEN     16
 #define MAXKEYLEN  16
