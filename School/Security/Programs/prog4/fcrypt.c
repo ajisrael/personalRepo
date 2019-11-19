@@ -307,7 +307,7 @@ int main (int argc, char* argv[])
         strcat(encFileName, ".enc");
 
         // Open encyrpted dataFile
-        encFile = open(encFileName, O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND);
+        encFile = open(encFileName, O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND,0400);
         if (encFile == -1)
         {
             perror("encFile");
@@ -382,7 +382,7 @@ int main (int argc, char* argv[])
 
     // Encrypt Kenc Begin ------------------------------------------------------
         // If keyfile doesn't exist it is created
-        keyFile = open(argv[3], O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND);
+        keyFile = open(argv[3], O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND,0400);
         if (keyFile == -1)
         {
             perror("keyFile");
@@ -521,7 +521,6 @@ int main (int argc, char* argv[])
         fstat(encFile, &fstats);
         ciphertext = malloc(fstats.st_size);
         read(encFile, ciphertext, fstats.st_size);
-        close(encFile);
 
         // Decrypt dataFile.enc with Kenc
         ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
@@ -596,6 +595,7 @@ int main (int argc, char* argv[])
         free(fileResult);
         free(ciphertext);
         EVP_CIPHER_CTX_free(ctx);
+        close(encFile);
     }
     else
     {
