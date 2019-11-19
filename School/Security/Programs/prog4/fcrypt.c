@@ -16,6 +16,7 @@
 #include <termios.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/mman.h>
 
 #define KEYLEN     16
 #define MAXKEYLEN  16
