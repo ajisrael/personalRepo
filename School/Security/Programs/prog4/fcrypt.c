@@ -307,7 +307,7 @@ int main (int argc, char* argv[])
         strcat(encFileName, ".enc");
 
         // Open encyrpted dataFile
-        encFile = open(encFileName, O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND, 0400);
+        encFile = open(encFileName, O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND);
         if (encFile == -1)
         {
             perror("encFile");
@@ -382,7 +382,7 @@ int main (int argc, char* argv[])
 
     // Encrypt Kenc Begin ------------------------------------------------------
         // If keyfile doesn't exist it is created
-        keyFile = open(argv[3], O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND, 0400);
+        keyFile = open(argv[3], O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND);
         if (keyFile == -1)
         {
             perror("keyFile");
