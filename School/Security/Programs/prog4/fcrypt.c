@@ -314,6 +314,7 @@ int main (int argc, char* argv[])
             unlock_memory(kPass, DIGLEN);
             unlock_memory(kEnc,  KEYLEN);
             free(encFileName);
+            close(dataFile);
             exit(1);
         }
         free(encFileName);
