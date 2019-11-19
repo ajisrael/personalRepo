@@ -308,9 +308,9 @@ int main (int argc, char* argv[])
 
         // Open encyrpted dataFile
         encFile = open(encFileName, O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND, 0400);
-        if (dataFile == -1)
+        if (encFile == -1)
         {
-            perror("dataFile");
+            perror("encFile");
             unlock_memory(kPass, DIGLEN);
             unlock_memory(kEnc,  KEYLEN);
             free(encFileName);
