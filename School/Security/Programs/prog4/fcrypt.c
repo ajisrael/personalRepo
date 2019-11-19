@@ -293,6 +293,13 @@ int main (int argc, char* argv[])
         // Encrypt datafile using Blowfish in CBC mode
         // Open datafile
         dataFile = open(argv[2], O_RDONLY);
+        if (dataFile == -1)
+        {
+            perror("dataFile");
+            unlock_memory(kPass, DIGLEN);
+            unlock_memory(kEnc,  KEYLEN);
+            exit(1);
+        }
 
         // Create encrypted dataFile name
         encFileName = malloc(strlen(argv[2]) + 5);
@@ -301,6 +308,14 @@ int main (int argc, char* argv[])
 
         // Open encyrpted dataFile
         encFile = open(encFileName, O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND, 0400);
+        if (dataFile == -1)
+        {
+            perror("dataFile");
+            unlock_memory(kPass, DIGLEN);
+            unlock_memory(kEnc,  KEYLEN);
+            free(encFileName);
+            exit(1);
+        }
         free(encFileName);
 
         // Set up Blow Fish algorithm
@@ -367,6 +382,13 @@ int main (int argc, char* argv[])
     // Encrypt Kenc Begin ------------------------------------------------------
         // If keyfile doesn't exist it is created
         keyFile = open(argv[3], O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND, 0400);
+        if (keyFile == -1)
+        {
+            perror("keyFile");
+            unlock_memory(kPass, DIGLEN);
+            unlock_memory(kEnc,  KEYLEN);
+            exit(1);
+        }
 
         // Set up Blow Fish algorithm
         keyCtx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX));
@@ -483,7 +505,7 @@ int main (int argc, char* argv[])
         messLen += outLen;
 
         // Print out Kenc in hexadecimal
-        printf("Kenc: <");
+        printf("Kenc:  <");
         printHex(stdout, res, messLen);
         printf(">\n");
     // Decrypt Kenc End --------------------------------------------------------
