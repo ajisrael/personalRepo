@@ -400,7 +400,6 @@ int main (int argc, char* argv[])
             perror("dataFile");
             unlockMemory(kPass, DIGLEN);
             unlockMemory(kEnc,  KEYLEN);
-            EVP_CIPHER_CTX_free(shactx);
             exit(1);
         }
 
@@ -416,7 +415,6 @@ int main (int argc, char* argv[])
             perror("encFile");
             unlockMemory(kPass, DIGLEN);
             unlockMemory(kEnc,  KEYLEN);
-            EVP_CIPHER_CTX_free(shactx);
             free(encFileName);
             close(dataFile);
             exit(1);
@@ -434,7 +432,6 @@ int main (int argc, char* argv[])
             perror("datafile_encrypt_init");
             unlockMemory(kEnc, KEYLEN);
             unlockMemory(kPass, DIGLEN);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(ctx);
             close(dataFile);
             close(encFile);
@@ -453,7 +450,6 @@ int main (int argc, char* argv[])
                 unlockMemory(kPass, DIGLEN);
                 free(ciphertext);
                 EVP_CIPHER_CTX_free(ctx);
-                EVP_CIPHER_CTX_free(shactx);
                 close(dataFile);
                 close(encFile);
                 exit(1);
@@ -471,7 +467,6 @@ int main (int argc, char* argv[])
             unlockMemory(kPass, DIGLEN);
             free(ciphertext);
             EVP_CIPHER_CTX_free(ctx);
-            EVP_CIPHER_CTX_free(shactx);
             close(dataFile);
             close(encFile);
             exit(1);
@@ -508,7 +503,6 @@ int main (int argc, char* argv[])
             unlockMemory(kPass, DIGLEN);
             unlockMemory(kEnc,  KEYLEN);
             close(keyFile);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(keyCtx);
             exit(1);
         }
@@ -527,7 +521,6 @@ int main (int argc, char* argv[])
             unlockMemory(kEnc,  KEYLEN);
             close(keyFile);
             free(ciphertext);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(keyCtx);
             exit(1);
         }
@@ -539,7 +532,6 @@ int main (int argc, char* argv[])
             unlockMemory(kEnc,  KEYLEN);
             close(keyFile);
             free(ciphertext);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(keyCtx);
             exit(1);
         }
@@ -554,7 +546,6 @@ int main (int argc, char* argv[])
         unlockMemory(kEnc,  KEYLEN);
         close(keyFile);
         free(ciphertext);
-        EVP_CIPHER_CTX_free(shactx);
         EVP_CIPHER_CTX_free(keyCtx);
     }
 // Decrpyt ---------------------------------------------------------------------
@@ -582,7 +573,6 @@ int main (int argc, char* argv[])
         {
             perror("Kenc_decrypt_init");
             free(ciphertext);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(keyCtx);
             exit(1);
         }
@@ -602,7 +592,6 @@ int main (int argc, char* argv[])
             unlockMemory(res, resLen);
             free(ciphertext);
             free(res);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(keyCtx);
             exit(1);
         }
@@ -613,7 +602,6 @@ int main (int argc, char* argv[])
             unlockMemory(res, resLen);
             free(ciphertext);
             free(res);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(keyCtx);
             exit(1);
         }
@@ -646,7 +634,6 @@ int main (int argc, char* argv[])
             perror("datafile_decrypt_init");
             free(res);
             free(ciphertext);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(ctx);
             exit(1);
         }
@@ -658,7 +645,6 @@ int main (int argc, char* argv[])
             perror("datafile_decrypt_init");
             free(res);
             free(ciphertext);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(ctx);
             exit(1);
         }
@@ -673,7 +659,6 @@ int main (int argc, char* argv[])
             free(res);
             free(fileResult);
             free(ciphertext);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(ctx);
             exit(1);
         }
@@ -685,7 +670,6 @@ int main (int argc, char* argv[])
             free(res);
             free(fileResult);
             free(ciphertext);
-            EVP_CIPHER_CTX_free(shactx);
             EVP_CIPHER_CTX_free(ctx);
             exit(1);
         }
@@ -712,7 +696,6 @@ int main (int argc, char* argv[])
         free(res);
         free(fileResult);
         free(ciphertext);
-        EVP_CIPHER_CTX_free(shactx);
         EVP_CIPHER_CTX_free(ctx);
         close(encFile);
     }
