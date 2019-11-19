@@ -23,6 +23,9 @@
 #define BLOCKSIZE   8
 #define STDIN_FD    0
 #define BUFSIZE    10
+#define DATASIZE 2048
+#define MAXPHLEN   80
+#define MINPHLEN   10
 
 void initializeKey(unsigned char *key, int length)
 {
@@ -58,6 +61,29 @@ unsigned char * allocateCiphertext(int mlen)
 	return (unsigned char *) malloc(mlen+BLOCKSIZE);
 }
 
+int lock_memory(char * addr, size_t size) {
+    unsigned long page_offset;
+    unsigned long page_size;
+
+    page_size = sysconf(_SC_PAGE_SIZE);
+    page_offset = (unsigned long) addr % page_size;
+    addr -= page_offset; /*Adjust addr to pg boundary */
+    size += page_offset; /*Adjust size w/page_offset */
+    return ( mlock(addr, size) ); /* Lock the memory */
+} 
+
+int unlock_memory(char * addr, size_t size) {
+    unsigned long page_offset;
+    unsigned long page_size;
+
+    bzero(addr, size);
+    page_size = sysconf(_SC_PAGE_SIZE);
+    page_offset = (unsigned long) addr % page_size;
+    addr -= page_offset; /* Adjust addr to page boundary */
+    size += page_offset; /* Adjust size with page_offset */
+    return ( munlock(addr, size) ); /* Unlock the memory */
+} 
+
 void secureCoreDump()
 {  
     struct rlimit plimits;
@@ -86,8 +112,8 @@ int main (int argc, char* argv[])
     EVP_CIPHER     * cipher;        // Resulting File Cipher
     EVP_CIPHER     * keyCipher;     // Resulting Key Cipher
 
-    char phrase1[80];        // Holds the 1st passphrase from the user
-    char phrase2[80];        // Holds the 2nd passphrase from the user
+    char phrase1[MAXPHLEN];  // Holds the 1st passphrase from the user
+    char phrase2[MAXPHLEN];  // Holds the 2nd passphrase from the user
     char buf[BUFSIZE];       // Buffer of BUFSIZE for reading and writing
     char ** digest;          // Digest generated from passphrase
     char *  encFileName;     // Name of datafile.enc
@@ -111,6 +137,7 @@ int main (int argc, char* argv[])
     int ctLen      = 0;   // Length of ciphertext
     int outLen     = 0;   // Length of decrypted result
     int keyMLen    = 0;   // Length of kEnc
+    int resLen     = 0;   // Length of resulting kEnc
     int i          = 0;   // Iterator for loops
 
     // Error checking for invocation
@@ -152,6 +179,10 @@ int main (int argc, char* argv[])
         exit(1);
     }
 
+    // Lock phrases
+    lock_memory(phrase1, MAXPHLEN);
+    lock_memory(phrase2, MAXPHLEN);
+
     // Loop for getting valid passphrase
     while (prompting == 1)
     {
@@ -175,7 +206,7 @@ int main (int argc, char* argv[])
         {
             // If in range of 10 to 80 characters break loop
             passLen = strlen(phrase1);
-            if (passLen >= 10 && passLen <= 80)
+            if (passLen >= MINPHLEN && passLen <= MAXPHLEN)
             {
                 prompting = 0;
             }
@@ -194,15 +225,18 @@ int main (int argc, char* argv[])
     // Turn on terminal echo
     if (tcgetattr(STDIN_FD, &termInfo) == -1)
     {
-        printf("Error: Unable to get terminal info.\n");
+        perror("get_terminal_info");
         exit(1);
     }
     termInfo.c_lflag |= ECHO;
     if (tcsetattr(STDIN_FD, TCSAFLUSH, &termInfo) == -1)
     {
-        printf("Error: Unable to set terminal info.\n");
+        perror("set_terminal_info");
         exit(1);
     }
+
+    // Lock Kpass
+    lock_memory(kPass, DIGLEN);
 
     // Once a valid passphrase is accepted run SHA1 over phrase to make Kpass
     shactx = EVP_MD_CTX_create();
@@ -218,6 +252,10 @@ int main (int argc, char* argv[])
         exit(1);
     }
 
+    // Unlock phrases
+    unlock_memory(phrase1, MAXPHLEN);
+    unlock_memory(phrase2, MAXPHLEN);
+
     // Print out Kpass in hexadecimal
     printf("Kpass: <");
     printHex(stdout, kPass, sha1Len);
@@ -227,6 +265,7 @@ int main (int argc, char* argv[])
     if (mode == 1) // Encrypt
     {
         // Generate 128 bit random number Kenc from /dev/urandom
+        lock_memory(kEnc, KEYLEN);
         initializeKey(kEnc, messLen);
 
         // Print out Kenc in hexadecimal
@@ -297,6 +336,8 @@ int main (int argc, char* argv[])
         write(keyFile, ciphertext, ctLen);
 
         // Clean up memory
+        unlock_memory(kPass, DIGLEN);
+        unlock_memory(kEnc,  KEYLEN);
         close(keyFile);
         free(ciphertext);
         EVP_CIPHER_CTX_free(keyCtx);
@@ -323,16 +364,24 @@ int main (int argc, char* argv[])
         ctLen = fstats.st_size;
         if (EVP_DecryptInit_ex(keyCtx, keyCipher, NULL, kPass, ivec) == 0)
         {
-            printf("Error: Initial Decryption of Kenc Failed.\n");
+            perror("Kenc_initial_decryption");
             free(ciphertext);
             EVP_CIPHER_CTX_free(keyCtx);
             exit(1);
         }
+
+        // Reset message length
         messLen = 0;
-        res = (unsigned char *) malloc(ctLen);
+
+        // Setup resulting Kenc
+        resLen = ctLen;
+        res = (unsigned char *) malloc(resLen);
+        lock_memory(res, resLen);
+
         if (EVP_DecryptUpdate(keyCtx, res, &outLen, ciphertext, ctLen) == 0)
         {
-            printf("Error: Update Decryption of Kenc Failed.\n");
+            perror("Kenc_update_decryption");
+            unlock_memory(res, resLen);
             free(ciphertext);
             free(res);
             EVP_CIPHER_CTX_free(keyCtx);
@@ -341,7 +390,8 @@ int main (int argc, char* argv[])
         messLen += outLen;
         if (EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen) == 0)
         {
-            printf("Error; Final Decryption of Kenc Failed.\n");
+            perror("Kenc_final_decryption");
+            unlock_memory(res, resLen);
             free(ciphertext);
             free(res);
             EVP_CIPHER_CTX_free(keyCtx);
@@ -371,6 +421,14 @@ int main (int argc, char* argv[])
         cipher = (EVP_CIPHER *) EVP_bf_cbc();
         ctLen = fstats.st_size;
         EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL);
+        {
+            perror("datafile.enc_initial_decryption");
+            free(res);
+            free(ciphertext);
+            EVP_CIPHER_CTX_free(ctx);
+            exit(1);
+        }
+
         EVP_CIPHER_CTX_set_key_length(ctx, KEYLEN);
 
         if (EVP_DecryptInit_ex(ctx, NULL, NULL, res, ivec) == 0)
@@ -407,6 +465,9 @@ int main (int argc, char* argv[])
             exit(1);
         }
         messLen += outLen;
+
+        // Unlock resulting kEnc
+        unlock_memory(res, resLen);
 
         // Print out decrypted datafile in hexadecimal
         printf("Datafile   (HEX): <");
