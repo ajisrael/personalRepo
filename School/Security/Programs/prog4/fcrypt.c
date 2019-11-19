@@ -392,11 +392,6 @@ int main (int argc, char* argv[])
         lockMemory(kEnc, KEYLEN);
         initializeKey(kEnc, messLen);
 
-        // Print out Kenc in hexadecimal
-        printf("Kenc:  <");
-        printHex(stdout, kEnc, messLen);
-        printf(">\n");
-
         // Encrypt datafile using Blowfish in CBC mode
         // Open datafile
         dataFile = open(argv[2], O_RDONLY);
