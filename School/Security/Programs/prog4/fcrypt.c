@@ -3,7 +3,14 @@
 // Revs: 2019.11.19 - Alex Israels
 // Prog: fcrpt.c
 // Func: Encrypts and decrptes a file, depending on the input of the user.
-// Vars: TBD
+// Defn: KEYLEN    = Length of Kenc.
+#//      MAXKEYLEN = Max length of Kenc.
+#//      DIGLEN    = Length of digest Kpass.
+#//      BLOCKSIZE = Size of a block for cipher in bytes.
+#//      STDIN_FD  = File desctriptor value for stdin.
+#//      BUFSIZE   = Size of buffer for reading and writing to files.
+#//      MAXPHLEN  = Maximum length of a phrase.
+#//      MINPHLEN  = Minimum length of a phrase.
 //------------------------------------------------------------------------------
 
 #include <openssl/evp.h>
@@ -19,36 +26,54 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#define KEYLEN     16
-#define MAXKEYLEN  16
-#define DIGLEN     20
-#define BLOCKSIZE   8
-#define STDIN_FD    0
-#define BUFSIZE    10
-#define MAXPHLEN   80
-#define MINPHLEN   10
+#define KEYLEN     16 // Length of Kenc
+#define MAXKEYLEN  16 // Max length of Kenc
+#define DIGLEN     20 // Length of digest Kpass
+#define BLOCKSIZE   8 // Size of a block for cipher in bytes
+#define STDIN_FD    0 // File descriptor value for stdin
+#define BUFSIZE    10 // Size of buffer for reading and writing to files
+#define MAXPHLEN   80 // Maximum length of a phrase
+#define MINPHLEN   10 // Minimum length of a phrase
 
 void initializeKey(unsigned char *key, int length)
+// -----------------------------------------------------------------------------
+// Name: initializeKey
+// Func: Initializes key <key> for a length <length> from /dev/urandom.
+// Args: key    = Key to be initialized.
+//       length = Length of key.
+// Vars: rng    = File stream for /dev/urandom.
+//       num    = Number of bytes read from rng.
+// -----------------------------------------------------------------------------
 {
-	FILE * rng;
-	int  num = 0;
+	FILE * rng;   // File stream for /dev/urandom
+	int  num = 0; // Number of bytes read from rng
 
-	rng = fopen("/dev/urandom", "r");
+	rng = fopen("/dev/urandom", "r"); // Open /dev/urandom
 
-    if (rng == NULL)
+    if (rng == NULL)  // Check that it opened correctly
     {
-        printf("Error: Unable to initialize key.\n");
+        perror("init_key");
         exit(1);
     }
 
+    // Read random numbers
 	while (num < length) {
 		num += fread(&key[num], 1, length - num, rng);
 	}
 
+    // Close file stream
 	fclose(rng);
 }
 
 void printHex(FILE * f, unsigned char *s, int len)
+// -----------------------------------------------------------------------------
+// Name: printHex
+// Func: Prints out a character array s to file stream f for len bytes.
+// Args: f   = Files stream for output.
+//       s   = Pointer to character array.
+//       len = Length of character array.
+// Vars: i   = Iterator of for loop.
+// -----------------------------------------------------------------------------
 {
 	int i;
 	for (i = 0; i < len; i++) {
@@ -57,12 +82,29 @@ void printHex(FILE * f, unsigned char *s, int len)
 }
 
 unsigned char * allocateCiphertext(int mlen)
+// -----------------------------------------------------------------------------
+// Name: allocateCiphertext
+// Func: Allocates space in memory with a minimum size BLOCKSIZE.
+// Args: mlen = Lenth of memory in bytes to allocate.
+// Retn: Base addr of allocated memory.
+// -----------------------------------------------------------------------------
 {
-	/* Alloc enough space for any possible padding. */
-	return (unsigned char *) malloc(mlen+BLOCKSIZE);
+	// Alloc enough space for any possible padding.
+	return (unsigned char *) malloc(mlen + BLOCKSIZE);
 }
 
-int lock_memory(char * addr, size_t size) {
+int lockMemory(char * addr, size_t size) {
+// -----------------------------------------------------------------------------
+// Name: lockMemory
+// Func: Locks pages in memory at address addr for size / pageSize pages.
+// Meth: Then gets the system page size, caclulates the number of pages 
+//       required, and unlocks them.
+// Args: addr = Location of variable to lock in memory.
+//       size = Size in bytes of variable to lock in memory.
+// Vars: page_offset = Offset from size to page.
+//       page_size   = Page size on system.
+// Retn: Return value from munlock().
+// -----------------------------------------------------------------------------
     unsigned long page_offset;  // Offest from size to page
     unsigned long page_size;    // Page size of system
 
@@ -75,7 +117,20 @@ int lock_memory(char * addr, size_t size) {
     return ( mlock(addr, size) ); // Lock the memory
 } 
 
-int unlock_memory(char * addr, size_t size) {
+int unlockMemory(char * addr, size_t size) 
+// -----------------------------------------------------------------------------
+// Name: unlockMemory
+// Func: Unlocks pages in memory at address addr for size / pageSize pages.
+// Meth: Sets the value of the contents of the char array at addr to NULL. Then
+//       gets the system page size, caclulates the number of pages required,
+//       and unlocks them.
+// Args: addr = Location of variable to unlock in memory.
+//       size = Size in bytes of variable to unlock in memory.
+// Vars: page_offset = Offset from size to page.
+//       page_size   = Page size on system.
+// Retn: Return value from munlock().
+// -----------------------------------------------------------------------------
+{
     unsigned long page_offset;  // Offest from size to page
     unsigned long page_size;    // Page size of system
 
@@ -92,18 +147,25 @@ int unlock_memory(char * addr, size_t size) {
 } 
 
 void secureCoreDump()
-{  
+// -----------------------------------------------------------------------------
+// Name: secureCoreDump
+// Func: Sets the size of the core dump to zero.
+// Meth: Gets the current core settings, sets the current and max limit
+//       attributes to zero and sets that as the settings for the core.
+// Vars: plimits = Rlimit structure for getting and setting core attributes.
+// -----------------------------------------------------------------------------
+{
     struct rlimit plimits;
     if (getrlimit(RLIMIT_CORE, &plimits) < 0)
     {
-        printf("Error: Unable to get current core properties.\n");
+        perror("core_get");
         exit(1);
     }
     plimits.rlim_cur = 0;
     plimits.rlim_max = 0;
     if (setrlimit(RLIMIT_CORE, &plimits) < 0)
     {
-        printf("Error: Unable to set current core properties.\n");
+        perror("core_set");
         exit(1);
     }
 }
@@ -113,10 +175,56 @@ int main (int argc, char* argv[])
 // Name: Main
 // Func: Either encrypts or decrypts a file using a passphrase depending on the 
 //       input from the user.
-// Meth: The user is promted for a passphrase twice to confirm the passphrase 
-//       entered is what the user intended. The passphrase must be between 10
-//       and 80 characters
-// 
+// Meth: First the program checks for the correct input. Confirming there are 3
+//       arguments. It then checks that the first argument is '-e' or '-d' and
+//       assigns the mode of the program accordingly. The user is then promted 
+//       for a passphrase twice to confirm the passphrase entered is what the 
+//       user intended. The passphrase must be between 10 and 80 characters to 
+//       be valid. Once the passphrase has been confirmed a SHA1 hash is ran 
+//       over the passphrase to generate Kpass. After Kpass is generated the 
+//       program runs in the mode determined by argv[1].
+// Encr: The program initializes Kenc from '\dev\urandom\' and uses this to
+//       encrypt the datafile specified by argv[2] using a Blow Fish algortithm.
+//       The encrypted data is written to a newly created file <dataFile>.enc.
+//       Kenc is then encrypted with a Blow Fish algorithm using Kpass as the
+//       key and written to <keyFile> specified by argv[3].
+// Decr: The program uses Kpass to decrypt Kenc stored in <keyFile>. Once Kenc
+//       is decrypted it is used to decrypt <dataFile>.enc whose decrypted
+//       contents are then printed out to the console.
+// Args: argc = The number of arguments to the program.
+//       argv = Array of character arrays specifying arguments to the program.
+// Vars: termInfo    = Struct for manipulating terminal properties/
+//       fstats      = Struct for getting metadata of a file.
+//       shactx      = Context for SHA1 hash.
+//       ctx         = Context for file encryption and decryption.
+//       keyctx      = Context for key encryption and decryption.
+//       cipher      = Cipher for files.
+//       keyCipher   = Cipher for keys.
+//       phrase1     = 1st passphrase from user.
+//       phrase2     = 2nd passphrase from user.
+//       buf         = Buffer of BUFSIZE for reading and writing.
+//       encFileName = Name of <datafile>.enc.
+//       ivec        = Initialization vector for Blow Fish algorithm.
+//       kPass       = Key generated by SHA1.
+//       kEnc        = Key generated from /dev/urandom.
+//       ciphertext  = Ciphertext generated by Blow Fish algorithm.
+//       res         = Result of key decryption.
+//       fileResult  = Result of file decryption.
+//       messLen     = Length of message to encrypt and recived from decryption.
+//       prompting   = Boolean for loop to keep promting user for passphrases.
+//       passLen     = Length of the passphrase.
+//       mode        = Mode of the application: 1 = encrypt, -1 = decrypt.
+//       dataFile    = File descriptor for dataFile.
+//       encFile     = File descriptor for dataFile.enc.
+//       keyFile     = File descriptor for keyFile.
+//       sha1Len     = The length of the outputted digest from SHA1.
+//       ctLen       = Length of ciphertext.
+//       outLen      = Length of decrypted result.
+//       keyMLen     = Max length of decrypted Kenc.
+//       resLen      = Actual length of decrypted Kenc.
+//       i           = Iterator for loops.
+// Retn: 0 = Success.
+//       1 = Error.
 // -----------------------------------------------------------------------------
 {
     struct termios termInfo;        // Struct for terminal echo
@@ -131,8 +239,7 @@ int main (int argc, char* argv[])
     char phrase1[MAXPHLEN];  // Holds the 1st passphrase from the user
     char phrase2[MAXPHLEN];  // Holds the 2nd passphrase from the user
     char buf[BUFSIZE];       // Buffer of BUFSIZE for reading and writing
-    char ** digest;          // Digest generated from passphrase
-    char *  encFileName;     // Name of datafile.enc
+    char *  encFileName;     // Name of <datafile>.enc
 
     char ivec[EVP_MAX_IV_LENGTH] = {0}; // Initialization vector for BF algo
 
@@ -152,8 +259,8 @@ int main (int argc, char* argv[])
     int sha1Len    = 0;   // Length of kPass generated from SHA1
     int ctLen      = 0;   // Length of ciphertext
     int outLen     = 0;   // Length of decrypted result
-    int keyMLen    = 0;   // Length of kEnc
-    int resLen     = 0;   // Length of resulting kEnc
+    int keyMLen    = 0;   // Length of Kenc
+    int resLen     = 0;   // Length of resulting Kenc
     int i          = 0;   // Iterator for loops
 
     // Error checking for invocation
@@ -196,8 +303,8 @@ int main (int argc, char* argv[])
     }
 
     // Lock phrases
-    lock_memory(phrase1, MAXPHLEN);
-    lock_memory(phrase2, MAXPHLEN);
+    lockMemory(phrase1, MAXPHLEN);
+    lockMemory(phrase2, MAXPHLEN);
 
     // Loop for getting valid passphrase
     while (prompting == 1)
@@ -251,7 +358,7 @@ int main (int argc, char* argv[])
     }
 
     // Lock Kpass
-    lock_memory(kPass, DIGLEN);
+    lockMemory(kPass, DIGLEN);
 
     // Once a valid passphrase is accepted run SHA1 over phrase to make Kpass
     shactx = EVP_MD_CTX_create();
@@ -268,8 +375,8 @@ int main (int argc, char* argv[])
     }
 
     // Unlock phrases
-    unlock_memory(phrase1, MAXPHLEN);
-    unlock_memory(phrase2, MAXPHLEN);
+    unlockMemory(phrase1, MAXPHLEN);
+    unlockMemory(phrase2, MAXPHLEN);
 
     // Print out Kpass in hexadecimal
     printf("Kpass: <");
@@ -282,7 +389,7 @@ int main (int argc, char* argv[])
     {
     // Encrypt Datafile Begin --------------------------------------------------
         // Generate 128 bit random number Kenc from /dev/urandom
-        lock_memory(kEnc, KEYLEN);
+        lockMemory(kEnc, KEYLEN);
         initializeKey(kEnc, messLen);
 
         // Print out Kenc in hexadecimal
@@ -296,8 +403,8 @@ int main (int argc, char* argv[])
         if (dataFile == -1)
         {
             perror("dataFile");
-            unlock_memory(kPass, DIGLEN);
-            unlock_memory(kEnc,  KEYLEN);
+            unlockMemory(kPass, DIGLEN);
+            unlockMemory(kEnc,  KEYLEN);
             exit(1);
         }
 
@@ -306,13 +413,13 @@ int main (int argc, char* argv[])
         strcpy(encFileName, argv[2]);
         strcat(encFileName, ".enc");
 
-        // Open encyrpted dataFile
+        // Create encyrpted dataFile
         encFile = open(encFileName, O_CREAT|O_TRUNC|O_WRONLY|O_NOFOLLOW|O_APPEND,0400);
         if (encFile == -1)
         {
             perror("encFile");
-            unlock_memory(kPass, DIGLEN);
-            unlock_memory(kEnc,  KEYLEN);
+            unlockMemory(kPass, DIGLEN);
+            unlockMemory(kEnc,  KEYLEN);
             free(encFileName);
             close(dataFile);
             exit(1);
@@ -328,8 +435,8 @@ int main (int argc, char* argv[])
         if (EVP_EncryptInit_ex(ctx, NULL, NULL, kEnc, ivec) == 0)
         {
             perror("datafile_encrypt_init");
-            unlock_memory(kEnc, KEYLEN);
-            unlock_memory(kPass, DIGLEN);
+            unlockMemory(kEnc, KEYLEN);
+            unlockMemory(kPass, DIGLEN);
             EVP_CIPHER_CTX_free(ctx);
             close(dataFile);
             close(encFile);
@@ -344,8 +451,8 @@ int main (int argc, char* argv[])
             if (EVP_EncryptUpdate(ctx, ciphertext, &ctLen, buf, messLen) == 0)
             {
                 perror("datafile_encrypt_update");
-                unlock_memory(kEnc, KEYLEN);
-                unlock_memory(kPass, DIGLEN);
+                unlockMemory(kEnc, KEYLEN);
+                unlockMemory(kPass, DIGLEN);
                 free(ciphertext);
                 EVP_CIPHER_CTX_free(ctx);
                 close(dataFile);
@@ -361,8 +468,8 @@ int main (int argc, char* argv[])
         if (EVP_EncryptFinal_ex(ctx, ciphertext, &ctLen) == 0)
         {
             perror("datafile_encrypt_final");
-            unlock_memory(kEnc, KEYLEN);
-            unlock_memory(kPass, DIGLEN);
+            unlockMemory(kEnc, KEYLEN);
+            unlockMemory(kPass, DIGLEN);
             free(ciphertext);
             EVP_CIPHER_CTX_free(ctx);
             close(dataFile);
@@ -386,8 +493,8 @@ int main (int argc, char* argv[])
         if (keyFile == -1)
         {
             perror("keyFile");
-            unlock_memory(kPass, DIGLEN);
-            unlock_memory(kEnc,  KEYLEN);
+            unlockMemory(kPass, DIGLEN);
+            unlockMemory(kEnc,  KEYLEN);
             exit(1);
         }
 
@@ -398,8 +505,8 @@ int main (int argc, char* argv[])
         if (EVP_EncryptInit_ex(keyCtx, keyCipher, NULL, kPass, ivec) == 0)
         {
             perror("Kenc_encrypt_init");
-            unlock_memory(kPass, DIGLEN);
-            unlock_memory(kEnc,  KEYLEN);
+            unlockMemory(kPass, DIGLEN);
+            unlockMemory(kEnc,  KEYLEN);
             close(keyFile);
             EVP_CIPHER_CTX_free(keyCtx);
             exit(1);
@@ -415,8 +522,8 @@ int main (int argc, char* argv[])
         if (EVP_EncryptUpdate(keyCtx, ciphertext, &ctLen, kEnc, keyMLen) == 0)
         {
             perror("Kenc_encrypt_update");
-            unlock_memory(kPass, DIGLEN);
-            unlock_memory(kEnc,  KEYLEN);
+            unlockMemory(kPass, DIGLEN);
+            unlockMemory(kEnc,  KEYLEN);
             close(keyFile);
             free(ciphertext);
             EVP_CIPHER_CTX_free(keyCtx);
@@ -426,8 +533,8 @@ int main (int argc, char* argv[])
         if (EVP_EncryptFinal_ex(keyCtx, &ciphertext[*(&ctLen)], &messLen) == 0)
         {
             perror("Kenc_encrypt_final");
-            unlock_memory(kPass, DIGLEN);
-            unlock_memory(kEnc,  KEYLEN);
+            unlockMemory(kPass, DIGLEN);
+            unlockMemory(kEnc,  KEYLEN);
             close(keyFile);
             free(ciphertext);
             EVP_CIPHER_CTX_free(keyCtx);
@@ -440,8 +547,8 @@ int main (int argc, char* argv[])
     // Encrypt Kenc End --------------------------------------------------------
 
         // Clean up memory
-        unlock_memory(kPass, DIGLEN);
-        unlock_memory(kEnc,  KEYLEN);
+        unlockMemory(kPass, DIGLEN);
+        unlockMemory(kEnc,  KEYLEN);
         close(keyFile);
         free(ciphertext);
         EVP_CIPHER_CTX_free(keyCtx);
@@ -481,13 +588,13 @@ int main (int argc, char* argv[])
         // Setup resulting Kenc
         resLen = ctLen;
         res = (unsigned char *) malloc(resLen);
-        lock_memory(res, resLen);
+        lockMemory(res, resLen);
 
         // Decrypt Kenc
         if (EVP_DecryptUpdate(keyCtx, res, &outLen, ciphertext, ctLen) == 0)
         {
             perror("Kenc_decrypt_update");
-            unlock_memory(res, resLen);
+            unlockMemory(res, resLen);
             free(ciphertext);
             free(res);
             EVP_CIPHER_CTX_free(keyCtx);
@@ -497,7 +604,7 @@ int main (int argc, char* argv[])
         if (EVP_DecryptFinal_ex(keyCtx, &res[outLen], &outLen) == 0)
         {
             perror("Kenc_decrypt_final");
-            unlock_memory(res, resLen);
+            unlockMemory(res, resLen);
             free(ciphertext);
             free(res);
             EVP_CIPHER_CTX_free(keyCtx);
@@ -574,7 +681,7 @@ int main (int argc, char* argv[])
         messLen += outLen;
 
         // Unlock resulting kEnc
-        unlock_memory(res, resLen);
+        unlockMemory(res, resLen);
 
         // Print out decrypted datafile in hexadecimal
         printf("Datafile   (HEX): <");
@@ -602,5 +709,6 @@ int main (int argc, char* argv[])
         printf("Invalid mode. Mode must be '-e' or '-d'.\n");
         exit(1);
     }
+    fclose(stdout);
     exit(0);
 }
