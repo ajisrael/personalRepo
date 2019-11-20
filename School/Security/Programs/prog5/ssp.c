@@ -255,7 +255,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    if (reallocMem(ptr1, 21) == -1)
+    if (reallocMem(ptr1, 0) == -1)
     {
         freeMem(NULL);
         exit(1);
