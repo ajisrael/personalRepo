@@ -238,22 +238,41 @@ int main(int argc, char** argv)
 {
     //struct stat fileStat;   // ptr to stat structure of a file
     char * ptr1 = NULL;
+    char * ptr2 = NULL;
+    char * ptr3 = NULL;
 
     gMan.size = 0;            // Size of memory manager initalized to zero
 
-    if (allocMem(ptr1, 10) == -1)
+    if (allocMem(ptr1, 11) == -1)
     {
         freeMem(NULL);
         exit(1);
     }
 
-    if (reallocMem(ptr1, 20) == -1)
+    if (allocMem(ptr3, 13) == -1)
     {
         freeMem(NULL);
         exit(1);
     }
 
-    free(ptr1);
+    if (reallocMem(ptr1, 21) == -1)
+    {
+        freeMem(NULL);
+        exit(1);
+    }
+
+    freeMem(ptr1);
+    freeMem(ptr2);
+
+    if (allocMem(ptr2, 12) == -1)
+    {
+        freeMem(NULL);
+        exit(1);
+    }
+
+    freeMem(ptr2);
+
+    freeMem(NULL);
 
     exit(0);
 }
