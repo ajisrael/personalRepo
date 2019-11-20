@@ -70,7 +70,7 @@ struct memPair
 
 struct memManager
 {
-    struct memPair ptrs[256]; // Matrix of pointers to allocated memory & thier status
+    struct memPair ptrs[1]; // Matrix of pointers to allocated memory & thier status
     int size;                 // # of allocated pointers
 } gMan;
 //------------------------------------------------------------------------------
@@ -181,17 +181,15 @@ int main(int argc, char** argv)
 {
     //struct stat fileStat;   // ptr to stat structure of a file
     char * ptr1 = NULL;
-    char * ptr2 = NULL;
 
     gMan.size = 0;          // Size initalized to zero
+    exit(0);
     
-    if (allocMem(ptr1, 10) == -1)
-    {
-        exit(1);
-    }
-    allocMem(ptr2, 5);
+    allocMem(ptr1, 10);
+    printf("mem alocated");
 
-    freeMem(NULL);
+    freeMem(ptr1);
+    printf("mem freed");
 
     exit(0);
 }
