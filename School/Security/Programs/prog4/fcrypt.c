@@ -578,6 +578,13 @@ int main (int argc, char* argv[])
 
         // Get encrypted Kenc
         keyFile = open(argv[3], O_RDONLY | O_NOFOLLOW);
+        if (keyFile == -1)
+        {
+            perror("keyFile");
+            unlockMemory(kPass, DIGLEN);
+            EVP_MD_CTX_destroy(shactx);
+            exit(1);
+        }
         fstat(keyFile, &fstats);
         ciphertext = malloc(fstats.st_size);
         read(keyFile, ciphertext, fstats.st_size);
@@ -645,6 +652,14 @@ int main (int argc, char* argv[])
     // Decrypt Datafile Begin --------------------------------------------------
         // Open dataFile.enc
         encFile = open(argv[2], O_RDONLY | O_NOFOLLOW);
+        if (encFile == -1)
+        {
+            perror("datafile");
+            free(res);
+            unlockMemory(res, resLen);
+            unlockMemory(kPass, DIGLEN);
+            EVP_MD_CTX_destroy(shactx);
+        }
         fstat(encFile, &fstats);
         ciphertext = malloc(fstats.st_size);
         read(encFile, ciphertext, fstats.st_size);
@@ -657,6 +672,7 @@ int main (int argc, char* argv[])
         if (EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL) == 0)
         {
             perror("datafile_decrypt_init");
+            close(encFile);
             free(res);
             free(ciphertext);
             unlockMemory(res, resLen);
@@ -671,6 +687,7 @@ int main (int argc, char* argv[])
         if (EVP_DecryptInit_ex(ctx, NULL, NULL, res, ivec) == 0)
         {
             perror("datafile_decrypt_init");
+            close(encFile);
             unlockMemory(res, resLen);
             free(res);
             free(ciphertext);
@@ -687,6 +704,7 @@ int main (int argc, char* argv[])
         if (EVP_DecryptUpdate(ctx, fileResult, &outLen, ciphertext, ctLen) == 0)
         {
             perror("datafile_decrypt_update");
+            close(encFile);
             unlockMemory(res, resLen);
             unlockMemory(kPass, DIGLEN);
             free(res);
@@ -701,6 +719,7 @@ int main (int argc, char* argv[])
         if (EVP_DecryptFinal_ex(ctx, &fileResult[outLen], &outLen) == 0)
         {
             perror("datafile_decrypt_final");
+            close(encFile);
             unlockMemory(res, resLen);
             unlockMemory(kPass, DIGLEN);
             free(res);
@@ -731,7 +750,6 @@ int main (int argc, char* argv[])
 
         // Clean up memory
         unlockMemory(kPass, DIGLEN);
-        unlockMemory(res, resLen);
         free(res);
         free(fileResult);
         free(ciphertext);
