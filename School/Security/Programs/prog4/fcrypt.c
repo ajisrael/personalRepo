@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 // Orig: 2019.11.10 - Alex Israels
-// Revs: 2019.11.19 - Alex Israels
-// Prog: fcrpt.c
+// Revs: 2019.11.20 - Alex Israels
+// Prog: fcrypt.c
 // Func: Encrypts and decrptes a file, depending on the input of the user.
 // Defn: KEYLEN    = Length of Kenc.
 //       MAXKEYLEN = Max length of Kenc.
