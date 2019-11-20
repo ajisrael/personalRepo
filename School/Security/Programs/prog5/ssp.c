@@ -117,6 +117,7 @@ int reallocMem(char * ptr, int size)
 // Args: ptr   = Base address of newly allocated memory.
 //       size  = Size of newly allocated memory in bytes.
 // Vars: found = Determines if a pointer was found in the memory manager.
+//       i     = Index of for loop.
 // Retn: stat  = Status of the function call.
 //          0  = Everything is good.
 //         -1  = An error occured.
@@ -124,6 +125,7 @@ int reallocMem(char * ptr, int size)
 {
     int stat  =  0;  // Status of the function call
     int found = -1;  // Determines if a ptr was found in memory manager
+    int i     =  0;  // Index of for loop
     
     for (i = 0; i < gMan.size; i++)         // Loop through ptrs in gMan
     {   
