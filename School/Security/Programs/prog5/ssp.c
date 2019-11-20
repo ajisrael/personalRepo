@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 //------------------------------------------------------------------------------
 {
     //struct stat fileStat;   // ptr to stat structure of a file
-    char * ptr1, * ptr2, * ptr3;
+    char * ptr1 = NULL;
 
     gMan.size = 0;            // Size of memory manager initalized to zero
 
