@@ -182,6 +182,7 @@ int main(int argc, char** argv)
     //struct stat fileStat;   // ptr to stat structure of a file
     char * ptr1 = NULL;
     char * ptr2 = NULL;
+    char * ptr3 = NULL;
 
     gMan.size = 0;          // Size initalized to zero
     
@@ -190,6 +191,11 @@ int main(int argc, char** argv)
 
     allocMem(ptr2, 4);
     printf("mem alocated\n");
+
+    allocMem(ptr3, 40);
+    printf("mem alocated\n");
+
+    freeMem(ptr1);
     
     freeMem(NULL);
     printf("mem freed\n");
