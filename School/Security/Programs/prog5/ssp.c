@@ -183,7 +183,6 @@ int main(int argc, char** argv)
     char * ptr1 = NULL;
 
     gMan.size = 0;          // Size initalized to zero
-    exit(0);
     
     allocMem(ptr1, 10);
     printf("mem alocated");
