@@ -57,18 +57,22 @@
 #include <sys/stat.h>  // System data
 #include <unistd.h>    // System data
 #include <stdlib.h>    // Memory management
+#include <stdio.h>     // IO ops
 
 #define MAXFILE 250000000 // Maximum size of a spoolable file
 
 //------------------------------------------------------------------------------
+struct memPair
+{
+    char * ptr;
+    int status;
+};
+
 struct memManager
 {
-    char ptrs[256][2]; // Matrix of pointers to allocated memory & thier status
-    int  size;         // # of allocated pointers
-}
-
-struct memManager gMan; // Global memory manager
-gMan.size = 0;          // Size initalized to zero
+    struct memPair ptrs[256]; // Matrix of pointers to allocated memory & thier status
+    int size;                 // # of allocated pointers
+} gMan;
 //------------------------------------------------------------------------------
 
 int allocMem(char * ptr, int size)
@@ -91,8 +95,8 @@ int allocMem(char * ptr, int size)
         return -1;
     }
 
-    gMan.ptrs[gMan.size][0] = &ptr; // Add ptr to memory manager
-    gMan.ptrs[gMan.size][1] = 1;    // Set status of ptr to alloced
+    gMan.ptrs[gMan.size].ptr = ptr;  // Add ptr to memory manager
+    gMan.ptrs[gMan.size].status = 1; // Set status of ptr to alloced
     gMan.size++;
 
     return 0;
@@ -112,24 +116,24 @@ void freeMem(char * ptr)
 
     if (ptr != NULL) // Check for specific ptr
     {
-        for (i = 0; i < gMan.size; i++) // Find ptr in memory manager
+        for (i = 0; i < gMan.size; i++)  // Find ptr in memory manager
         {
-            if (ptr == gMan.ptrs[i][0])
+            if (ptr == gMan.ptrs[i].ptr)
             {
-                free(ptr);              // Free ptr from memory
-                gMan.ptrs[i][1] = 0;    // Set status of ptr to freed
-                i = gMan.size;          // Break loop
+                free(ptr);               // Free ptr from memory
+                gMan.ptrs[i].status = 0; // Set status of ptr to freed
+                i = gMan.size;           // Break loop
             }
         }
     }
-    else
+    else // Free all malloced ptrs
     {
         for (i = 0; i < gMan.size; i++) // Loop through all ptrs
         {
-            if (gMan.ptrs[i][1] == 1)   // If ptr is allocated
+            if (gMan.ptrs[i].status == 1)   // If ptr is allocated
             {
-                free(gMan.ptrs[i][0]);  // Free ptr
-                gMan.ptrs[i][1] = 0;    // Set status of ptr to freed
+                free(gMan.ptrs[i].ptr);     // Free ptr
+                gMan.ptrs[i].status = 0;    // Set status of ptr to freed
             }
         }
         gMan.size = 0;                  // Reset size of allocated mem to 0
@@ -151,18 +155,17 @@ int checkFile(int fd, struct stat fStats)
 {
     int valid = 1; // Satus of validity of a file
 
-    if (fstat(fd, fStats) == -1)
-    [
+    if (fstat(fd, &fStats) == -1)
+    {
         perror("fstat");
         return valid = -1;
-    ]
-
+    }
     // Check if not regular
     if (!(S_ISREG(fStats.st_mode)))
     {
        return valid;
     }
-
+    return valid;
 }
 
 int main(int argc, char** argv)
@@ -176,6 +179,19 @@ int main(int argc, char** argv)
 // Retn:
 //------------------------------------------------------------------------------
 {
-    struct stat fileStat;   // ptr to stat structure of a file
+    //struct stat fileStat;   // ptr to stat structure of a file
+    char * ptr1 = NULL;
+    char * ptr2 = NULL;
 
+    gMan.size = 0;          // Size initalized to zero
+    
+    if (allocMem(ptr1, 10) == -1)
+    {
+        exit(1);
+    }
+    allocMem(ptr2, 5);
+
+    freeMem(NULL);
+
+    exit(0);
 }
