@@ -1,0 +1,8 @@
+Name: Alex Israels
+Slip-Days: 4 I believe. I was a little confused from the annoncement about the 
+           weekend so, however many it takes to make this not late.
+Content Overview:
+- fcrypt.c: This is the source code for the fcrypt application. It encrypts or
+            decrypts a file and writes or reads an encrypted key to/from the key
+            file depending on the invocation.
+- makefile: This is my make file to compile my source code.
