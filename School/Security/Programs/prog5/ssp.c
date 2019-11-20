@@ -130,7 +130,7 @@ int reallocMem(char * ptr, int size)
         if (ptr == gMan.ptrs[i].ptr)        // Find ptr in memory manager
         {  
             found = 0;                      // Mark found 
-            ptr = realloc(size);            // Reallocate memory
+            ptr = realloc(ptr, size);       // Reallocate memory
             if (ptr == NULL)                // Check for error
             {
                 perror("realloc");          // Set perror
