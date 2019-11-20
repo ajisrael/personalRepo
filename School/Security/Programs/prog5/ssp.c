@@ -62,17 +62,17 @@
 #define MAXFILE 250000000 // Maximum size of a spoolable file
 
 //------------------------------------------------------------------------------
-struct memPair
+struct memPair   // Touple of a ptr to memory and its status
 {
-    char * ptr;
-    int status;
+    char * ptr;  // Ptr to base addr of allocated memory
+    int status;  // Status of base addr: 1 = alloced, 0 = freed
 };
 
-struct memManager
+struct memManager             // Structure to better manage memory
 {
-    struct memPair ptrs[256]; // Matrix of pointers to allocated memory & thier status
+    struct memPair ptrs[256]; // Array of memory pairs
     int size;                 // # of allocated pointers
-} gMan;
+} gMan; // Global memory manager
 //------------------------------------------------------------------------------
 
 int allocMem(char * ptr, int size)
@@ -83,23 +83,74 @@ int allocMem(char * ptr, int size)
 //       global memory manager.
 // Args: ptr  = Base address of newly allocated memory.
 //       size = Size of newly allocated memory in bytes.
-// Retn:  0 = Everything is good.
-//       -1 = An error occured.
+// Retn: stat = Status of the function call.
+//          0 = Everything is good.
+//         -1 = An error occured.
 //------------------------------------------------------------------------------
 {
-    ptr = malloc(size);
+    int stat = 0;           // Status of the funciton call
+
+    ptr = malloc(size);     // Allocate memory
     
-    if (ptr == NULL)
+    if (ptr == NULL)        // Check for error
     {
-        perror("alloc");
-        return -1;
+        perror("alloc");    // Set perror
+        stat = -1;          // Set status
+    }
+    else
+    {
+        gMan.ptrs[gMan.size].ptr = ptr;  // Add ptr to memory manager
+        gMan.ptrs[gMan.size].status = 1; // Set status of ptr to alloced
+        gMan.size++;  // Increment # of alloced pointers
+        stat = 0;     // Set status
     }
 
-    gMan.ptrs[gMan.size].ptr = ptr;  // Add ptr to memory manager
-    gMan.ptrs[gMan.size].status = 1; // Set status of ptr to alloced
-    gMan.size++;
+    return stat;      // return status            
+}
 
-    return 0;
+int reallocMem(char * ptr, int size)
+//------------------------------------------------------------------------------
+// Name: reallocMem
+// Func: Wrapper for global memory manager when reallocing memory.
+// Meth: Reallocs size bytes of memory, sets new base addr of ptr, and updates 
+//       the global memory manager.
+// Args: ptr   = Base address of newly allocated memory.
+//       size  = Size of newly allocated memory in bytes.
+// Vars: found = Determines if a pointer was found in the memory manager.
+// Retn: stat  = Status of the function call.
+//          0  = Everything is good.
+//         -1  = An error occured.
+//------------------------------------------------------------------------------
+{
+    int stat  =  0;  // Status of the function call
+    int found = -1;  // Determines if a ptr was found in memory manager
+    
+    for (i = 0; i < gMan.size; i++)         // Loop through ptrs in gMan
+    {   
+        if (ptr == gMan.ptrs[i].ptr)        // Find ptr in memory manager
+        {  
+            found = 0;                      // Mark found 
+            ptr = realloc(size);            // Reallocate memory
+            if (ptr == NULL)                // Check for error
+            {
+                perror("realloc");          // Set perror
+                stat = -1;                  // Set status
+            }
+            else                            // If no error
+            {
+                gMan.ptrs[i].ptr = ptr;     // Update ptr in memory manager
+                gMan.ptrs[i].status = 1;    // Update status in memory manager
+                i = gMan.size;              // Break loop
+            }
+        }
+    }
+
+    if (found == -1)  // If ptr was not found in memory manager
+    {
+        stat = allocMem(ptr, size);         // Alloc ptr and set status
+    }
+
+    return stat;      // return status            
 }
 
 void freeMem(char * ptr)
@@ -149,22 +200,25 @@ int checkFile(int fd, struct stat fStats)
 //       fStats = Struct for getting metadata of a file.
 // Retn: valid  = Status of the file, if it can be spooled or not.
 //        0 = File is valid.
-//        1 = File is invalid.
-//       -1 = An error occured.
+//       -1 = File is invalid.
 //------------------------------------------------------------------------------
 {
-    int valid = 1; // Satus of validity of a file
+    int valid = 0; // Satus of validity of a file
 
+    // Get file stats
     if (fstat(fd, &fStats) == -1)
     {
         perror("fstat");
-        return valid = -1;
+        freeMem(NULL);
+        exit(1);
     }
+
     // Check if not regular
     if (!(S_ISREG(fStats.st_mode)))
     {
-       return valid;
+        valid = -1;
     }
+
     return valid;
 }
 
@@ -176,32 +230,20 @@ int main(int argc, char** argv)
 // Args: argc = The number of arguments passed into the program.
 //       argv = Array of arguments passed into the program.
 // Vars: fileStat = Struct for getting metadata of a file.
-// Retn:
+// Retn: 0 = Program ran as expected.
+//       1 = An error occured.
 //------------------------------------------------------------------------------
 {
     //struct stat fileStat;   // ptr to stat structure of a file
-    char * ptr1 = NULL;
-    char * ptr2 = NULL;
-    char * ptr3 = NULL;
+    char * ptr1, * ptr2, * ptr3;
 
-    gMan.size = 0;          // Size initalized to zero
-    
+    gMan.size = 0;            // Size of memory manager initalized to zero
+
     allocMem(ptr1, 10);
-    printf("mem alocated\n");
 
-    allocMem(ptr2, 4);
-    printf("mem alocated\n");
+    reallocMem(ptr1, 20);
 
-    allocMem(ptr3, 40);
-    printf("mem alocated\n");
-
-    freeMem(ptr1);
-
-    allocMem(ptr1, 100);
-    printf("mem alocated\n");
-    
-    freeMem(NULL);
-    printf("mem freed\n");
+    free(ptr1);
 
     exit(0);
 }
