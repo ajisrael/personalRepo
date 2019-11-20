@@ -196,6 +196,9 @@ int main(int argc, char** argv)
     printf("mem alocated\n");
 
     freeMem(ptr1);
+
+    allocMem(ptr1, 100);
+    printf("mem alocated\n");
     
     freeMem(NULL);
     printf("mem freed\n");
