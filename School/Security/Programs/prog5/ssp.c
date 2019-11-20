@@ -253,7 +253,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    freeMem(ptr1);
+    free(ptr1);
 
     exit(0);
 }
