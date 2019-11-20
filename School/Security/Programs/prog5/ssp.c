@@ -241,11 +241,19 @@ int main(int argc, char** argv)
 
     gMan.size = 0;            // Size of memory manager initalized to zero
 
-    allocMem(ptr1, 10);
+    if (allocMem(ptr1, 10) == -1)
+    {
+        freeMem(NULL);
+        exit(1);
+    }
 
-    reallocMem(ptr1, 20);
+    if (reallocMem(ptr1, 20) == -1)
+    {
+        freeMem(NULL);
+        exit(1);
+    }
 
-    free(ptr1);
+    freeMem(ptr1);
 
     exit(0);
 }
