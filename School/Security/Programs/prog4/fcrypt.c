@@ -4,13 +4,13 @@
 // Prog: fcrpt.c
 // Func: Encrypts and decrptes a file, depending on the input of the user.
 // Defn: KEYLEN    = Length of Kenc.
-#//      MAXKEYLEN = Max length of Kenc.
-#//      DIGLEN    = Length of digest Kpass.
-#//      BLOCKSIZE = Size of a block for cipher in bytes.
-#//      STDIN_FD  = File desctriptor value for stdin.
-#//      BUFSIZE   = Size of buffer for reading and writing to files.
-#//      MAXPHLEN  = Maximum length of a phrase.
-#//      MINPHLEN  = Minimum length of a phrase.
+//       MAXKEYLEN = Max length of Kenc.
+//       DIGLEN    = Length of digest Kpass.
+//       BLOCKSIZE = Size of a block for cipher in bytes.
+//       STDIN_FD  = File desctriptor value for stdin.
+//       BUFSIZE   = Size of buffer for reading and writing to files.
+//       MAXPHLEN  = Maximum length of a phrase.
+//       MINPHLEN  = Minimum length of a phrase.
 //------------------------------------------------------------------------------
 
 #include <openssl/evp.h>
