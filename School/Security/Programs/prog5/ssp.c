@@ -402,7 +402,7 @@ int main(int argc, char** argv)
     }
 
     /// Test print
-    if (test == 1) {printf("UID: %d\n", fileStat.st_uid);
+    if (test == 1) {printf("UID: %d\n", fileStat.st_uid);}
 
     // Check IDs of the file
     if (uid != fileStat.st_uid)
