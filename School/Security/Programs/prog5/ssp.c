@@ -270,7 +270,7 @@ int main(int argc, char** argv)
     char * ptr2 = NULL;
 
     initMemManager(1); // Initialize memory manager
-    printf("Size: %d\n", gMan.size);
+    printf("Size: %d\n", sizeof(memPair));
 
     if (allocMem(ptr1, 8) == -1)
     {
