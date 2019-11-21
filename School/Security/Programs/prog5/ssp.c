@@ -268,26 +268,31 @@ int main(int argc, char** argv)
     char * ptr2 = NULL;
 
     initMemManager(1); // Initialize memory manager
+    printf("Size: %d\n", gMan.size);
 
     if (allocMem(ptr1, 8) == -1)
     {
         freeMem(NULL);
         exit(1);
     }
+    printf("Size: %d\n", gMan.size);
 
     if (allocMem(ptr2, 12) == -1)
     {
         freeMem(NULL);
         exit(1);
     }
+    printf("Size: %d\n", gMan.size);
 
     if (reallocMem(ptr1, 16) == -1)
     {
         freeMem(NULL);
         exit(1);
     }
+    printf("Size: %d\n", gMan.size);
 
     freeMem(NULL);
     freeMemManager();
+    printf("Size: %d\n", gMan.size);
     exit(0);
 }
