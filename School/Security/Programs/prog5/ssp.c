@@ -408,12 +408,12 @@ int main(int argc, char** argv)
     if (test == 1) {printf("UID: %d\n", fileStat.st_uid);}
 
     // Check IDs of the file
-    if (uid != fileStat.st_uid)
-    {
-        printf("slog_uid: Uid's do not match.\n");
-        close(slogFD);
-        exit(1);
-    }
+    // if (uid != fileStat.st_uid)
+    // {
+    //     printf("slog_uid: Uid's do not match.\n");
+    //     close(slogFD);
+    //     exit(1);
+    // }
 
     // Check group and world bits
     if (fileStat.st_mode & 077)
@@ -442,14 +442,14 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    // Check IDs of the file
-    if (uid != fileStat.st_uid)
-    {
-        printf("spool_uid: Uid's do not match.\n");
-        close(slogFD);
-        close(spoolFD);
-        exit(1);
-    }
+    // // Check IDs of the file
+    // if (uid != fileStat.st_uid)
+    // {
+    //     printf("spool_uid: Uid's do not match.\n");
+    //     close(slogFD);
+    //     close(spoolFD);
+    //     exit(1);
+    // }
 
     // Check group and world bits
     if (fileStat.st_mode & 077)
