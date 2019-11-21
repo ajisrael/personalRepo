@@ -92,6 +92,16 @@ void initMemManager(int ptrNum)
     gMan.size = 0;            // Size of memory manager initalized to zero
 }
 
+void freeMemManager()
+//------------------------------------------------------------------------------
+// Name: freeMemManager
+// Func: Frees memory manager ptr.
+//------------------------------------------------------------------------------
+{
+    free(gMan.ptrs);    // Free base addr of memory manager
+    gMan.size = 0;      // Reset size to 0
+}
+
 int allocMem(char * ptr, int size)
 //------------------------------------------------------------------------------
 // Name: allocMem
@@ -258,7 +268,7 @@ int main(int argc, char** argv)
     char * ptr2 = NULL;
     char * ptr3 = NULL;
 
-    initMemManager(8); // Initialize memory manager
+    initMemManager(1); // Initialize memory manager
 
     if (allocMem(ptr1, 11) == -1)
     {
@@ -290,6 +300,7 @@ int main(int argc, char** argv)
     freeMem(ptr2);
 
     freeMem(NULL);
+    freeMemManager();
 
     exit(0);
 }
