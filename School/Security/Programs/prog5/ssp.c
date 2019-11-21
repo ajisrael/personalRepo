@@ -56,12 +56,14 @@
 // Vars: gMan    = Global memory manager.
 //------------------------------------------------------------------------------
 
+#include <unistd.h>    // System data
 #include <sys/types.h> // System data
 #include <sys/stat.h>  // System data
-#include <unistd.h>    // System data
+#include <sys/mman.h>  // Memory management
 #include <stdlib.h>    // Memory management
 #include <stdio.h>     // IO ops
 #include <fcntl.h>     // File ops
+#include <termios.h>   // Core management
 
 #define MAXFILE 250000000 // Maximum size of a spoolable file
 #define MEMSIZE        64 // Maximum number of memory pairs in memory manager
@@ -366,11 +368,14 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    // Set the umask
+    // Clear process environment
+
+    // Make sure process isn't running as root
+
+    // Set the umask to prevent group and world bits from being set
     umask(077);
 
     // Slog Setup Begin --------------------------------------------------------
-    // Terminates if slog doesn't meet these requirements
     slogFD = open(slog, O_WRONLY | O_NOFOLLOW | O_APPEND | O_CREAT);
     if (slogFD == -1)
     {
@@ -440,8 +445,11 @@ int main(int argc, char** argv)
     }
     // Spool Setup End ---------------------------------------------------------
 
-    // Start looping through files
+    initMemManager();       // Initialize memory manager
 
+    // Start looping through files
+    for (i = 1; i < argc; i++)
+    {
         // Open file
 
         // Check file is ordinary
@@ -459,8 +467,9 @@ int main(int argc, char** argv)
                 // Add filename to slog
 
         // If file cannot be spooled add to slog
+
     
-    initMemManager();       // Initialize memory manager
+    }
     
     exit(1);
 }
