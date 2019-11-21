@@ -70,10 +70,21 @@ struct memPair   // Touple of a ptr to memory and its status
 
 struct memManager             // Structure to better manage memory
 {
-    struct memPair ptrs[256]; // Array of memory pairs
+    struct memPair * ptrs;    // Array of memory pairs
     int size;                 // # of allocated pointers
 } gMan; // Global memory manager
 //------------------------------------------------------------------------------
+
+void initMemManager(int ptrNum)
+{
+    gMan.ptrs = malloc(ptrNum * sizeof(memPair));
+    if (gMan.ptrs == NULL)
+    {
+        perror("mem_manager_init");
+        exit(1);
+    }
+    
+}
 
 int allocMem(char * ptr, int size)
 //------------------------------------------------------------------------------
