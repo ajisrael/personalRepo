@@ -145,29 +145,31 @@ int reallocMem(char * ptr, int size)
 //       size  = Size of newly allocated memory in bytes.
 // Vars: found = Determines if a pointer was found in the memory manager.
 //       i     = Index of for loop.
+//       rePtr = Ptr to newley allocated memory.
 // Retn: stat  = Status of the function call.
 //          0  = Everything is good.
 //         -1  = An error occured.
 //------------------------------------------------------------------------------
 {
-    int stat  =  0;  // Status of the function call
-    int found = -1;  // Determines if a ptr was found in memory manager
-    int i     =  0;  // Index of for loop
+    int stat  =  0;      // Status of the function call
+    int found = -1;      // Determines if a ptr was found in memory manager
+    int i     =  0;      // Index of for loop
+    char * rePtr = NULL; // Ptr to new alloced memory
     
     for (i = 0; i < gMan.size; i++)         // Loop through ptrs in gMan
     {   
         if (ptr == gMan.ptrs[i].ptr)        // Find ptr in memory manager
         {  
             found = 0;                      // Mark found 
-            ptr = realloc(ptr, size);       // Reallocate memory
-            if (ptr == NULL)                // Check for error
+            rePtr = realloc(ptr, size);     // Reallocate memory
+            if (rePtr == NULL)              // Check for error
             {
                 perror("realloc");          // Set perror
                 stat = -1;                  // Set status
             }
             else                            // If no error
             {
-                gMan.ptrs[i].ptr = ptr;     // Update ptr in memory manager
+                gMan.ptrs[i].ptr = rePtr;   // Update ptr in memory manager
                 gMan.ptrs[i].status = 1;    // Update status in memory manager
                 i = gMan.size;              // Break loop
             }
