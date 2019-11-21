@@ -366,9 +366,10 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    // Set the umask and get IDs 
+    // Set the umask
+    umask(077);
 
-    // Start slog: owned by RUID of executing spooler (g and w bits clear)
+    // Slog Setup Begin --------------------------------------------------------
     // Terminates if slog doesn't meet these requirements
     slogFD = open(slog, O_WRONLY | O_NOFOLLOW | O_APPEND | O_CREAT);
     if (slogFD == -1)
@@ -400,8 +401,44 @@ int main(int argc, char** argv)
         close(slogFD);
         exit(1);
     }
+    // Slog Setup End ----------------------------------------------------------
 
-    // Start spool
+    // Spool Setup Begin -------------------------------------------------------
+    spoolFD = open(spool, O_WRONLY | O_NOFOLLOW | O_APPEND | O_CREAT);
+    if (spoolFD == -1)
+    {
+        perror("spool");
+        close(slogFD);
+        exit(1);
+    }
+
+    // Verify file is regular and get it's stats
+    if (checkFile(slogFD, fileStat) == -1)
+    {
+        printf("spool_reg: File spool is not a regular file.\n");
+        close(slogFD);
+        close(spoolFD);
+        exit(1);
+    }
+
+    // Check IDs of the file
+    if (uid != fileStat.st_uid)
+    {
+        printf("spool_uid: Uid's do not match.\n");
+        close(slogFD);
+        close(spoolFD);
+        exit(1);
+    }
+
+    // Check group and world bits
+    if (fileStat.st_mode & 077)
+    {
+        printf("spool_gid: Group and world bits set.\n");
+        close(slogFD);
+        close(spoolFD);
+        exit(1);
+    }
+    // Spool Setup End ---------------------------------------------------------
 
     // Start looping through files
 
