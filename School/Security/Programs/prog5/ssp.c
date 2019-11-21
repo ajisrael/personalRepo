@@ -359,6 +359,7 @@ int main(int argc, char** argv)
 
     uid_t uid  = getuid();  // UID of current process
     uid_t euid = geteuid(); // EUID of current process
+    
 
     int slogFD  = 0;        // File descriptor for slog
     int spoolFD = 0;        // File descriptor for spool
