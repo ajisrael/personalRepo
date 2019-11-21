@@ -56,14 +56,16 @@
 // Vars: gMan    = Global memory manager.
 //------------------------------------------------------------------------------
 
-#include <unistd.h>    // System data
-#include <sys/types.h> // System data
-#include <sys/stat.h>  // System data
-#include <sys/mman.h>  // Memory management
-#include <stdlib.h>    // Memory management
-#include <stdio.h>     // IO ops
-#include <fcntl.h>     // File ops
-#include <termios.h>   // Core management
+#include <unistd.h>         // System data
+#include <sys/types.h>      // System data
+#include <sys/stat.h>       // System data
+#include <sys/mman.h>       // Memory management
+#include <stdlib.h>         // Memory management
+#include <stdio.h>          // IO ops
+#include <fcntl.h>          // File ops
+#include <termios.h>        // Core management
+#include <sys/time.h>       // Core management
+#include <sys/resource.h>   // Core management
 
 #define MAXFILE 250000000 // Maximum size of a spoolable file
 #define MEMSIZE        64 // Maximum number of memory pairs in memory manager
@@ -356,7 +358,8 @@ int main(int argc, char** argv)
 
     int slogFD  = 0;        // File descriptor for slog
     int spoolFD = 0;        // File descriptor for spool
-    int currFD  = 0;        // File descriptor for current file
+    //int currFD  = 0;        // File descriptor for current file
+    int i       = 0;        // Index of for loop
 
     char * slog  = "slog";  // Name of slog file
     char * spool = "spool"; // Name of spool file
