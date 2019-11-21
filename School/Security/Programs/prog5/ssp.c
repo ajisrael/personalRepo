@@ -62,6 +62,7 @@
 #include <sys/mman.h>       // Memory management
 #include <stdlib.h>         // Memory management
 #include <stdio.h>          // IO ops
+#include <strings.h>        // IO ops
 #include <fcntl.h>          // File ops
 #include <termios.h>        // Core management
 #include <sys/time.h>       // Core management
@@ -379,7 +380,7 @@ int main(int argc, char** argv)
     umask(077);
 
     // Slog Setup Begin --------------------------------------------------------
-    slogFD = open(slog, O_WRONLY | O_NOFOLLOW | O_APPEND | O_CREAT);
+    slogFD = open(slog, O_WRONLY | O_APPEND | O_CREAT);
     if (slogFD == -1)
     {
         perror("slog");
@@ -412,7 +413,7 @@ int main(int argc, char** argv)
     // Slog Setup End ----------------------------------------------------------
 
     // Spool Setup Begin -------------------------------------------------------
-    spoolFD = open(spool, O_WRONLY | O_NOFOLLOW | O_APPEND | O_CREAT);
+    spoolFD = open(spool, O_WRONLY | O_APPEND | O_CREAT);
     if (spoolFD == -1)
     {
         perror("spool");
