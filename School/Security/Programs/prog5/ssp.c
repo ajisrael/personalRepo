@@ -277,6 +277,7 @@ int main(int argc, char** argv)
         freeMem(NULL);
         exit(1);
     }
+    printf("Loc:  %x\n", &ptr1);
     printf("Size: %d\n", gMan.size);
 
     if (allocMem(ptr2, 12) == -1)
@@ -284,6 +285,7 @@ int main(int argc, char** argv)
         freeMem(NULL);
         exit(1);
     }
+    printf("Loc:  %x\n", &ptr2);
     printf("Size: %d\n", gMan.size);
 
     if (reallocMem(ptr1, 16) == -1)
@@ -291,6 +293,7 @@ int main(int argc, char** argv)
         freeMem(NULL);
         exit(1);
     }
+    printf("Loc:  %x\n", &ptr1);
     printf("Size: %d\n", gMan.size);
 
     freeMem(NULL);
