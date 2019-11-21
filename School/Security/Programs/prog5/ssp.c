@@ -275,9 +275,13 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    freeMem(ptr1);
-
     if (allocMem(ptr2, 12) == -1)
+    {
+        freeMem(NULL);
+        exit(1);
+    }
+
+    if (reallocMem(ptr1, 16) == -1)
     {
         freeMem(NULL);
         exit(1);
