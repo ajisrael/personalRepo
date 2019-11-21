@@ -51,6 +51,8 @@
 //       9. All other incorporated secure coding practices explained in README.
 // Assm: No file spooled by this application contains sensitive data.
 // Defn: MAXFILE = The maximum size of a spoolable file in bytes.
+//       MEMSIZE = The maximum number of memory pairs in memory manager.
+// Vars: gMan    = Global memory manager.
 //------------------------------------------------------------------------------
 
 #include <sys/types.h> // System data
@@ -60,6 +62,7 @@
 #include <stdio.h>     // IO ops
 
 #define MAXFILE 250000000 // Maximum size of a spoolable file
+#define MEMSIZE        64 // Maximum number of memory pairs in memory manager
 
 //------------------------------------------------------------------------------
 struct memPair     // Touple of a ptr to memory and its status
@@ -70,9 +73,10 @@ struct memPair     // Touple of a ptr to memory and its status
 
 struct memManager             // Structure to better manage memory
 {
-    struct memPair ptrs[256]; // Array of memory pairs
-    int size;                 // # of allocated pointers
+    struct memPair ptrs[MEMSIZE]; // Array of memory pairs
+    char size;                    // # of allocated pointers
 } gMan; // Global memory manager
+gMan.size = 0;
 //------------------------------------------------------------------------------
 
 void initMemManager(int ptrNum)
@@ -98,7 +102,7 @@ void freeMemManager()
 // Func: Frees memory manager ptr.
 //------------------------------------------------------------------------------
 {
-    free(gMan.ptrs);    // Free base addr of memory manager
+    //free(gMan.ptrs);    // Free base addr of memory manager
     gMan.size = 0;      // Reset size to 0
 }
 
@@ -266,29 +270,5 @@ int main(int argc, char** argv)
 //------------------------------------------------------------------------------
 {
     //struct stat fileStat;   // ptr to stat structure of a file
-    char * ptr1 = NULL;
-    char * ptr2 = NULL;
-
-    //initMemManager(1); // Initialize memory manager
-    gMan.size = 0;
-    printf("Size: %d\n", gMan.size);
-
-    if (allocMem(ptr1, 8) == -1)
-    {
-        freeMem(NULL);
-        exit(1);
-    }
-    printf("Size: %d\n", gMan.size);
-
-    if (allocMem(ptr2, 12) == -1)
-    {
-        freeMem(NULL);
-        exit(1);
-    }
-    printf("Size: %d\n", gMan.size);
-
-    freeMem(NULL);
-    //freeMemManager();
-    printf("Size: %d\n", gMan.size);
-    exit(0);
+    
 }
