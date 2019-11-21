@@ -5,6 +5,7 @@ OPTS = -std=c99 -pedantic -Wall -g
 EXE = ssp
 
 build: $(SRC_FILE)
+	rm -f slog
 	$(CC) $(OPTS) -o $(EXE) $(SRC_FILES)
 
 .PHONY: clean
