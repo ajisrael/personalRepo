@@ -61,6 +61,7 @@
 #include <unistd.h>    // System data
 #include <stdlib.h>    // Memory management
 #include <stdio.h>     // IO ops
+#include <fcntl.h>     // File ops
 
 #define MAXFILE 250000000 // Maximum size of a spoolable file
 #define MEMSIZE        64 // Maximum number of memory pairs in memory manager
@@ -158,7 +159,7 @@ int reallocMem(char * ptr, int size)
     int stat  =  0;      // Status of the function call
     int found = -1;      // Determines if a ptr was found in memory manager
     int i     =  0;      // Index of for loop
-    char * rePtr = NULL; // Ptr to new alloced memory
+    char * rePtr = NULL; // Ptr to newly allocated memory
     
     for (i = 0; i < gMan.size; i++)         // Loop through ptrs in gMan
     {   
@@ -226,6 +227,83 @@ void freeMem(char * ptr)
     }
 }
 
+int lockMemory(char * addr, size_t size) {
+// -----------------------------------------------------------------------------
+// Name: lockMemory
+// Func: Locks pages in memory at address addr for size / pageSize pages.
+// Meth: Gets the system page size, caclulates the number of pages required, and
+//       locks them.
+// Args: addr = Location of variable to lock in memory.
+//       size = Size in bytes of variable to lock in memory.
+// Vars: page_offset = Offset from size to page.
+//       page_size   = Page size on system.
+// Retn: Return value from munlock().
+// -----------------------------------------------------------------------------
+    unsigned long page_offset;  // Offest from size to page
+    unsigned long page_size;    // Page size of system
+
+    // Set page size and offset
+    page_size = sysconf(_SC_PAGE_SIZE);
+    page_offset = (unsigned long) addr % page_size;
+
+    addr -= page_offset; // Adjust addr to pg boundary
+    size += page_offset; // Adjust size w/page_offset
+    return ( mlock(addr, size) ); // Lock the memory
+} 
+
+int unlockMemory(char * addr, size_t size) 
+// -----------------------------------------------------------------------------
+// Name: unlockMemory
+// Func: Unlocks pages in memory at address addr for size / pageSize pages.
+// Meth: Sets the value of the contents of the char array at addr to NULL. Then
+//       gets the system page size, caclulates the number of pages required,
+//       and unlocks them.
+// Args: addr = Location of variable to unlock in memory.
+//       size = Size in bytes of variable to unlock in memory.
+// Vars: page_offset = Offset from size to page.
+//       page_size   = Page size on system.
+// Retn: Return value from munlock().
+// -----------------------------------------------------------------------------
+{
+    unsigned long page_offset;  // Offest from size to page
+    unsigned long page_size;    // Page size of system
+
+    // Clear variable to NULL
+    bzero(addr, size);
+
+    // Set page size and offset
+    page_size = sysconf(_SC_PAGE_SIZE);
+    page_offset = (unsigned long) addr % page_size;
+
+    addr -= page_offset; // Adjust addr to page boundary
+    size += page_offset; // Adjust size with page_offset
+    return ( munlock(addr, size) ); // Unlock the memory
+} 
+
+void secureCoreDump()
+// -----------------------------------------------------------------------------
+// Name: secureCoreDump
+// Func: Sets the size of the core dump to zero.
+// Meth: Gets the current core settings, sets the current and max limit
+//       attributes to zero and sets that as the settings for the core.
+// Vars: plimits = Rlimit structure for getting and setting core attributes.
+// -----------------------------------------------------------------------------
+{
+    struct rlimit plimits;
+    if (getrlimit(RLIMIT_CORE, &plimits) < 0)
+    {
+        perror("core_get");
+        exit(1);
+    }
+    plimits.rlim_cur = 0;
+    plimits.rlim_max = 0;
+    if (setrlimit(RLIMIT_CORE, &plimits) < 0)
+    {
+        perror("core_set");
+        exit(1);
+    }
+}
+
 int checkFile(int fd, struct stat fStats)
 //------------------------------------------------------------------------------
 // Name: checkFile
@@ -245,6 +323,7 @@ int checkFile(int fd, struct stat fStats)
     {
         perror("fstat");
         freeMem(NULL);
+        close(fd);
         exit(1);
     }
 
@@ -271,12 +350,79 @@ int main(int argc, char** argv)
 {
     struct stat fileStat;   // Ptr to stat structure of a file
 
+    uid_t uid = getuid();   // UID of current process
+
+    int slogFD  = 0;        // File descriptor for slog
+    int spoolFD = 0;        // File descriptor for spool
+    int currFD  = 0;        // File descriptor for current file
+
+    char * slog  = "slog";  // Name of slog file
+    char * spool = "spool"; // Name of spool file
+
+    // Check for correct input
     if (argc <= 1)
     {
         printf("Error: No files entered.\n");
         exit(1);
     }
 
+    // Set the umask and get IDs 
+
+    // Start slog: owned by RUID of executing spooler (g and w bits clear)
+    // Terminates if slog doesn't meet these requirements
+    slogFD = open(slog, O_WRONLY | O_NOFOLLOW | O_APPEND | O_CREAT);
+    if (slogFD == -1)
+    {
+        perror("slog");
+        exit(1);
+    }
+
+    // Verify file is regular and get it's stats
+    if (checkFile(slogFD, fileStat) == -1)
+    {
+        printf("slog_reg: File slog is not a regular file.\n");
+        close(slogFD);
+        exit(1);
+    }
+
+    // Check IDs of the file
+    if (uid != fileStat.st_uid)
+    {
+        printf("slog_uid: Uid's do not match.\n");
+        close(slogFD);
+        exit(1);
+    }
+
+    // Check group and world bits
+    if (fileStat.st_mode & 077)
+    {
+        printf("slog_gid: Group and world bits set.\n");
+        close(slogFD);
+        exit(1);
+    }
+
+    // Start spool
+
+    // Start looping through files
+
+        // Open file
+
+        // Check file is ordinary
+
+            // Check file size is less than MAXFILE
+
+                // If valid read entire file into memory
+                
+                    // If malloc fails entry made to slog and exit program
+
+                // Loop to look for non-printable characters
+
+                // If all are printable copy to spool
+
+                // Add filename to slog
+
+        // If file cannot be spooled add to slog
+    
     initMemManager();       // Initialize memory manager
     
     exit(1);
