@@ -76,10 +76,9 @@ struct memManager             // Structure to better manage memory
     struct memPair ptrs[MEMSIZE]; // Array of memory pairs
     char size;                    // # of allocated pointers
 } gMan; // Global memory manager
-gMan.size = 0;
 //------------------------------------------------------------------------------
 
-void initMemManager(int ptrNum)
+void initMemManager()
 //------------------------------------------------------------------------------
 // Name: initMemManager
 // Func: Initializes the base size of the memory manager.
@@ -88,11 +87,11 @@ void initMemManager(int ptrNum)
 //------------------------------------------------------------------------------
 {
     //gMan.ptrs = malloc(ptrNum * sizeof(struct memPair));
-    if (gMan.ptrs == NULL)
-    {
-        perror("mem_manager_init");
-        exit(1);
-    }
+    // if (gMan.ptrs == NULL)
+    // {
+    //     perror("mem_manager_init");
+    //     exit(1);
+    // }
     gMan.size = 0;            // Size of memory manager initalized to zero
 }
 
@@ -270,5 +269,6 @@ int main(int argc, char** argv)
 //------------------------------------------------------------------------------
 {
     //struct stat fileStat;   // ptr to stat structure of a file
+    initMemManager();
     
 }
