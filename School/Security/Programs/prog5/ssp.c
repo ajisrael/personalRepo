@@ -76,6 +76,12 @@ struct memManager             // Structure to better manage memory
 //------------------------------------------------------------------------------
 
 void initMemManager(int ptrNum)
+//------------------------------------------------------------------------------
+// Name: initMemManager
+// Func: Initializes the base size of the memory manager.
+// Meth: Mallocs ptrNum memPairs & sets base addr of the memory manager.
+// Args: ptrNum = Number of memPairs to allocate.
+//------------------------------------------------------------------------------
 {
     gMan.ptrs = malloc(ptrNum * sizeof(memPair));
     if (gMan.ptrs == NULL)
@@ -83,7 +89,7 @@ void initMemManager(int ptrNum)
         perror("mem_manager_init");
         exit(1);
     }
-    
+    gMan.size = 0;            // Size of memory manager initalized to zero
 }
 
 int allocMem(char * ptr, int size)
@@ -252,7 +258,7 @@ int main(int argc, char** argv)
     char * ptr2 = NULL;
     char * ptr3 = NULL;
 
-    gMan.size = 0;            // Size of memory manager initalized to zero
+    initMemManager(8); // Initialize memory manager
 
     if (allocMem(ptr1, 11) == -1)
     {
