@@ -70,7 +70,7 @@ struct memPair     // Touple of a ptr to memory and its status
 
 struct memManager             // Structure to better manage memory
 {
-    struct memPair * ptrs;    // Array of memory pairs
+    struct memPair ptrs[256]; // Array of memory pairs
     int size;                 // # of allocated pointers
 } gMan; // Global memory manager
 //------------------------------------------------------------------------------
@@ -269,7 +269,8 @@ int main(int argc, char** argv)
     char * ptr1 = NULL;
     char * ptr2 = NULL;
 
-    initMemManager(1); // Initialize memory manager
+    //initMemManager(1); // Initialize memory manager
+    gMan.size = 0;
     printf("Size: %d\n", gMan.size);
 
     if (allocMem(ptr1, 8) == -1)
