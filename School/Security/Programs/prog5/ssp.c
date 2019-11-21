@@ -357,7 +357,8 @@ int main(int argc, char** argv)
 
     struct stat fileStat;   // Ptr to stat structure of a file
 
-    uid_t uid = getuid();   // UID of current process
+    uid_t uid  = getuid();  // UID of current process
+    uid_t euid = geteuid(); // EUID of current process
 
     int slogFD  = 0;        // File descriptor for slog
     int spoolFD = 0;        // File descriptor for spool
@@ -377,6 +378,8 @@ int main(int argc, char** argv)
 
     /// Test print
     if (test == 1) {printf("UID: %d\n", uid);}
+    /// Test print
+    if (test == 1) {printf("EUID: %d\n", euid);}
 
     // Clear process environment
 
