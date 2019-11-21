@@ -83,7 +83,7 @@ void initMemManager(int ptrNum)
 // Args: ptrNum = Number of memPairs to allocate.
 //------------------------------------------------------------------------------
 {
-    gMan.ptrs = malloc(ptrNum * sizeof(struct memPair));
+    //gMan.ptrs = malloc(ptrNum * sizeof(struct memPair));
     if (gMan.ptrs == NULL)
     {
         perror("mem_manager_init");
