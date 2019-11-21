@@ -288,7 +288,7 @@ int main(int argc, char** argv)
     printf("Size: %d\n", gMan.size);
 
     freeMem(NULL);
-    freeMemManager();
+    //freeMemManager();
     printf("Size: %d\n", gMan.size);
     exit(0);
 }
