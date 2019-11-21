@@ -49,6 +49,7 @@
 //          No dynamically allocated memory by process on program exit.
 //       8. Log content is not specified, explaination required in README.
 //       9. All other incorporated secure coding practices explained in README.
+//      10. No integer overflow errors.
 // Assm: No file spooled by this application contains sensitive data.
 // Defn: MAXFILE = The maximum size of a spoolable file in bytes.
 //       MEMSIZE = The maximum number of memory pairs in memory manager.
@@ -268,7 +269,15 @@ int main(int argc, char** argv)
 //       1 = An error occured.
 //------------------------------------------------------------------------------
 {
-    //struct stat fileStat;   // ptr to stat structure of a file
-    initMemManager();
+    struct stat fileStat;   // Ptr to stat structure of a file
+
+    if (argc <= 1)
+    {
+        printf("Error: No files entered.\n");
+        exit(1);
+    }
+
+    initMemManager();       // Initialize memory manager
     
+    exit(1);
 }
