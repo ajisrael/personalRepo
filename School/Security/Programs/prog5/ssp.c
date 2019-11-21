@@ -62,10 +62,10 @@
 #define MAXFILE 250000000 // Maximum size of a spoolable file
 
 //------------------------------------------------------------------------------
-struct memPair   // Touple of a ptr to memory and its status
+struct memPair     // Touple of a ptr to memory and its status
 {
-    char * ptr;  // Ptr to base addr of allocated memory
-    int status;  // Status of base addr: 1 = alloced, 0 = freed
+    char * ptr;    // Ptr to base addr of allocated memory
+    char   status; // Status of base addr: 1 = alloced, 0 = freed
 };
 
 struct memManager             // Structure to better manage memory
@@ -83,7 +83,7 @@ void initMemManager(int ptrNum)
 // Args: ptrNum = Number of memPairs to allocate.
 //------------------------------------------------------------------------------
 {
-    gMan.ptrs = malloc(ptrNum * sizeof(memPair));
+    gMan.ptrs = malloc(ptrNum * sizeof(struct memPair));
     if (gMan.ptrs == NULL)
     {
         perror("mem_manager_init");
