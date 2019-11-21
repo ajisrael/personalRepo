@@ -74,7 +74,7 @@ struct memPair     // Touple of a ptr to memory and its status
 struct memManager             // Structure to better manage memory
 {
     struct memPair ptrs[MEMSIZE]; // Array of memory pairs
-    char size;                    // # of allocated pointers
+    int size;                     // # of allocated pointers
 } gMan; // Global memory manager
 //------------------------------------------------------------------------------
 
