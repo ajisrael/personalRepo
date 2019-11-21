@@ -353,6 +353,8 @@ int main(int argc, char** argv)
 //       1 = An error occured.
 //------------------------------------------------------------------------------
 {
+    int test = 1;
+
     struct stat fileStat;   // Ptr to stat structure of a file
 
     uid_t uid = getuid();   // UID of current process
@@ -371,6 +373,8 @@ int main(int argc, char** argv)
         printf("Error: No files entered.\n");
         exit(1);
     }
+
+    if (test == 1) {printf("UID: %d\n", uid);}
 
     // Clear process environment
 
