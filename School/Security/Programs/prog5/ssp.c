@@ -389,7 +389,7 @@ int main(int argc, char** argv)
     umask(077);
 
     // Slog Setup Begin --------------------------------------------------------
-    slogFD = open(slog, O_WRONLY | O_APPEND | O_CREAT);
+    slogFD = open(slog, O_WRONLY | O_APPEND | O_CREAT, 0600);
     if (slogFD == -1)
     {
         perror("slog");
