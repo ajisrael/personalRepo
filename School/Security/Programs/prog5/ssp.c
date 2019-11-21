@@ -374,6 +374,8 @@ int main(int argc, char** argv)
         exit(1);
     }
 
+
+    /// Test print
     if (test == 1) {printf("UID: %d\n", uid);}
 
     // Clear process environment
@@ -398,6 +400,9 @@ int main(int argc, char** argv)
         close(slogFD);
         exit(1);
     }
+
+    /// Test print
+    if (test == 1) {printf("UID: %d\n", fileStat.st_uid);
 
     // Check IDs of the file
     if (uid != fileStat.st_uid)
