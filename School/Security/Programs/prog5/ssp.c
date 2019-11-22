@@ -356,7 +356,7 @@ int main(int argc, char** argv)
     int test = 1;
     int checking = 1;
 
-    struct stat fileStat;   // Ptr to stat structure of a file
+    struct stat fileStat = NULL;   // Ptr to stat structure of a file
 
     uid_t uid  = getuid();  // UID of current process
     uid_t euid = geteuid(); // EUID of current process
