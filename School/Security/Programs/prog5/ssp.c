@@ -379,6 +379,7 @@ int main(int argc, char** argv)
     int i       = 0;         // Index of file for loop
     int j       = 0;         // Index of character check for loop
     int valid   = 0;         // Determines whether or not a file is valid
+    int logLen  = 0;         // Length of entry in slog
 
     char * slog   = "slog";  // Name of slog file
     char * spool  = "spool"; // Name of spool file
