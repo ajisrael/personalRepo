@@ -606,6 +606,9 @@ int main(int argc, char** argv)
                             freeMem(NULL);
                             exit(1);
                         }
+
+                        // Close current file descriptor
+                        close(currFD);
                     }
                     else // If file cannot be spooled add to slog
                     {
