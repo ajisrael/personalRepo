@@ -53,6 +53,12 @@
 // Assm: No file spooled by this application contains sensitive data.
 // Defn: MAXFILE = The maximum size of a spoolable file in bytes.
 //       MEMSIZE = The maximum number of memory pairs in memory manager.
+//       FLOPERR = Base length of file open error message to slog.
+//       FLMAERR = Base length of file malloc error message to slog.
+//       SPOOLAD = Base length of successfull file add to spool msg to slog.
+//       INVALID = Flag for when a process fails or file is invalid.
+//       MINPRNT = Minimum value of a printable character (inclusive).
+//       MAXPRNT = Maximum value of a printable character (inclusive).
 // Vars: gMan    = Global memory manager.
 //------------------------------------------------------------------------------
 
@@ -70,6 +76,12 @@
 
 #define MAXFILE 250000000 // Maximum size of a spoolable file
 #define MEMSIZE        64 // Maximum number of memory pairs in memory manager
+#define FLOPERR        20 // Base length of file open error message to slog
+#define FLMAERR        20 // Base length of file malloc error message to slog
+#define SPOOLAD        17 // Base length of successfull file add to spool
+#define INVALID        -1 // Flag for when a process fails or file is invalid
+#define MINPRNT        32 // Minimum value of a printable character
+#define MAXPRNT       126 // Maximum value of a printable character
 
 //------------------------------------------------------------------------------
 struct memPair     // Touple of a ptr to memory and its status
@@ -132,7 +144,7 @@ int allocMem(char * ptr, int size)
     if (ptr == NULL)        // Check for error
     {
         perror("alloc");    // Set perror
-        stat = -1;          // Set status
+        stat = INVALID;     // Set status
     }
     else
     {
@@ -162,7 +174,7 @@ int reallocMem(char * ptr, int size)
 //------------------------------------------------------------------------------
 {
     int stat  =  0;      // Status of the function call
-    int found = -1;      // Determines if a ptr was found in memory manager
+    int found = INVALID; // Determines if a ptr was found in memory manager
     int i     =  0;      // Index of for loop
     char * rePtr = NULL; // Ptr to newly allocated memory
     
@@ -175,23 +187,23 @@ int reallocMem(char * ptr, int size)
             if (rePtr == NULL)              // Check for error
             {
                 perror("realloc");          // Set perror
-                stat = -1;                  // Set status
+                stat = INVALID;                  // Set status
             }
             else                            // If no error
             {
-                gMan.ptrs[i].ptr = rePtr;   // Update ptr in memory manager
+                gMan.ptrs[i].ptr = ptr;     // Update ptr in memory manager
                 gMan.ptrs[i].status = 1;    // Update status in memory manager
                 i = gMan.size;              // Break loop
             }
         }
     }
 
-    if (found == -1)  // If ptr was not found in memory manager
+    if (found == INVALID)     // If ptr was not found in memory manager
     {
         stat = allocMem(ptr, size);         // Alloc ptr and set status
     }
 
-    return stat;      // return status            
+    return stat;         // return status            
 }
 
 void freeMem(char * ptr)
@@ -220,7 +232,7 @@ void freeMem(char * ptr)
     }
     else // Free all malloced ptrs
     {
-        for (i = 0; i < gMan.size; i++) // Loop through all ptrs
+        for (i = 0; i < gMan.size; i++)     // Loop through all ptrs
         {
             if (gMan.ptrs[i].status == 1)   // If ptr is allocated
             {
@@ -228,7 +240,7 @@ void freeMem(char * ptr)
                 gMan.ptrs[i].status = 0;    // Set status of ptr to freed
             }
         }
-        gMan.size = 0;                  // Reset size of allocated mem to 0
+        gMan.size = 0;                      // Reset size of allocated mem to 0
     }
 }
 
@@ -242,7 +254,7 @@ int lockMemory(char * addr, size_t size) {
 //       size = Size in bytes of variable to lock in memory.
 // Vars: page_offset = Offset from size to page.
 //       page_size   = Page size on system.
-// Retn: Return value from munlock().
+// Retn: Return value from mlock().
 // -----------------------------------------------------------------------------
     unsigned long page_offset;  // Offest from size to page
     unsigned long page_size;    // Page size of system
@@ -324,7 +336,7 @@ int checkFile(int fd, struct stat fStats)
     int valid = 0; // Satus of validity of a file
 
     // Get file stats
-    if (fstat(fd, &fStats) == -1)
+    if (fstat(fd, &fStats) == INVALID)
     {
         perror("fstat");
         freeMem(NULL);
@@ -335,7 +347,7 @@ int checkFile(int fd, struct stat fStats)
     // Check if not regular
     if (!(S_ISREG(fStats.st_mode)))
     {
-        valid = -1;
+        valid = INVALID;
     }
 
     return valid;
@@ -353,22 +365,25 @@ int main(int argc, char** argv)
 //       1 = An error occured.
 //------------------------------------------------------------------------------
 {
-    int test = 1;
-    int checking = 1;
+    int test = 0;            /// TESTING VARIABLE
+    int checking = 0;        /// TESTING VARIABLE
 
-    struct stat fileStat = NULL;   // Ptr to stat structure of a file
+    struct stat fileStat;    // Ptr to stat structure of a file
 
-    uid_t uid  = getuid();  // UID of current process
-    uid_t euid = geteuid(); // EUID of current process
-    
+    uid_t uid  = getuid();   // UID of current process
+    uid_t euid = geteuid();  // EUID of current process
 
-    int slogFD  = 0;        // File descriptor for slog
-    int spoolFD = 0;        // File descriptor for spool
-    //int currFD  = 0;        // File descriptor for current file
-    int i       = 0;        // Index of for loop
+    int slogFD  = 0;         // File descriptor for slog
+    int spoolFD = 0;         // File descriptor for spool
+    int currFD  = 0;         // File descriptor for current file
+    int i       = 0;         // Index of file for loop
+    int j       = 0;         // Index of character check for loop
+    int valid   = 0;         // Determines whether or not a file is valid
 
-    char * slog  = "slog";  // Name of slog file
-    char * spool = "spool"; // Name of spool file
+    char * slog   = "slog";  // Name of slog file
+    char * spool  = "spool"; // Name of spool file
+    char * logBuf = NULL;    // Ptr to base addr of buffer for writing to slog
+    char * fBuf   = NULL;    // Ptr to base addr of buffer for writing to spool
 
     // Check for correct input
     if (argc <= 1)
@@ -377,29 +392,34 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-
     /// Test print
     if (test == 1) {printf("UID: %d\n", uid);}
+
     /// Test print
     if (test == 1) {printf("EUID: %d\n", euid);}
 
     // Clear process environment
 
     // Make sure process isn't running as root
+    if (euid == 0 || uid == 0)
+    {
+        printf("root: ssp cannot be run as root.\n");
+        exit(1);
+    }
 
     // Set the umask to prevent group and world bits from being set
     umask(077);
 
     // Slog Setup Begin --------------------------------------------------------
     slogFD = open(slog, O_WRONLY | O_APPEND | O_CREAT, 0600);
-    if (slogFD == -1)
+    if (slogFD == INVALID)
     {
         perror("slog");
         exit(1);
     }
 
-    // Verify file is regular and get it's stats
-    if (checkFile(slogFD, fileStat) == -1)
+    // Verify file is regular and get its stats
+    if (checkFile(slogFD, fileStat) == INVALID)
     {
         printf("slog_reg: File slog is not a regular file.\n");
         close(slogFD);
@@ -427,16 +447,16 @@ int main(int argc, char** argv)
     // Slog Setup End ----------------------------------------------------------
 
     // Spool Setup Begin -------------------------------------------------------
-    spoolFD = open(spool, O_WRONLY | O_APPEND | O_CREAT);
-    if (spoolFD == -1)
+    spoolFD = open(spool, O_WRONLY | O_APPEND | O_CREAT, 0600);
+    if (spoolFD == INVALID)
     {
         perror("spool");
         close(slogFD);
         exit(1);
     }
 
-    // Verify file is regular and get it's stats
-    if (checkFile(slogFD, fileStat) == -1)
+    // Verify file is regular and get its stats
+    if (checkFile(slogFD, fileStat) == INVALID)
     {
         printf("spool_reg: File spool is not a regular file.\n");
         close(slogFD);
@@ -463,31 +483,145 @@ int main(int argc, char** argv)
     }
     // Spool Setup End ---------------------------------------------------------
 
-    initMemManager();       // Initialize memory manager
+    initMemManager();   // Initialize memory manager
 
     // Start looping through files
     for (i = 1; i < argc; i++)
     {
         // Open file
+        currFD = open(argv[i], O_RDONLY);
 
-        // Check file is ordinary
+        // Check open call for errors and log if needed
+        if (currFD == INVALID)
+        {
+            valid = INVALID;
+        }
+        else
+        {
+            // Check if file is regular and get its stats
+            if (checkFile(currFD, fileStat) == INVALID)
+            {
+                valid = INVALID;
+            }
+            else
+            {
+                // Check file size is less than MAXFILE
+                if (fileStat.st_size > MAXFILE)
+                {
+                    valid = INVALID;
+                }
+                else
+                {
+                    // Allocate space to read file into memory
+                    if (reallocMem(fBuf, fileStat.st_size) == INVALID)
+                    {
+                        logLen = FLMAERR + strLen(argv[i]);
+                        if (reallocMem(logBuf, logLen) == INVALID)
+                        {
+                            close(slogFD);
+                            close(spoolFD);
+                            close(currFD);
+                            freeMem(NULL);
+                            exit(1);
+                        }
+                        sprintf(logBuf, "Failed malloc for %s.\n", argv[i]);
+                        if (write(slogFD, logBuf, logLen) == INVALID)
+                        {
+                            perror("slog_write");
+                            close(slogFD);
+                            close(spoolFD);
+                            close(currFD);
+                            freeMem(NULL);
+                            exit(1);
+                        }
+                        close(slogFD);
+                        close(spoolFD);
+                        close(currFD);
+                        freeMem(NULL);
+                        exit(1);
+                    }
 
-            // Check file size is less than MAXFILE
+                    // Read entire file into memory
+                    if (read(currFD, fBuf, fileStat.st_size) == INVALID)
+                    {
+                        perror("file_read");
+                        close(slogFD);
+                        close(spoolFD);
+                        close(currFD);
+                        freeMem(NULL);
+                        exit(1);
+                    }
 
-                // If valid read entire file into memory
-                
-                    // If malloc fails entry made to slog and exit program
+                    // Loop to look for non-printable characters
+                    for (j = 0; j < fileStat.st_size; j++)
+                    {
+                        if (fBuf[j] == '\t'||fBuf[j] == '\n'||fBuf[j] == '\r')
+                        {
+                            continue;
+                        }
+                        else if (fBuf[j] >= 32 && fBuf[j] <= 126)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            valid = INVALID;
+                            break;
+                        }
+                    }
 
-                // Loop to look for non-printable characters
+                    // If all are printable
+                    if (valid != INVALID)
+                    {
+                        // Copy to spool
+                        if (write(spoolFD, fBuf, fileStat.st_size) == INVALID)
+                        {
+                            perror("spool_write");
+                            close(slogFD);
+                            close(spoolFD);
+                            close(currFD);
+                            freeMem(NULL);
+                            exit(1);
+                        }
 
-                // If all are printable copy to spool
-
-                // Add filename to slog
-
-        // If file cannot be spooled add to slog
-
-    
+                        // Add filename to slog
+                        logLen = SPOOLAD + strLen(argv[i]);
+                        if (reallocMem(logBuf, logLen) == INVALID)
+                        {
+                            close(slogFD);
+                            close(spoolFD);
+                            close(currFD);
+                            freeMem(NULL);
+                            exit(1);
+                        }
+                        sprintf(logBuf, "%s added to spool.\n", argv[i]);
+                        if (write(slogFD, logBuf, logLen) == INVALID)
+                        {
+                            perror("slog_write");
+                            close(slogFD);
+                            close(spoolFD);
+                            close(currFD);
+                            freeMem(NULL);
+                            exit(1);
+                        }
+                    }
+                    else // If file cannot be spooled add to slog
+                    {
+                        logLen = FLOPERR + strLen(argv[i]);
+                        if (reallocMem(logBuf, logLen) == INVALID)
+                        {
+                            close(slogFD);
+                            close(spoolFD);
+                            close(currFD);
+                            freeMem(NULL);
+                            exit(1);
+                        }
+                        sprintf(logBuf, "File %s was not read.\n", argv[i]);
+                        write(slogFD, logBuf, logLen);
+                    }
+                }
+            }
+        }
     }
-    
-    exit(1);
+    exit(0);
 }
