@@ -517,7 +517,7 @@ int main(int argc, char** argv)
                     // Allocate space to read file into memory
                     if (reallocMem(fBuf, fileStat.st_size) == INVALID)
                     {
-                        logLen = FLMAERR + strLen(argv[i]);
+                        logLen = FLMAERR + strlen(argv[i]);
                         if (reallocMem(logBuf, logLen) == INVALID)
                         {
                             close(slogFD);
@@ -587,7 +587,7 @@ int main(int argc, char** argv)
                         }
 
                         // Add filename to slog
-                        logLen = SPOOLAD + strLen(argv[i]);
+                        logLen = SPOOLAD + strlen(argv[i]);
                         if (reallocMem(logBuf, logLen) == INVALID)
                         {
                             close(slogFD);
@@ -609,7 +609,7 @@ int main(int argc, char** argv)
                     }
                     else // If file cannot be spooled add to slog
                     {
-                        logLen = FLOPERR + strLen(argv[i]);
+                        logLen = FLOPERR + strlen(argv[i]);
                         if (reallocMem(logBuf, logLen) == INVALID)
                         {
                             close(slogFD);
