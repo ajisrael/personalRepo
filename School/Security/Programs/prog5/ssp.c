@@ -69,6 +69,7 @@
 #include <stdlib.h>         // Memory management
 #include <stdio.h>          // IO ops
 #include <strings.h>        // IO ops
+#include <string.h>         // File ops
 #include <fcntl.h>          // File ops
 #include <termios.h>        // Core management
 #include <sys/time.h>       // Core management
