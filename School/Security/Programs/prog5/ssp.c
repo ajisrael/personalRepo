@@ -353,8 +353,8 @@ int main(int argc, char** argv)
 //       1 = An error occured.
 //------------------------------------------------------------------------------
 {
-    int test = 0;
-    int checking = 0;
+    int test = 1;
+    int checking = 1;
 
     struct stat fileStat;   // Ptr to stat structure of a file
 
