@@ -82,7 +82,7 @@
 #define MEMSIZE        64 // Maximum number of memory pairs in memory manager
 #define FLOPERR        17 // Base length of file open error message to slog
 #define FLMAERR        20 // Base length of file malloc error message to slog
-#define FLSZERR        26 // Base length of file size error message to slog
+#define FLSZERR        29 // Base length of file size error message to slog
 #define FLCHERR        38 // Base length of file char error message to slog
 #define FLSTERR        22 // Base length of file stat error message to slog
 #define SPOOLAD        22 // Base length of successfull file add to spool
@@ -204,9 +204,6 @@ int reallocMem(char * ptr, int size)
             }
         }
     }
-
-    /// Test print
-    printf("Ptr not found in memory manager.\n");
 
     if (found == INVALID)     // If ptr was not found in memory manager
     {
