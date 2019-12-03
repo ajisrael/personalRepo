@@ -720,7 +720,7 @@ int main(int argc, char** argv)
                             exit(1);
                         }
                         sprintf(logBuf, "File %s contained an invalid character.\n", argv[i]);
-                        if (write(slogFD, logBuf, logLen == INVALID)
+                        if (write(slogFD, logBuf, logLen) == INVALID)
                         {
                             perror("slog_write_inv_char");
                             close(slogFD);
