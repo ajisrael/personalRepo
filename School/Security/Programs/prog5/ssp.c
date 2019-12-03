@@ -78,12 +78,12 @@
 #include <sys/resource.h>   // Core management
 
 #define MAXFILE 250000000 // Maximum size of a spoolable file
-#define FLOPERR        18 // Base length of file open error message to slog
+#define FLOPERR        17 // Base length of file open error message to slog
 #define FLMAERR        21 // Base length of file malloc error message to slog
 #define FLSZERR        27 // Base length of file size error message to slog
-#define FLCHERR        39 // Base length of file char error message to slog
+#define FLCHERR        38 // Base length of file char error message to slog
 #define FLSTERR        23 // Base length of file stat error message to slog
-#define SPOOLAD        23 // Base length of successfull file add to spool
+#define SPOOLAD        22 // Base length of successfull file add to spool
 #define INVALID        -1 // Flag for when a process fails or file is invalid
 #define ERRFLAG        -2 // Flag for when a function errors
 #define MINPRNT        32 // Minimum value of a printable character

@@ -1,7 +1,7 @@
 CC = gcc
 SRC_FILES = ssp.c
 OBJ_FILES = *.o
-OPTS = -std=c99
+OPTS = -std=c99 -pedantic -Wall -g
 EXE = ssp
 
 build: $(SRC_FILE)
