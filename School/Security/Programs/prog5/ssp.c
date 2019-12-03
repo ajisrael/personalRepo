@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 // Orig: 2019.11.20 - Alex Israels
-// Revs: 2019.11.20 - Alex Israels
+// Revs: 2019.12.03 - Alex Israels
 // Prog: ssp.c
 // Func: Pools multiple files into one file.
 // Reqm: 1. Does not spawn children
@@ -62,7 +62,6 @@
 //       ERRFLAG = Flag for when a function errors.
 //       MINPRNT = Minimum value of a printable character (inclusive).
 //       MAXPRNT = Maximum value of a printable character (inclusive).
-// Vars: gMan    = Global memory manager.
 //------------------------------------------------------------------------------
 
 #include <unistd.h>         // System data
@@ -119,12 +118,14 @@ int checkFile(int fd, struct stat * fStats)
 //------------------------------------------------------------------------------
 // Name: checkFile
 // Func: Checks a file to make sure it is valid to be spooled.
-// Meth:
+// Meth: Calls fstat on the file and sets valid to -2 if the call failed and -1
+//       if the file is not regular. Otherwise valid stays at 0.
 // Args: fd     = File descriptor for file to be checked.
 //       fStats = Struct for getting metadata of a file.
 // Retn: valid  = Status of the file, if it can be spooled or not.
 //        0 = File is valid.
 //       -1 = File is invalid.
+//       -2 = Fstat() errored in some way.
 //------------------------------------------------------------------------------
 {
     int valid = 0; // Satus of validity of a file
@@ -148,11 +149,28 @@ int checkFile(int fd, struct stat * fStats)
 int main(int argc, char** argv)
 //------------------------------------------------------------------------------
 // Name: main
-// Func: The main process of the program.
-// Meth:
+// Func: Pools the contents of multiple files into one file.
+// Meth: Uses secure coding practices to set up a secure processing enviroinment
+//       Meeting all the requirements defined above. Then begins to loop through
+//       each file and determine if it's contents are "printable" and pools them
+//       together if they are.
 // Args: argc = The number of arguments passed into the program.
 //       argv = Array of arguments passed into the program.
 // Vars: fileStat = Struct for getting metadata of a file.
+//       uid      = UID of current running process.
+//       euid     = EUID of current running process.
+//       slogFD   = File descriptor for slog.
+//       spoolFD  = File descriptor for spool.
+//       currFD   = File descriptor for the current file.
+//       i        = Index of File for loop.
+//       j        = Index of the character checking for loop.
+//       valid    = Marks the validity of a file based on req. in header.
+//       stat     = Return value from custom function calls.
+//       logLen   = Length of entry in slog.
+//       slog     = Name of slog file.
+//       spool    = Name of spool file.
+//       logBuf   = Ptr to base addr of buffer for writing to slog.
+//       fBuf     = Ptr to base addr of buffer for writing to spool.
 // Retn: 0 = Program ran as expected.
 //       1 = An error occured.
 //------------------------------------------------------------------------------
@@ -167,7 +185,7 @@ int main(int argc, char** argv)
     int currFD  = 0;         // File descriptor for current file
     int i       = 0;         // Index of file for loop
     int j       = 0;         // Index of character check for loop
-    int valid   = 0;         // Determines whether or not a file is valid
+    int valid   = 0;         // Marks the validity of a file
     int stat    = 0;         // Return value from custom funciton calls
     int logLen  = 0;         // Length of entry in slog
 
@@ -183,6 +201,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
+    // Secure Environment Begin ------------------------------------------------
     // Clear process environment
     if (clearenv() != 0)
     {
@@ -202,6 +221,7 @@ int main(int argc, char** argv)
 
     // Set the umask to prevent group and world bits from being set
     umask(077);
+    // Secure Environment End --------------------------------------------------
 
     // Slog Setup Begin --------------------------------------------------------
     slogFD = open(slog, O_WRONLY | O_APPEND | O_CREAT, 0600);
@@ -611,6 +631,5 @@ int main(int argc, char** argv)
     close(slogFD);
     close(spoolFD);
     free(fileStat);
-
     exit(0);
 }
