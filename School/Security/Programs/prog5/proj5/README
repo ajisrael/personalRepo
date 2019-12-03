@@ -1,0 +1,29 @@
+Name: Alex Israels
+Slip-Days: 1
+LOG: I decided to log the following errors:
+- Open: When a file is unable to be opened I wanted to make sure it was
+        identified so there would be an explaination as to why it's
+        contents did not appear in spool.
+- Regular: When a file is not regular I wanted to make sure it was 
+           identified so there would be an explaination as to why 
+           it's contents did not appear in spool. Irregular files will 
+           not contain only printable characters.
+- Size: When a file is too big to be read into memory I wanted to make 
+        sure it was identified so there would be an explaination as to 
+        why it's contents did not appear in spool. Reading in a file
+        without any for of limit can be dangerous and lead to many 
+        potential errors. Such as running out of memory. As well as 
+        performance issues if the file is sufficiently large.
+- Malloc: When the process failes to allocate memory for a file I wanted
+          to make sure that reason was caputured before exiting the
+          process.
+- Add: When a file is successfully spooled I wanted to add that to the
+       log to provide a synopsis of the success or failure of the process
+- Invalid Char: When a file contains an invalid character I wanted to mark
+                that specifically as the reason for not spooling, since the
+                character is not printable.
+TOCTOU: It is possible to have a TOCTOU error around the checks that I made on
+        these files before spooling them. If someone were to change the contents
+        of the file between being opened and read into memory then the size of 
+        memory allocated may not be suffiecent enough or may be too much
+        depending on the changes made.
