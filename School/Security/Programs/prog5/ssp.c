@@ -428,7 +428,7 @@ int main(int argc, char** argv)
     }
 
     // Allocate memory for fileStat
-    if (allocMem((char *) fileStat, sizeof(struct stat)) == INVALID)
+    if (allocMem(fileStat, sizeof(struct stat)) == INVALID)
     {
         close(slogFD);
         exit(1);
