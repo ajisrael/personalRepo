@@ -539,7 +539,7 @@ int main(int argc, char** argv)
         else
         {
             /// Test print
-            //if (test == 1) {printf("CheckFile: %d\n", checkFile(currFD, fileStat));}
+            if (test == 1) {printf("CheckFile: %d\n", checkFile(currFD, fileStat));}
 
             // Check if file is regular and get its stats
             if (checkFile(currFD, fileStat) == INVALID)
@@ -598,6 +598,10 @@ int main(int argc, char** argv)
                         freeMem(NULL);
                         exit(1);
                     }
+
+                    /// Test print
+                    if (test == 1) {printf("Realloced...\n");}
+
                     if (sprintf(logBuf, "File %s is too big to read.\n", argv[i]) < 0)
                     {
                         perror("slog_sprintf_size");
@@ -607,6 +611,10 @@ int main(int argc, char** argv)
                         freeMem(NULL);
                         exit(1);
                     }
+
+                    /// Test print
+                    if (test == 1) {printf("Filled logBuf...\n");}
+
                     if (write(slogFD, logBuf, logLen) == INVALID)
                     {
                         perror("slog_write_size");
