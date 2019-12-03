@@ -83,7 +83,7 @@
 #define FLSZERR        26 // Base length of file size error message to slog
 #define FLCHERR        38 // Base length of file char error message to slog
 #define FLSTERR        22 // Base length of file stat error message to slog
-#define SPOOLAD        22 // Base length of successfull file add to spool
+#define SPOOLAD        23 // Base length of successfull file add to spool
 #define INVALID        -1 // Flag for when a process fails or file is invalid
 #define ERRFLAG        -2 // Flag for when a function errors
 #define MINPRNT        32 // Minimum value of a printable character
