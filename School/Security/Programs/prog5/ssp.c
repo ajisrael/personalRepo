@@ -157,7 +157,7 @@ int main(int argc, char** argv)
 //       1 = An error occured.
 //------------------------------------------------------------------------------
 {
-    int test = 1;            /// TESTING VARIABLE
+    int test = 0;            /// TESTING VARIABLE
 
     struct stat * fileStat = NULL;  // Ptr to stat structure of a file
 
