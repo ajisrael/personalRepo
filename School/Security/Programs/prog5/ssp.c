@@ -541,7 +541,15 @@ int main(int argc, char** argv)
                     exit(1);
                 }
                 sprintf(logBuf, "File %s is not regular.\n", argv[i]);
-                write(slogFD, logBuf, logLen);
+                if (write(slogFD, logBuf, logLen) == INVALID)
+                {
+                    perror("slog_write_open");
+                    close(slogFD);
+                    close(spoolFD);
+                    close(currFD);
+                    freeMem(NULL);
+                    exit(1);
+                }
 
                 /// Test print
                 if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
@@ -567,7 +575,15 @@ int main(int argc, char** argv)
                         exit(1);
                     }
                     sprintf(logBuf, "File %s is too big to read.\n", argv[i]);
-                    write(slogFD, logBuf, logLen);
+                    if (write(slogFD, logBuf, logLen) == INVALID)
+                    {
+                        perror("slog_write_size");
+                        close(slogFD);
+                        close(spoolFD);
+                        close(currFD);
+                        freeMem(NULL);
+                        exit(1);
+                    }
 
                     /// Test print
                     if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
@@ -589,7 +605,7 @@ int main(int argc, char** argv)
                         sprintf(logBuf, "Failed malloc for %s.\n", argv[i]);
                         if (write(slogFD, logBuf, logLen) == INVALID)
                         {
-                            perror("slog_write");
+                            perror("slog_write_malloc");
                             close(slogFD);
                             close(spoolFD);
                             close(currFD);
@@ -678,7 +694,7 @@ int main(int argc, char** argv)
                         sprintf(logBuf, "File %s added to spool.\n", argv[i]);
                         if (write(slogFD, logBuf, logLen) == INVALID)
                         {
-                            perror("slog_write");
+                            perror("slog_write_spool");
                             close(slogFD);
                             close(spoolFD);
                             close(currFD);
@@ -704,7 +720,15 @@ int main(int argc, char** argv)
                             exit(1);
                         }
                         sprintf(logBuf, "File %s contained an invalid character.\n", argv[i]);
-                        write(slogFD, logBuf, logLen);
+                        if (write(slogFD, logBuf, logLen == INVALID)
+                        {
+                            perror("slog_write_inv_char");
+                            close(slogFD);
+                            close(spoolFD);
+                            close(currFD);
+                            freeMem(NULL);
+                            exit(1);
+                        }
 
                         /// Test print
                         if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
