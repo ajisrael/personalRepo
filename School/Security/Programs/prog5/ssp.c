@@ -307,9 +307,7 @@ int main(int argc, char** argv)
     }
     // Spool Setup End ---------------------------------------------------------
 
-    initMemManager();   // Initialize memory manager
-
-    // Start looping through files
+    // File Loop Begin ---------------------------------------------------------
     for (i = 1; i < argc; i++)
     {
         // Open file
@@ -549,7 +547,6 @@ int main(int argc, char** argv)
                         }
                     }
 
-
                     // If all are printable
                     if (valid != INVALID)
                     {
@@ -664,6 +661,7 @@ int main(int argc, char** argv)
             close(currFD);
         }
     }
+    // File Loop End -----------------------------------------------------------
     close(slogFD);
     close(spoolFD);
     free(fileStat);
