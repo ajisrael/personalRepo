@@ -200,7 +200,7 @@ int reallocMem(char * ptr, int size)
             {
                 gMan.ptrs[i].ptr = rePtr;   // Update ptr in memory manager
                 gMan.ptrs[i].status = 1;    // Update status in memory manager
-                &ptr = &rePtr;              // Set base addr of old ptr to new
+                ptr = rePtr;                // Set base addr of old ptr to new
                 i = gMan.size;              // Break loop
             }
         }
