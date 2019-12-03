@@ -516,6 +516,9 @@ int main(int argc, char** argv)
                 // Check file size is less than MAXFILE
                 if (fileStat.st_size > MAXFILE)
                 {
+                    /// Test print
+                    if (test == 1) {printf("File %s is too big.\n", argv[i]);}
+
                     valid = INVALID;
                 }
                 else
