@@ -157,8 +157,6 @@ int main(int argc, char** argv)
 //       1 = An error occured.
 //------------------------------------------------------------------------------
 {
-    int test = 0;            /// TESTING VARIABLE
-
     struct stat * fileStat = NULL;  // Ptr to stat structure of a file
 
     uid_t uid  = getuid();   // UID of current process
@@ -192,6 +190,14 @@ int main(int argc, char** argv)
     if (test == 1) {printf("EUID: %d\n", euid);}
 
     // Clear process environment
+    if (clearenv() != 0)
+    {
+        perror("clearenv");
+        exit(1);
+    }
+
+    // Set the core dump size to zero
+    secureCoreDump();
 
     // Make sure process isn't running as root
     if (euid == 0 || uid == 0)
