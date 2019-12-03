@@ -428,8 +428,9 @@ int main(int argc, char** argv)
     }
 
     // Allocate memory for fileStat
-    if (allocMem(fileStat, sizeof(struct stat)) == INVALID)
+    if (malloc(fileStat, sizeof(struct stat)) == NULL)
     {
+        perror("malloc_fstat")
         close(slogFD);
         exit(1);
     }
@@ -439,6 +440,7 @@ int main(int argc, char** argv)
     {
         printf("slog_reg: File slog is not a regular file.\n");
         close(slogFD);
+        free(fileStat);
         exit(1);
     }
 
@@ -450,6 +452,7 @@ int main(int argc, char** argv)
     {
         printf("slog_uid: Uid's do not match.\n");
         close(slogFD);
+        free(fileStat);
         exit(1);
     }
 
@@ -458,6 +461,7 @@ int main(int argc, char** argv)
     {
         printf("slog_gid: Group and world bits set.\n");
         close(slogFD);
+        free(fileStat);
         exit(1);
     }
     // Slog Setup End ----------------------------------------------------------
@@ -468,6 +472,7 @@ int main(int argc, char** argv)
     {
         perror("spool");
         close(slogFD);
+        free(fileStat);
         exit(1);
     }
 
@@ -477,6 +482,7 @@ int main(int argc, char** argv)
         printf("spool_reg: File spool is not a regular file.\n");
         close(slogFD);
         close(spoolFD);
+        free(fileStat);
         exit(1);
     }
 
@@ -486,6 +492,7 @@ int main(int argc, char** argv)
         printf("spool_uid: Uid's do not match.\n");
         close(slogFD);
         close(spoolFD);
+        free(fileStat);
         exit(1);
     }
 
@@ -495,6 +502,7 @@ int main(int argc, char** argv)
         printf("spool_gid: Group and world bits set.\n");
         close(slogFD);
         close(spoolFD);
+        free(fileStat);
         exit(1);
     }
     // Spool Setup End ---------------------------------------------------------
@@ -520,6 +528,7 @@ int main(int argc, char** argv)
                 close(spoolFD);
                 close(currFD);
                 freeMem(NULL);
+                free(fileStat);
                 exit(1);
             }
             if (sprintf(logBuf, "Failed to open %s.\n", argv[i]) < 0)
@@ -529,6 +538,7 @@ int main(int argc, char** argv)
                 close(spoolFD);
                 close(currFD);
                 freeMem(NULL);
+                free(fileStat);
                 exit(1);
             }
             if (write(slogFD, logBuf, logLen) == INVALID)
@@ -538,6 +548,7 @@ int main(int argc, char** argv)
                 close(spoolFD);
                 close(currFD);
                 freeMem(NULL);
+                free(fileStat);
                 exit(1);
             }
 
@@ -562,6 +573,7 @@ int main(int argc, char** argv)
                     close(spoolFD);
                     close(currFD);
                     freeMem(NULL);
+                    free(fileStat);
                     exit(1);
                 }
                 if (sprintf(logBuf, "File %s is not regular.\n", argv[i]) < 0)
@@ -571,6 +583,7 @@ int main(int argc, char** argv)
                     close(spoolFD);
                     close(currFD);
                     freeMem(NULL);
+                    free(fileStat);
                     exit(1);
                 }
                 if (write(slogFD, logBuf, logLen) == INVALID)
@@ -580,6 +593,7 @@ int main(int argc, char** argv)
                     close(spoolFD);
                     close(currFD);
                     freeMem(NULL);
+                    free(fileStat);
                     exit(1);
                 }
 
@@ -604,6 +618,7 @@ int main(int argc, char** argv)
                         close(spoolFD);
                         close(currFD);
                         freeMem(NULL);
+                        free(fileStat);
                         exit(1);
                     }
 
@@ -617,6 +632,7 @@ int main(int argc, char** argv)
                         close(spoolFD);
                         close(currFD);
                         freeMem(NULL);
+                        free(fileStat);
                         exit(1);
                     }
 
@@ -630,6 +646,7 @@ int main(int argc, char** argv)
                         close(spoolFD);
                         close(currFD);
                         freeMem(NULL);
+                        free(fileStat);
                         exit(1);
                     }
 
@@ -648,6 +665,7 @@ int main(int argc, char** argv)
                             close(spoolFD);
                             close(currFD);
                             freeMem(NULL);
+                            free(fileStat);
                             exit(1);
                         }
                         if (sprintf(logBuf, "Failed malloc for %s.\n", argv[i]) < 0)
@@ -657,6 +675,7 @@ int main(int argc, char** argv)
                             close(spoolFD);
                             close(currFD);
                             freeMem(NULL);
+                            free(fileStat);
                             exit(1);
                         }
                         if (write(slogFD, logBuf, logLen) == INVALID)
@@ -666,12 +685,14 @@ int main(int argc, char** argv)
                             close(spoolFD);
                             close(currFD);
                             freeMem(NULL);
+                            free(fileStat);
                             exit(1);
                         }
                         close(slogFD);
                         close(spoolFD);
                         close(currFD);
                         freeMem(NULL);
+                        free(fileStat);
                         exit(1);
                     }
 
@@ -686,6 +707,7 @@ int main(int argc, char** argv)
                         close(spoolFD);
                         close(currFD);
                         freeMem(NULL);
+                        free(fileStat);
                         exit(1);
                     }
 
@@ -731,6 +753,7 @@ int main(int argc, char** argv)
                             close(spoolFD);
                             close(currFD);
                             freeMem(NULL);
+                            free(fileStat);
                             exit(1);
                         }
 
@@ -745,6 +768,7 @@ int main(int argc, char** argv)
                             close(spoolFD);
                             close(currFD);
                             freeMem(NULL);
+                            free(fileStat);
                             exit(1);
                         }
                         if (sprintf(logBuf, "File %s added to spool.\n", argv[i]) < 0)
@@ -763,6 +787,7 @@ int main(int argc, char** argv)
                             close(spoolFD);
                             close(currFD);
                             freeMem(NULL);
+                            free(fileStat);
                             exit(1);
                         }
 
@@ -781,6 +806,7 @@ int main(int argc, char** argv)
                             close(spoolFD);
                             close(currFD);
                             freeMem(NULL);
+                            free(fileStat);
                             exit(1);
                         }
                         if (sprintf(logBuf, "File %s contained an invalid character.\n", argv[i]) < 0)
@@ -790,6 +816,7 @@ int main(int argc, char** argv)
                             close(spoolFD);
                             close(currFD);
                             freeMem(NULL);
+                            free(fileStat);
                             exit(1);
                         }
                         if (write(slogFD, logBuf, logLen) == INVALID)
@@ -799,6 +826,7 @@ int main(int argc, char** argv)
                             close(spoolFD);
                             close(currFD);
                             freeMem(NULL);
+                            free(fileStat);
                             exit(1);
                         }
 
@@ -811,7 +839,13 @@ int main(int argc, char** argv)
             close(currFD);
         }
     }
+    close(slogFD);
+    close(spoolFD);
+    freeMem(NULL);
+    free(fileStat);
+
     /// Test print
     if (test == 1) {printf("Spooling complete.\n");}
+
     exit(0);
 }
