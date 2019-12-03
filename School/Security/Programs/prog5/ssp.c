@@ -329,7 +329,7 @@ void secureCoreDump()
     }
 }
 
-int checkFile(int fd, struct stat fStats)
+int checkFile(int fd, struct stat * fStats)
 //------------------------------------------------------------------------------
 // Name: checkFile
 // Func: Checks a file to make sure it is valid to be spooled.
@@ -344,7 +344,7 @@ int checkFile(int fd, struct stat fStats)
     int valid = 0; // Satus of validity of a file
 
     // Get file stats
-    if (fstat(fd, &fStats) == INVALID)
+    if (fstat(fd, fStats) == INVALID)
     {
         perror("fstat");
         freeMem(NULL);
@@ -353,7 +353,7 @@ int checkFile(int fd, struct stat fStats)
     }
 
     // Check if not regular
-    if (!(S_ISREG(fStats.st_mode)))
+    if (!(S_ISREG(fStats->st_mode)))
     {
         valid = INVALID;
     }
@@ -376,7 +376,7 @@ int main(int argc, char** argv)
     int test = 1;            /// TESTING VARIABLE
     int checking = 0;        /// TESTING VARIABLE
 
-    struct stat fileStat;    // Ptr to stat structure of a file
+    struct stat * fileStat = NULL;  // Ptr to stat structure of a file
 
     uid_t uid  = getuid();   // UID of current process
     uid_t euid = geteuid();  // EUID of current process
@@ -427,6 +427,13 @@ int main(int argc, char** argv)
         exit(1);
     }
 
+    // Allocate memory for fileStat
+    if (allocMem((char *) fileStat, sizeof(struct stat)) == INVALID)
+    {
+        close(slogFD);
+        exit(1);
+    }
+
     // Verify file is regular and get its stats
     if (checkFile(slogFD, fileStat) == INVALID)
     {
@@ -436,10 +443,10 @@ int main(int argc, char** argv)
     }
 
     /// Test print
-    if (test == 1) {printf("UID: %d\n", fileStat.st_uid);}
+    if (test == 1) {printf("UID: %d\n", fileStat->st_uid);}
 
     // Check IDs of the file
-    if (uid != fileStat.st_uid && checking == 1)
+    if (uid != fileStat->st_uid && checking == 1)
     {
         printf("slog_uid: Uid's do not match.\n");
         close(slogFD);
@@ -447,7 +454,7 @@ int main(int argc, char** argv)
     }
 
     // Check group and world bits
-    if (fileStat.st_mode & 077 && checking == 1)
+    if (fileStat->st_mode & 077 && checking == 1)
     {
         printf("slog_gid: Group and world bits set.\n");
         close(slogFD);
@@ -474,7 +481,7 @@ int main(int argc, char** argv)
     }
 
     // Check IDs of the file
-    if (uid != fileStat.st_uid && checking == 1)
+    if (uid != fileStat->st_uid && checking == 1)
     {
         printf("spool_uid: Uid's do not match.\n");
         close(slogFD);
@@ -483,7 +490,7 @@ int main(int argc, char** argv)
     }
 
     // Check group and world bits
-    if (fileStat.st_mode & 077 && checking == 1)
+    if (fileStat->st_mode & 077 && checking == 1)
     {
         printf("spool_gid: Group and world bits set.\n");
         close(slogFD);
@@ -582,10 +589,10 @@ int main(int argc, char** argv)
             else
             {
                 /// Test print
-                if (test == 1) {printf("FileSize: %d\n", (unsigned int) fileStat.st_size);}
+                if (test == 1) {printf("FileSize: %d\n", (unsigned int) fileStat->st_size);}
 
                 // Check file size is less than MAXFILE
-                if (fileStat.st_size > MAXFILE && checking == 1)
+                if (fileStat->st_size > MAXFILE && checking == 1)
                 {
                     /// Test print
                     if (test == 1) {printf("File %s is too big.\n", argv[i]);}
@@ -632,7 +639,7 @@ int main(int argc, char** argv)
                 else
                 {
                     // Allocate space to read file into memory
-                    if (reallocMem(fBuf, fileStat.st_size) == INVALID)
+                    if (reallocMem(fBuf, fileStat->st_size) == INVALID)
                     {
                         logLen = FLMAERR + strlen(argv[i]);
                         if (reallocMem(logBuf, logLen) == INVALID)
@@ -672,7 +679,7 @@ int main(int argc, char** argv)
                     if (test == 1) {printf("Memory Allocated.\n");}
 
                     // Read entire file into memory
-                    if (read(currFD, fBuf, fileStat.st_size) == INVALID)
+                    if (read(currFD, fBuf, fileStat->st_size) == INVALID)
                     {
                         perror("file_read");
                         close(slogFD);
@@ -689,7 +696,7 @@ int main(int argc, char** argv)
                     if (test == 1) {printf("File Contents:\n%s\n",fBuf);}
 
                     // Loop to look for non-printable characters
-                    for (j = 0; j < fileStat.st_size; j++)
+                    for (j = 0; j < fileStat->st_size; j++)
                     {
                         if (fBuf[j] == '\t'||fBuf[j] == '\n'||fBuf[j] == '\r')
                         {
@@ -717,7 +724,7 @@ int main(int argc, char** argv)
                         if (test == 1) {printf("File is valid.\n");}
 
                         // Copy to spool
-                        if (write(spoolFD, fBuf, fileStat.st_size) == INVALID)
+                        if (write(spoolFD, fBuf, fileStat->st_size) == INVALID)
                         {
                             perror("spool_write");
                             close(slogFD);
