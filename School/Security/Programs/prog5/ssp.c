@@ -57,6 +57,7 @@
 //       FLMAERR = Base length of file malloc error message to slog.
 //       FLSZERR = Base length of file size error message to slog.
 //       FLCHERR = Base length of file character error message to slog.
+//       FLSTERR = Base length of file stat error message to slog.
 //       SPOOLAD = Base length of successfull file add to spool msg to slog.
 //       INVALID = Flag for when a process fails or file is invalid.
 //       MINPRNT = Minimum value of a printable character (inclusive).
@@ -81,8 +82,9 @@
 #define MEMSIZE        64 // Maximum number of memory pairs in memory manager
 #define FLOPERR        17 // Base length of file open error message to slog
 #define FLMAERR        20 // Base length of file malloc error message to slog
-#define FLSZERR        27 // Base length of file size error message to slog
+#define FLSZERR        26 // Base length of file size error message to slog
 #define FLCHERR        38 // Base length of file char error message to slog
+#define FLSTERR        22 // Base length of file stat error message to slog
 #define SPOOLAD        22 // Base length of successfull file add to spool
 #define INVALID        -1 // Flag for when a process fails or file is invalid
 #define MINPRNT        32 // Minimum value of a printable character
@@ -500,7 +502,23 @@ int main(int argc, char** argv)
         // Check open call for errors and log if needed
         if (currFD == INVALID)
         {
-            valid = INVALID;
+            /// Test print
+            if (test == 1) {printf("Failed to open %s.\n", argv[i]);}
+
+            logLen = FLOPERR + strlen(argv[i]);
+            if (allocMem(logBuf, logLen) == INVALID)
+            {
+                close(slogFD);
+                close(spoolFD);
+                close(currFD);
+                freeMem(NULL);
+                exit(1);
+            }
+            sprintf(logBuf, "Failed to open %s.\n", argv[i]);
+            write(slogFD, logBuf, logLen);
+
+            /// Test print
+            if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
         }
         else
         {
@@ -511,9 +529,9 @@ int main(int argc, char** argv)
             if (checkFile(currFD, fileStat) == INVALID)
             {
                 /// Test print
-                if (test == 1) {printf("Failed to open %s.\n", argv[i]);}
+                if (test == 1) {printf("File %s is not regular.\n", argv[i]);}
 
-                logLen = FLOPERR + strlen(argv[i]);
+                logLen = FLSTERR + strlen(argv[i]);
                 if (allocMem(logBuf, logLen) == INVALID)
                 {
                     close(slogFD);
@@ -522,7 +540,7 @@ int main(int argc, char** argv)
                     freeMem(NULL);
                     exit(1);
                 }
-                sprintf(logBuf, "Failed to open %s.\n", argv[i]);
+                sprintf(logBuf, "File %s is not regular.\n", argv[i]);
                 write(slogFD, logBuf, logLen);
 
                 /// Test print
@@ -670,9 +688,6 @@ int main(int argc, char** argv)
 
                         /// Test print
                         if (test == 1) {printf("File %s added to slog.\n", argv[i]);}
-
-                        // Close current file descriptor
-                        close(currFD);
                     }
                     else // If file cannot be spooled add to slog
                     {
@@ -696,7 +711,11 @@ int main(int argc, char** argv)
                     }
                 }
             }
+            // Close current file descriptor
+            close(currFD);
         }
     }
+    /// Test print
+    if (test == 1) {printf("Spooling complete.\n");}
     exit(0);
 }
