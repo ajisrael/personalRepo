@@ -423,12 +423,12 @@ int main(int argc, char** argv)
     slogFD = open(slog, O_WRONLY | O_APPEND | O_CREAT, 0600);
     if (slogFD == INVALID)
     {
-        perror("slog");
+        perror("slog_open");
         exit(1);
     }
 
     // Allocate memory for fileStat
-    fileStat = malloc(sizeof(struct stat))
+    fileStat = malloc(sizeof(struct stat));
     if (fileStat == NULL)
     {
         perror("malloc_fstat");
@@ -471,7 +471,7 @@ int main(int argc, char** argv)
     spoolFD = open(spool, O_WRONLY | O_APPEND | O_CREAT, 0600);
     if (spoolFD == INVALID)
     {
-        perror("spool");
+        perror("spool_open");
         close(slogFD);
         free(fileStat);
         exit(1);
