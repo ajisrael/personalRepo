@@ -55,6 +55,8 @@
 //       MEMSIZE = The maximum number of memory pairs in memory manager.
 //       FLOPERR = Base length of file open error message to slog.
 //       FLMAERR = Base length of file malloc error message to slog.
+//       FLSZERR = Base length of file size error message to slog.
+//       FLCHERR = Base length of file character error message to slog.
 //       SPOOLAD = Base length of successfull file add to spool msg to slog.
 //       INVALID = Flag for when a process fails or file is invalid.
 //       MINPRNT = Minimum value of a printable character (inclusive).
@@ -77,9 +79,11 @@
 
 #define MAXFILE 250000000 // Maximum size of a spoolable file
 #define MEMSIZE        64 // Maximum number of memory pairs in memory manager
-#define FLOPERR        20 // Base length of file open error message to slog
+#define FLOPERR        17 // Base length of file open error message to slog
 #define FLMAERR        20 // Base length of file malloc error message to slog
-#define SPOOLAD        17 // Base length of successfull file add to spool
+#define FLSZERR        26 // Base length of file size error message to slog
+#define FLCHERR        38 // Base length of file char error message to slog
+#define SPOOLAD        22 // Base length of successfull file add to spool
 #define INVALID        -1 // Flag for when a process fails or file is invalid
 #define MINPRNT        32 // Minimum value of a printable character
 #define MAXPRNT       126 // Maximum value of a printable character
@@ -506,7 +510,23 @@ int main(int argc, char** argv)
             // Check if file is regular and get its stats
             if (checkFile(currFD, fileStat) == INVALID)
             {
-                valid = INVALID;
+                /// Test print
+                if (test == 1) {printf("Failed to open %s.\n", argv[i]);}
+
+                logLen = FLOPERR + strlen(argv[i]);
+                if (reallocMem(logBuf, logLen) == INVALID)
+                {
+                    close(slogFD);
+                    close(spoolFD);
+                    close(currFD);
+                    freeMem(NULL);
+                    exit(1);
+                }
+                sprintf(logBuf, "Failed to open %s.\n", argv[i]);
+                write(slogFD, logBuf, logLen);
+
+                /// Test print
+                if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
             }
             else
             {
@@ -519,7 +539,20 @@ int main(int argc, char** argv)
                     /// Test print
                     if (test == 1) {printf("File %s is too big.\n", argv[i]);}
 
-                    valid = INVALID;
+                    logLen = FLSZERR + strlen(argv[i]);
+                    if (reallocMem(logBuf, logLen) == INVALID)
+                    {
+                        close(slogFD);
+                        close(spoolFD);
+                        close(currFD);
+                        freeMem(NULL);
+                        exit(1);
+                    }
+                    sprintf(logBuf, "File %s is too big to read.\n", argv[i]);
+                    write(slogFD, logBuf, logLen);
+
+                    /// Test print
+                    if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
                 }
                 else
                 {
@@ -624,7 +657,7 @@ int main(int argc, char** argv)
                             freeMem(NULL);
                             exit(1);
                         }
-                        sprintf(logBuf, "%s added to spool.\n", argv[i]);
+                        sprintf(logBuf, "File %s added to spool.\n", argv[i]);
                         if (write(slogFD, logBuf, logLen) == INVALID)
                         {
                             perror("slog_write");
@@ -644,9 +677,9 @@ int main(int argc, char** argv)
                     else // If file cannot be spooled add to slog
                     {
                         /// Test print
-                        if (test == 1) {printf("File is not valid.\n");}
+                        if (test == 1) {printf("File %s is not valid.\n", argv[i]);}
 
-                        logLen = FLOPERR + strlen(argv[i]);
+                        logLen = FLCHERR + strlen(argv[i]);
                         if (reallocMem(logBuf, logLen) == INVALID)
                         {
                             close(slogFD);
@@ -655,7 +688,7 @@ int main(int argc, char** argv)
                             freeMem(NULL);
                             exit(1);
                         }
-                        sprintf(logBuf, "File %s was not read.\n", argv[i]);
+                        sprintf(logBuf, "File %s contained an invalid character.\n", argv[i]);
                         write(slogFD, logBuf, logLen);
 
                         /// Test print
