@@ -428,9 +428,10 @@ int main(int argc, char** argv)
     }
 
     // Allocate memory for fileStat
-    if (malloc(fileStat, sizeof(struct stat)) == NULL)
+    fileStat = malloc(sizeof(struct stat))
+    if (fileStat == NULL)
     {
-        perror("malloc_fstat")
+        perror("malloc_fstat");
         close(slogFD);
         exit(1);
     }
