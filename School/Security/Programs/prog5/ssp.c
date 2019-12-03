@@ -81,7 +81,7 @@
 #define MEMSIZE        64 // Maximum number of memory pairs in memory manager
 #define FLOPERR        17 // Base length of file open error message to slog
 #define FLMAERR        20 // Base length of file malloc error message to slog
-#define FLSZERR        26 // Base length of file size error message to slog
+#define FLSZERR        27 // Base length of file size error message to slog
 #define FLCHERR        38 // Base length of file char error message to slog
 #define SPOOLAD        22 // Base length of successfull file add to spool
 #define INVALID        -1 // Flag for when a process fails or file is invalid
@@ -514,7 +514,7 @@ int main(int argc, char** argv)
                 if (test == 1) {printf("Failed to open %s.\n", argv[i]);}
 
                 logLen = FLOPERR + strlen(argv[i]);
-                if (reallocMem(logBuf, logLen) == INVALID)
+                if (allocMem(logBuf, logLen) == INVALID)
                 {
                     close(slogFD);
                     close(spoolFD);
