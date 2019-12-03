@@ -77,7 +77,6 @@
 #include <termios.h>        // Core management
 #include <sys/time.h>       // Core management
 #include <sys/resource.h>   // Core management
-#include <env.h>
 
 #define MAXFILE 250000000 // Maximum size of a spoolable file
 #define FLOPERR        17 // Base length of file open error message to slog
