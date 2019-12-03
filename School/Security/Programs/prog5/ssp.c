@@ -539,7 +539,7 @@ int main(int argc, char** argv)
         else
         {
             /// Test print
-            if (test == 1) {printf("CheckFile: %d\n", checkFile(currFD, fileStat));}
+            //if (test == 1) {printf("CheckFile: %d\n", checkFile(currFD, fileStat));}
 
             // Check if file is regular and get its stats
             if (checkFile(currFD, fileStat) == INVALID)
