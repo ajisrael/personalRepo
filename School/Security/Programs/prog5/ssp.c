@@ -205,6 +205,9 @@ int reallocMem(char * ptr, int size)
         }
     }
 
+    /// Test print
+    printf("Ptr not found in memory manager.\n");
+
     if (found == INVALID)     // If ptr was not found in memory manager
     {
         stat = allocMem(ptr, size);         // Alloc ptr and set status
