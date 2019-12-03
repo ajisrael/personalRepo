@@ -523,7 +523,8 @@ int main(int argc, char** argv)
             if (test == 1) {printf("Failed to open %s.\n", argv[i]);}
 
             logLen = FLOPERR + strlen(argv[i]);
-            if (allocMem(logBuf, logLen * sizeof(char)) == INVALID)
+            logBuf = malloc(logLen * sizeof(char));
+            if (logBuf == NULL)
             {
                 close(slogFD);
                 close(spoolFD);
