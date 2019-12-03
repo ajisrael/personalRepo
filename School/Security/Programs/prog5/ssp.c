@@ -626,6 +626,8 @@ int main(int argc, char** argv)
             // Close current file descriptor
             close(currFD);
         }
+        // Reset valid
+        valid = 0;
     }
     // File Loop End -----------------------------------------------------------
     close(slogFD);
