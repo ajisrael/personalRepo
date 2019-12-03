@@ -657,7 +657,8 @@ int main(int argc, char** argv)
                 else
                 {
                     // Allocate space to read file into memory
-                    if (reallocMem(fBuf, fileStat->st_size) == INVALID)
+                    fBuf = malloc(fileStat->st_size);
+                    if (fBuf == NULL)
                     {
                         logLen = FLMAERR + strlen(argv[i]);
                         if (reallocMem(logBuf, logLen) == INVALID)
