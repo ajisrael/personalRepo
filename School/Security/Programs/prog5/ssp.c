@@ -183,12 +183,6 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    /// Test print
-    if (test == 1) {printf("UID: %d\n", uid);}
-
-    /// Test print
-    if (test == 1) {printf("EUID: %d\n", euid);}
-
     // Clear process environment
     if (clearenv() != 0)
     {
@@ -241,9 +235,6 @@ int main(int argc, char** argv)
         free(fileStat);
         exit(1);
     }
-
-    /// Test print
-    if (test == 1) {printf("UID: %d\n", fileStat->st_uid);}
 
     // Check IDs of the file
     if (uid != fileStat->st_uid)
@@ -322,9 +313,6 @@ int main(int argc, char** argv)
         // Check open call for errors and log if needed
         if (currFD == INVALID)
         {
-            /// Test print
-            if (test == 1) {printf("Failed to open %s.\n", argv[i]);}
-
             logLen = FLOPERR + strlen(argv[i]);
             logBuf = malloc(logLen * sizeof(char));
             if (logBuf == NULL)
@@ -357,9 +345,6 @@ int main(int argc, char** argv)
             }
 
             free(logBuf);
-
-            /// Test print
-            if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
         }
         else
         {
@@ -375,9 +360,6 @@ int main(int argc, char** argv)
             }
             else if (stat == INVALID)
             {
-                /// Test print
-                if (test == 1) {printf("File %s is not regular.\n", argv[i]);}
-
                 logLen = FLSTERR + strlen(argv[i]);
                 logBuf = malloc(logLen * sizeof(char));
                 if (logBuf == NULL)
@@ -410,21 +392,12 @@ int main(int argc, char** argv)
                 }
 
                 free(logBuf);
-
-                /// Test print
-                if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
             }
             else
             {
-                /// Test print
-                if (test == 1) {printf("FileSize: %d\n", (unsigned int) fileStat->st_size);}
-
                 // Check file size is less than MAXFILE
                 if (fileStat->st_size > MAXFILE)
                 {
-                    /// Test print
-                    if (test == 1) {printf("File %s is too big.\n", argv[i]);}
-
                     logLen = FLSZERR + strlen(argv[i]);
                     logBuf = malloc(logLen * sizeof(char));
                     if (logBuf== NULL)
@@ -436,9 +409,6 @@ int main(int argc, char** argv)
                         exit(1);
                     }
 
-                    /// Test print
-                    if (test == 1) {printf("Realloced...\n");}
-
                     if (sprintf(logBuf, "File %s is too big to read.\n", argv[i]) < 0)
                     {
                         perror("slog_sprintf_size");
@@ -449,9 +419,6 @@ int main(int argc, char** argv)
                         free(logBuf);
                         exit(1);
                     }
-
-                    /// Test print
-                    if (test == 1) {printf("Filled logBuf...\n");}
 
                     if (write(slogFD, logBuf, logLen) == INVALID)
                     {
@@ -465,9 +432,6 @@ int main(int argc, char** argv)
                     }
 
                     free(logBuf);
-
-                    /// Test print
-                    if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
                 }
                 else
                 {
@@ -526,12 +490,6 @@ int main(int argc, char** argv)
                         exit(1);
                     }
 
-                    /// Test print
-                    if (test == 1) {printf("File Read into memory.\n");}
-
-                    /// Test print
-                    if (test == 1) {printf("File Contents:\n%s\n",fBuf);}
-
                     // Loop to look for non-printable characters
                     for (j = 0; j < fileStat->st_size; j++)
                     {
@@ -545,9 +503,6 @@ int main(int argc, char** argv)
                         }
                         else
                         {
-                            /// Test print
-                            if (test == 1) {printf("Invalid character %d found.\n", (int) fBuf[j]);}
-
                             valid = INVALID;
                             break;
                         }
@@ -556,9 +511,6 @@ int main(int argc, char** argv)
                     // If all are printable
                     if (valid != INVALID)
                     {
-                        /// Test print
-                        if (test == 1) {printf("File is valid.\n");}
-
                         // Copy to spool
                         if (write(spoolFD, fBuf, fileStat->st_size) == INVALID)
                         {
@@ -571,9 +523,6 @@ int main(int argc, char** argv)
                             free(fBuf);
                             exit(1);
                         }
-
-                        /// Test print
-                        if (test == 1) {printf("Wrote to spool.\n");}
 
                         // Add filename to slog
                         logLen = SPOOLAD + strlen(argv[i]);
@@ -611,15 +560,9 @@ int main(int argc, char** argv)
                         }
 
                         free(logBuf);
-
-                        /// Test print
-                        if (test == 1) {printf("File %s added to slog.\n", argv[i]);}
                     }
                     else // If file cannot be spooled add to slog
                     {
-                        /// Test print
-                        if (test == 1) {printf("File %s is not valid.\n", argv[i]);}
-
                         logLen = FLCHERR + strlen(argv[i]);
                         logBuf = malloc(logLen * sizeof(char));
                         if (logBuf == NULL)
@@ -655,9 +598,6 @@ int main(int argc, char** argv)
                         }
 
                         free(logBuf);
-
-                        /// Test print
-                        if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
                     }
                     // Free file contents in memory
                     free(fBuf);
@@ -671,9 +611,6 @@ int main(int argc, char** argv)
     close(slogFD);
     close(spoolFD);
     free(fileStat);
-
-    /// Test print
-    if (test == 1) {printf("Spooling complete.\n");}
 
     exit(0);
 }
