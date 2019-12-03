@@ -500,6 +500,9 @@ int main(int argc, char** argv)
         }
         else
         {
+            /// Test print
+            if (test == 1) {printf("CheckFile: %d\n", checkFile(currFD, fileStat));}
+
             // Check if file is regular and get its stats
             if (checkFile(currFD, fileStat) == INVALID)
             {
@@ -507,6 +510,9 @@ int main(int argc, char** argv)
             }
             else
             {
+                /// Test print
+                if (test == 1) {printf("FileSize: %d\n", fileStat.st_size);}
+
                 // Check file size is less than MAXFILE
                 if (fileStat.st_size > MAXFILE)
                 {
@@ -543,6 +549,9 @@ int main(int argc, char** argv)
                         exit(1);
                     }
 
+                    /// Test print
+                    if (test == 1) {printf("Memory Allocated.\n");}
+
                     // Read entire file into memory
                     if (read(currFD, fBuf, fileStat.st_size) == INVALID)
                     {
@@ -553,6 +562,12 @@ int main(int argc, char** argv)
                         freeMem(NULL);
                         exit(1);
                     }
+
+                    /// Test print
+                    if (test == 1) {printf("File Read into memory.\n");}
+
+                    /// Test print
+                    if (test == 1) {printf("File Contents:\n%s\n",fBuf);}
 
                     // Loop to look for non-printable characters
                     for (j = 0; j < fileStat.st_size; j++)
@@ -567,14 +582,21 @@ int main(int argc, char** argv)
                         }
                         else
                         {
+                            /// Test print
+                            if (test == 1) {printf("Invalid character %d found.\n", (int) fBuf[j]);}
+
                             valid = INVALID;
                             break;
                         }
                     }
 
+
                     // If all are printable
                     if (valid != INVALID)
                     {
+                        /// Test print
+                        if (test == 1) {printf("File is valid.\n");}
+
                         // Copy to spool
                         if (write(spoolFD, fBuf, fileStat.st_size) == INVALID)
                         {
@@ -585,6 +607,9 @@ int main(int argc, char** argv)
                             freeMem(NULL);
                             exit(1);
                         }
+
+                        /// Test print
+                        if (test == 1) {printf("Wrote to spool.\n");}
 
                         // Add filename to slog
                         logLen = SPOOLAD + strlen(argv[i]);
@@ -607,11 +632,17 @@ int main(int argc, char** argv)
                             exit(1);
                         }
 
+                        /// Test print
+                        if (test == 1) {printf("File %s added to slog.\n", argv[i]);}
+
                         // Close current file descriptor
                         close(currFD);
                     }
                     else // If file cannot be spooled add to slog
                     {
+                        /// Test print
+                        if (test == 1) {printf("File is not valid.\n");}
+
                         logLen = FLOPERR + strlen(argv[i]);
                         if (reallocMem(logBuf, logLen) == INVALID)
                         {
@@ -623,6 +654,9 @@ int main(int argc, char** argv)
                         }
                         sprintf(logBuf, "File %s was not read.\n", argv[i]);
                         write(slogFD, logBuf, logLen);
+
+                        /// Test print
+                        if (test == 1) {printf("Logged invalid file %s.\n", argv[i]);}
                     }
                 }
             }
