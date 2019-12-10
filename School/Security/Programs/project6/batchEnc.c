@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-struct fdata{
+struct fdata {
   char name[20];
   unsigned short start;
   unsigned short end;
@@ -50,7 +50,9 @@ unsigned int pastWhite(int fd){
      return(ch);  //--- First non-blank character.
 
 }
-unsigned getFileList(struct fdata *fileList[], char *file){
+
+unsigned getFileList(struct fdata *fileList[], char *file)
+{
 
      char num[5];   //-- Temporary storage for text value of input offset
      int fctr;      //-- Number of segments to encrypt
@@ -120,6 +122,7 @@ START:
     if (ch==10) {fctr++;goto START;}
     return(-1);
 }
+
 int encryptFile(char *file, int start, int end)
 {
   char *plain;
@@ -141,6 +144,12 @@ int main(int argc, char *argv[]){
   int entries; 
   int i;
 
+  // Check input
+  if (argc != 2 || argc != 3)
+  {
+    printf("Invocation: batchEnc file start end or -f file.")
+    exit(1);
+  }
 
   //-- Create space for an array of structure pointers.
   //   Each array element points to information for encryption of one segment
