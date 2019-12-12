@@ -212,7 +212,28 @@ int encryptFile(char *file, int start, int end)
 #endif
   plain = malloc(sizeof(char) * (end - start));
   fd = open(file, O_RDWR);
-  read(fd, plain, end - start);
+  /// CHANGE: Error check open
+  if (fd == -1)
+  {
+    perror("encrypt_file_open");
+    return -1;
+  }
+
+  /// CHANGE: Error check read
+  if (read(fd, plain, end - start) == -1)
+  {
+    perror("encrypt_file_read");
+    close(fd);
+    return -1;
+  }
+
+  /// CHANGE: Error check close
+  if (close(fd) == -1)
+  {
+    perror("encrypt_file_close");
+    return -1;
+  }
+
   if (encryptWithPhrase(plain, file, end - start) == 1)
   {
     return -1;
