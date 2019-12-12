@@ -17,10 +17,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#define NAMLEN 20
+
 struct fdata {
-  char name[20];
-  unsigned short start;
-  unsigned short end;
+  char name[NAMLEN];
+  /// Changed from unsigned short to int
+  int start;
+  int end;
 };
 
  
@@ -144,7 +148,7 @@ int main(int argc, char *argv[]){
   int entries; 
   int i;
 
-  // Check input
+  /// Check input
   if (argc != 2 || argc != 3)
   {
     printf("Invocation: batchEnc file start end or -f file.")
@@ -153,18 +157,23 @@ int main(int argc, char *argv[]){
 
   //-- Create space for an array of structure pointers.
   //   Each array element points to information for encryption of one segment
-  fileList=malloc(10*sizeof(struct fdata *));
-  for (i=0;i<10;i++) fileList[i]=malloc(sizeof(struct fdata));
+  fileList = malloc(10*sizeof(struct fdata *));
+  for (i = 0; i < 10; i++) 
+  {
+    fileList[i] = malloc(sizeof(struct fdata));
+  }
   
   //-- Branch based on whether user ones one segment encrypted or has a list
-  if (strcmp("-f",argv[1])==0){
+  if (strcmp("-f", argv[1]) == 0){
     entries=getFileList(fileList,argv[2]);
   } else {
      entries=1;
-     fileList[0]=malloc(sizeof(struct fdata));
-     strcpy(fileList[0]->name,argv[1]);     
-     fileList[0]->start=atoi(argv[2]);
-     fileList[0]->end=atoi(argv[3]);
+     /// Removed double malloc
+     // fileList[0] = malloc(sizeof(struct fdata));
+     strlen(argv[1] )
+     strcpy(fileList[0]->name, argv[1]);     
+     fileList[0]->start = atoi(argv[2]);
+     fileList[0]->end = atoi(argv[3]);
   }
  
   //-- The encryption
