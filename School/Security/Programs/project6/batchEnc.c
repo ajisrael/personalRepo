@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
   uid_t euid = geteuid(); // EUID of current process
 
   /// CHANGE: Check input
-  if (argc != 2 || argc != 3)
+  if (!(argc == 2 || argc == 3))
   {
     printf("Invocation: batchEnc file start end or -f file.\n");
     exit(1);
