@@ -17,7 +17,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+/// CHANGE: Required library for secure core dump
+#include <sys/resource.h>
+#include <sys/time.h>
 /// CHANGE: Added for getuid() and geteuid() function calls
 #include <unistd.h>
 
