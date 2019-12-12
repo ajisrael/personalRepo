@@ -75,14 +75,14 @@ int unlockMemory(char *addr, size_t size)
 }
 
 /// CHANGE: Added function to set core dump to zero.
-int secureCoreDump()
+int secureCoreDumpRet()
 // -----------------------------------------------------------------------------
-// Name: secureCoreDump
+// Name: secureCoreDumpRet
 // Func: Sets the size of the core dump to zero.
 // Meth: Gets the current core settings, sets the current and max limit
 //       attributes to zero and sets that as the settings for the core.
 // Vars: plimits = Rlimit structure for getting and setting core attributes.
-// 			 status  = The status of the function. 0 = good, -1 = error occured.
+// Retn: status  = The status of the function. 0 = good, -1 = error occured.
 // -----------------------------------------------------------------------------
 {
         int status = 0; // status of function
@@ -218,7 +218,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
 
         /// CHANGE: Secure the core dump size to zero
         // Set core dump size to zero
-        if (secureCoreDump() == -1)
+        if (secureCoreDumpRet() == -1)
         {
                 perror("secure_core_dump");
                 free(phrase);
