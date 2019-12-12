@@ -223,7 +223,8 @@ int encryptFile(char *file, int start, int end)
 /// CHANGE: Easier way to free file list ptrs when handling errors
 void freeFileList(struct fdata **fileList)
 {
-  for (int i = 0; i < 10; i++)
+  int i = 0;
+  for (i = 0; i < 10; i++)
   {
     free(fileList[i]);
   }
@@ -244,8 +245,8 @@ int main(int argc, char *argv[])
   /// CHANGE: Check input
   if (argc != 2 || argc != 3)
   {
-    printf("Invocation: batchEnc file start end or -f file.")
-        exit(1);
+    printf("Invocation: batchEnc file start end or -f file.");
+    exit(1);
   }
 
   /// CHANGE: Set core dump size to zero
@@ -324,10 +325,10 @@ int main(int argc, char *argv[])
   else
   {
     entries = 1;
-    /// CHANGE: Removed double malloc
+    /// CHANGE: Removed double malloc and meaningless strlen
     /// fileList[0] = malloc(sizeof(struct fdata));
-    strlen(argv[1])
-        strcpy(fileList[0]->name, argv[1]);
+    /// strlen(argv[1]);
+    strcpy(fileList[0]->name, argv[1]);
     fileList[0]->start = atoi(argv[2]);
     fileList[0]->end = atoi(argv[3]);
   }
