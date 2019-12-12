@@ -277,19 +277,19 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         }
 
         /// CHANGE: Lock kkey into memory
-        if (lockMemory(kkey, sizeof(kkey))) == -1)
-                {
-                        perror("kkey_lockMemory");
-                        free(phrase);
-                        exit(1);
-                }
+        if (lockMemory(kkey, sizeof(kkey)) == -1)
+        {
+                perror("kkey_lockMemory");
+                free(phrase);
+                exit(1);
+        }
 
         /// CHANGE: Check all return codes of EVP calls
         if (EVP_DigestUpdate(&hctx, phrase, strlen(phrase)) == 0)
         {
                 perror("digest_update");
                 free(phrase);
-                free(hctx);
+                free(&hctx);
                 exit(1);
         }
         /* Won't include the string terminator*/
@@ -298,19 +298,19 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("digest_final");
                 free(phrase);
-                free(hctx);
+                free(&hctx);
                 exit(1);
         }
 
         /// CHANGE: Does not clean up or free hctx
-        if (EVP_MD_CTX_cleanup(hctx) == 0)
+        if (EVP_MD_CTX_cleanup(&hctx) == 0)
         {
                 perror("EVP_MD_CTX_cleanup");
                 free(phrase);
-                free(hctx);
+                free(&hctx);
                 exit(1);
         }
-        free(hctx);
+        free(&hctx);
 
         /// CHANGE: Setting phrase to zero in memory and unlock the memory
         if (unlockMemory(phrase, sizeof(char) * strlen(phrase)) == -1)
@@ -334,7 +334,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         }
 
         /// CHANGE: Error checking for unlock memory, and unlocking memory
-        if (unlockMemory(kkey, sizeof(kkey))) == -1)
+        if (unlockMemory(kkey, sizeof(kkey)) == -1)
                 {
                         perror("kkey_unlockMemory");
                         exit(1);
@@ -345,8 +345,8 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (ciphertext == NULL)
         {
                 perror("allocate_ciphertext");
-                EVP_MD_CTX_cleanup(ctx);
-                free(ctx);
+                EVP_MD_CTX_cleanup(&ctx);
+                free(&ctx);
                 exit(1);
         }
 
@@ -354,8 +354,8 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (encrypt_and_print(&ctx, fkey, BFKEYLEN,              /* Encrypt fkey output is */
                               ciphertext, &ctlen, stdout) == -1) /* ciphertext */
         {
-                EVP_MD_CTX_cleanup(ctx);
-                free(ctx);
+                EVP_MD_CTX_cleanup(&ctx);
+                free(&ctx);
                 exit(1);
         }
 
@@ -363,7 +363,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (EVP_CIPHER_CTX_cleanup(&ctx) == 0)
         {
                 perror("cleanup_ctx");
-                free(ctx);
+                free(&ctx);
                 exit(1);
         }
 
