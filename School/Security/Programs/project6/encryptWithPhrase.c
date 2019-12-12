@@ -289,7 +289,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("digest_update");
                 free(phrase);
-                free(&hctx);
+                
                 exit(1);
         }
         /* Won't include the string terminator*/
@@ -298,7 +298,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("digest_final");
                 free(phrase);
-                free(&hctx);
+                
                 exit(1);
         }
 
@@ -307,10 +307,10 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("EVP_MD_CTX_cleanup");
                 free(phrase);
-                free(&hctx);
+                
                 exit(1);
         }
-        free(&hctx);
+        
 
         /// CHANGE: Setting phrase to zero in memory and unlock the memory
         if (unlockMemory(phrase, sizeof(char) * strlen(phrase)) == -1)
@@ -346,7 +346,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("allocate_ciphertext");
                 EVP_CIPHER_CTX_cleanup(&ctx);
-                free(&ctx);
+                
                 exit(1);
         }
 
@@ -355,7 +355,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                               ciphertext, &ctlen, stdout) == -1) /* ciphertext */
         {
                 EVP_CIPHER_CTX_cleanup(&ctx);
-                free(&ctx);
+                
                 exit(1);
         }
 
@@ -363,7 +363,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (EVP_CIPHER_CTX_cleanup(&ctx) == 0)
         {
                 perror("cleanup_ctx");
-                free(&ctx);
+                
                 exit(1);
         }
 
@@ -460,21 +460,21 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
 
         //CHANGE: unlocking fkey in memory
         if (unlockMemory(fkey, sizeof(fkey)) == -1)
-                {
-                        perror("unlock Memory Error fkey");
-                        close(fde);
-                        exit(1);
-                }
+        {
+                perror("unlock Memory Error fkey");
+                close(fde);
+                exit(1);
+        }
 
         //CHANGE cleanup ctx again
         if (EVP_CIPHER_CTX_cleanup(&ctx) == 0)
         {
                 perror("cleanup_ctx");
-                free(&ctx);
+                
                 close(fde);
                 exit(1);
         }
-        free(&ctx);
+        
 
         /// CHANGE: Error checking write
         if (write(fde, ciphertext, ctlen) == -1)
