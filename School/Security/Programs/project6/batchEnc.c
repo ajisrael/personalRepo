@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
   /// CHANGE: Check input
   if (argc != 2 || argc != 3)
   {
-    printf("Invocation: batchEnc file start end or -f file.");
+    printf("Invocation: batchEnc file start end or -f file.\n");
     exit(1);
   }
 
