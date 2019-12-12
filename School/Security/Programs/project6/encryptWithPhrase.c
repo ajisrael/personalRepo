@@ -345,7 +345,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (ciphertext == NULL)
         {
                 perror("allocate_ciphertext");
-                EVP_MD_CTX_cleanup(&ctx);
+                EVP_CIPHER_CTX_cleanup(&ctx);
                 free(&ctx);
                 exit(1);
         }
@@ -354,7 +354,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (encrypt_and_print(&ctx, fkey, BFKEYLEN,              /* Encrypt fkey output is */
                               ciphertext, &ctlen, stdout) == -1) /* ciphertext */
         {
-                EVP_MD_CTX_cleanup(&ctx);
+                EVP_CIPHER_CTX_cleanup(&ctx);
                 free(&ctx);
                 exit(1);
         }
@@ -441,8 +441,8 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         /// CHANGE: Error checking of EVP funtion
         if (EVP_EncryptInit(&ctx, cipher, fkey, ivec) == 0) /* fkey to encrypt file */
         {
-                perror("encFile_encrypt_init")
-                    close(fde);
+                perror("encFile_encrypt_init");
+                close(fde);
                 exit(1);
         }
 
@@ -459,7 +459,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                           ciphertext, &ctlen, stdout); /* ciphertext */
 
         //CHANGE: unlocking fkey in memory
-        if (unlockMemory(fkey, sizeof(fkey))) == -1)
+        if (unlockMemory(fkey, sizeof(fkey)) == -1)
                 {
                         perror("unlock Memory Error fkey");
                         close(fde);
@@ -470,12 +470,11 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (EVP_CIPHER_CTX_cleanup(&ctx) == 0)
         {
                 perror("cleanup_ctx");
-                free(ctx);
+                free(&ctx);
                 close(fde);
                 exit(1);
         }
-
-        free(ctx);
+        free(&ctx);
 
         /// CHANGE: Error checking write
         if (write(fde, ciphertext, ctlen) == -1)
