@@ -89,7 +89,6 @@ class AdjMatrix:
         lines = packet.split('\n')
 
         # Separate first line to get source vertex and # of verticies
-        print("FirstLine:" + lines[0])
         line1 = lines[0].split(',')
         lines.remove(lines[0])
         self.sourceVertex = int(line1[0].strip())
@@ -104,11 +103,12 @@ class AdjMatrix:
         # Remove empty line
         lines.remove(lines[0])
         
+        self.matrix = [[0 for col in range(self.numVerticies)] for row in range(self.numVerticies)]
         # Loop through remaining lines
-        for i in range(len(lines)):
-            row = (lines[i].split(',')).strip()
+        for i in range(len(lines)-1):
+            row = (lines[i].split(','))
             for j in range(len(row)):
-                self.matrix[i][j].append(int(row[j]))
+                self.matrix[i][j] = int(row[j].strip())
 
 def initMatrix():
     # --------------------------------------------------------------------------
@@ -149,18 +149,19 @@ def initMatrix():
     if os.path.isfile(path):
         with open(fileName, 'r') as fileMatrix:
             matrix = AdjMatrix(str(fileMatrix.read()))
-            print("Packet :" + matrix.packet)
-            print("SourceV:" + matrix.sourceVertex)
-            print("NumVert:" + matrix.numVerticies)
-            print("IP Addr:" + matrix.ipAddrs)
-            print("Matrix :" + matrix.matrix)
+            if debug == 1:
+                print("Packet :" + str(matrix.packet))
+                print("SourceV:" + str(matrix.sourceVertex))
+                print("NumVert:" + str(matrix.numVerticies))
+                print("IP Addr:" + str(matrix.ipAddrs))
+                print("Matrix :" + str(matrix.matrix))
     else:
         erMsg = "adjMatrix: No such file."
         print(erMsg)
         adjMatrix = erMsg
     # --------------------------------------------------------------------------
 
-def connect():
+def connectRouter():
     #---------------------------------------------------------------------------
     # Func: Establishes TCP connection to router program
     # Vars: serverName   = Name of server (default = localhost)
@@ -189,7 +190,12 @@ def connect():
     #---------------------------------------------------------------------------
 
 # Initialize adjacency matrix:
+global debug 
+debug = 1
 initMatrix()
+
+# Connect to router
+connectRouter()
 
 # Periodically open TCP connection to routing program and send adjacency matrix:
 
