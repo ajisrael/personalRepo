@@ -234,16 +234,16 @@ int encryptFile(char *file, int start, int end)
     return -1;
   }
 
-	printf("Return: %d\n",encryptWithPhrase(plain,file,end-start));
-/*  if (encryptWithPhrase(plain, file, end - start) == 1)
+  /// CHANGE: Error check encryptWithPhrase
+  if (encryptWithPhrase(plain, file, end - start) == 1)
   {
     return -1;
   }
   else
- {*/
-free(plain);
-  return 0;
-// }
+  {
+    free(plain);
+    return 0;
+  }
 }
 
 /// CHANGE: Easier way to free file list ptrs when handling errors
