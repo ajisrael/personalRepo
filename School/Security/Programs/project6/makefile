@@ -1,7 +1,7 @@
 all: batchEnc
 
 batchEnc:  encryptWithPhrase.o batchEnc.o
-	gcc -g -o batchEnc batchEnc.o encryptWithPhrase.o -lcrypto
+	gcc -o batchEnc batchEnc.o encryptWithPhrase.o -lcrypto
 
 batchEnc.o: batchEnc.c encryptWithPhrase.h
 	gcc -c batchEnc.c
