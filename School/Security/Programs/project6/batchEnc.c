@@ -234,7 +234,7 @@ int encryptFile(char *file, int start, int end)
     return -1;
   }
 
-	encryptWithPhrase(plain,file,end-start);
+	printf("Return: %d\n",encryptWithPhrase(plain,file,end-start));
 /*  if (encryptWithPhrase(plain, file, end - start) == 1)
   {
     return -1;
