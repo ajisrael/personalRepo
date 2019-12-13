@@ -214,7 +214,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("clearenv");
                 free(phrase);
-		exit(1);
+		return 1;
         }
 
         /// CHANGE: Secure the core dump size to zero
@@ -223,7 +223,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("secure_core_dump");
                 free(phrase);
-                exit(1);
+                return 1;
         }
 
         /// CHANGE: Set the umask to prevent group and world bits from being set
@@ -234,7 +234,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 printf("root: ssp cannot be run as root.\n");
                 free(phrase);
-		exit(1);
+		return 1;
         }
 
         /* Generate the key -- may be more bytes than needed*/
@@ -244,7 +244,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("fkey_lockMemory");
                 free(phrase);
-                exit(1);
+                return 1;
         }
 
         /* Get the passphrase. Will run digest over this to produce key */
@@ -265,7 +265,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("phrase_lockMemory");
                 free(phrase);
-                exit(1);
+                return 1;
         }
 	
 
@@ -276,7 +276,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("digest_init");
                 free(phrase);
-                exit(1);
+                return 1;
         }
 
         /// CHANGE: Lock kkey into memory
@@ -284,7 +284,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("kkey_lockMemory");
                 free(phrase);
-                exit(1);
+                return 1;
         }
 
         /// CHANGE: Check all return codes of EVP calls
@@ -293,7 +293,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 perror("digest_update");
                 free(phrase);
                 
-                exit(1);
+                return 1;
         }
         /* Won't include the string terminator*/
 
@@ -302,7 +302,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 perror("digest_final");
                 free(phrase);
                 
-                exit(1);
+                return 1;
         }
 
         /// CHANGE: Does not clean up or free hctx
@@ -311,7 +311,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 perror("EVP_MD_CTX_cleanup");
                 free(phrase);
                 
-                exit(1);
+                return 1;
         }
         
 
@@ -320,7 +320,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("phrase_unlockMemory");
                 free(phrase);
-                exit(1);
+                return 1;
         }
 
 
@@ -335,14 +335,14 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (EVP_EncryptInit(&ctx, cipher, kkey, ivec) == 0) /* Kkey to encrypt kfile */
         {
                 perror("kFile_encrypt_init");
-                exit(1);
+                return 1;
         }
 
         /// CHANGE: Error checking for unlock memory, and unlocking memory
         if (unlockMemory(kkey, sizeof(kkey)) == -1)
                 {
                         perror("kkey_unlockMemory");
-                        exit(1);
+                        return 1;
                 }
 
         ciphertext = allocate_ciphertext(BFKEYLEN);
@@ -352,7 +352,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 perror("allocate_ciphertext");
                 EVP_CIPHER_CTX_cleanup(&ctx);
                 
-                exit(1);
+                return 1;
         }
 
         /// CHANGE: check encrypt_and_print return codes
@@ -361,7 +361,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 EVP_CIPHER_CTX_cleanup(&ctx);
 		free(ciphertext);                
-                exit(1);
+                return 1;
         }
 
         //CHANGE: Moved ctx cleanup higher up
@@ -370,7 +370,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("cleanup_ctx");
          	free(ciphertext);       
-                exit(1);
+                return 1;
         }
 	
 
@@ -383,7 +383,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("keyFile_malloc");
                 free(ciphertext);
-		exit(1);
+		return 1;
         }
 
         strcpy(keyFile, file);
@@ -397,7 +397,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 perror("keyFile_open");
                 free(keyFile);
 		free(ciphertext);
-                exit(1);
+                return 1;
         }
 
         /// CHANGE: Free keyFile
@@ -409,14 +409,14 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 perror("keyFile_write");
                 close(fdk);
                 free(ciphertext);
-		exit(1);
+		return 1;
         }
 
         /// CHANGE: Error checking of close
         if (close(fdk) == -1)
         {
                 perror("keyFile_close");
-                exit(1);
+                return 1;
         }
 
 	free(ciphertext);
@@ -427,7 +427,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (encFile == NULL)
         {
                 perror("encFile_malloc");
-                exit(1);
+                return 1;
         }
 
         strcpy(encFile, file);
@@ -440,7 +440,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("encFile_open");
                 free(encFile);
-                exit(1);
+                return 1;
         }
 
         /// CHANGE: Free encFile
@@ -453,7 +453,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("encFile_encrypt_init");
                 close(fde);
-                exit(1);
+                return 1;
         }
 
         ciphertext = allocate_ciphertext(size + 1);
@@ -463,7 +463,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("encFile_allocate_ciphertext");
                 close(fde);
-                exit(1);
+                return 1;
         }
         encrypt_and_print(&ctx, plaintext, size,
                           ciphertext, &ctlen, stdout); /* ciphertext */
@@ -474,7 +474,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 perror("unlock Memory Error fkey");
                 close(fde);
                 free(ciphertext);
-		exit(1);
+		return 1;
         }
 
      
@@ -484,7 +484,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 perror("cleanup_ctx");
          	free(ciphertext);       
                 close(fde);
-                exit(1);
+                return 1;
         }
         
         /// CHANGE: Error checking write
@@ -493,7 +493,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 perror("writing ciphertext");
                 free(ciphertext);
 		close(fde);
-                exit(1);
+                return 1;
         }
 
         /// CHANGE: Error chekcing Close
@@ -501,7 +501,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("closing fde");
                 free(ciphertext);
-		exit(1);
+		return 1;
         }
 	free(ciphertext);
         /// CHANGE: Exit status okay
