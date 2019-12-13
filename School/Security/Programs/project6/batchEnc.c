@@ -58,8 +58,8 @@ void secureCoreDump()
   }
 }
 
-/// CHANGE: Changed from unsigned int to char
-char pastWhite(int fd)
+/// CHANGE: Changed from unsigned int to int
+int pastWhite(int fd)
 {
   char ch;
   int ret;
@@ -69,7 +69,7 @@ char pastWhite(int fd)
   if (ret == 0)
     return (0);
   if (ret < 0)
-    return (-1);
+    return (2); /// CHANGE: From -1 to 2 b/c return value is type char
 
   //-- Past whitespace.  Stop if hit EOF or on error.
   for (; ch == 32 || ch == 9; ret = read(fd, &ch, 1))
@@ -77,7 +77,7 @@ char pastWhite(int fd)
     if (ret == 0)
       return (0);
     if (ret < 0)
-      return (-1);
+      return (2); /// CHANGE: From -1 to 2 b/c return value is type char
   }
 
   //--- Read some non-blank character.
@@ -116,7 +116,8 @@ START:
   ch = pastWhite(fd);
   if (ch == 0)
     return (fctr); //-- Last line blank without '\n'
-  if (ch < 0)
+  /// CHANGE: Compares to 2 b/c ch is of type char not int
+  if (ch == 2)
     return (-1); //-- Error
   if (ch == 1)
     return (fctr); //-- Last line blank with '\n'
@@ -137,7 +138,8 @@ START:
   ch = pastWhite(fd);
   if (ch == 0)
     return (-2); //-- EOF too soon
-  if (ch < 0)
+  /// CHANGE: Compares to 2 b/c ch is of type char not int
+  if (ch == 2)
     return (-3); //-- Error
   if (ch == 1)
     return (-4); //-- Line return too soon
@@ -189,7 +191,8 @@ START:
     exit(1);
   }
 
-  if (ch < 0)
+  /// CHANGE: Compares to 2 b/c ch is of type char not int
+  if (ch == 2)
     return (-1);
   if (read(fd, &ch, 1) == 0)
     return (fctr);
