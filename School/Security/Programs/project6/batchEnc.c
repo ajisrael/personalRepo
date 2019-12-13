@@ -196,6 +196,7 @@ START:
   /// CHANGE: Compares to 2 b/c ch is of type char not int
   if (ch == 2)
     return (-1);
+  printf("FD: %d\n", fd);
   red = read(fd, &ch, 1);
   if (red == 0)
     return (fctr);
