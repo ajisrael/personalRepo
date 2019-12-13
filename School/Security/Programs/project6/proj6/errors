@@ -1,0 +1,143 @@
+Errors found and fixed Project 6 CS 4471
+Programmers:
+Chris Holmes
+Alex Israels
+Collin Palmer
+
+batchEnc.c
+
+fdata struct
+- changed fdata struct start and end to int instead of unsigned short because atoi
+returns an int and atoi was used to fill these values
+- added a global variable for the length of the name called NAMLEN to make sure
+it cannot be overwritten by a buffer overflow
+
+Coredump function
+- Added and called a function to set the coredump size to zero
+
+pastWhite function
+- Changed pastWhite to return a char because it was returning values that 
+were in char range except when it returned -1 which we changed to return 2
+
+checkFile function
+- added function to check the start offset isnt above or equal to the end offset
+if this happens then it will not encrypt this file.
+- verifies the start offset isnt greater than the file if it is then it sets it to zero
+- verifies the end offset isnt greater than the length of the file if it is then it sets 
+the offset to the file length
+
+getFileList function
+- changed file permission in getFileList function so that the file descriptor fd was 
+opened with O_RDONLY and O_NOFOLLOW only
+- checked return code of open call for fd
+
+Encryptfile function
+- check return code of open for fd in encryptFile function
+- check return code for error of read call 
+- check return code for close of fd file descriptor
+- check return code for encryptWithPhrase
+- freed plain
+
+freeFileList
+- added a function to free the memory malloc'd for fileList
+
+main function 
+- checked the uid and euid to make sure the program was not executed as root
+- called function to set coredump to zero
+- checked to make sure the program was called with either 3 or 4 arguments
+- called clearenv to make sure the enviroment was cleared before execution of the program
+- check return code for clearenv for errors
+- set umask to 077 to protect against world and group user bits being set by files created
+by the program
+- Added a switch statement to check return codes of the getFileList function to decide what
+message to supply to the user
+- Removed a double malloc on fileList[0] 
+- removed meaningless call of strlen on argv[1] as it was never store to a variable
+- Free fileList
+- exit with a 0 if everything goes well
+- check return code of call o checkFile function for errors 
+- No memory leaks
+
+
+ENCRYPTWITHPHRASE.c
+
+lockMemory
+- Added function for locking things into memory
+
+unlockMemory
+- set memory to zero using memset
+- Added function for unlocking things in memory
+
+secureCoreDumpRet
+- Added function for setting core dump to zero
+
+initialize_key
+- changed the seed for srand from 10 to the current time so the attacker can't guess the
+random value
+
+encrypt_and_print
+- changed the return value to int so that errors can be checked in encryptWithPhrase
+- Added a variable called status to be used as the detector of errors when returning 
+from this function
+- checked return code for EVP_EncryptUpdate
+- checked return code for EVP_EncryptFinal
+
+encryptWithPhrase function
+- added a default size for passphrase variable called psize set to 80
+- malloc'd out phrase instead of static size
+- called clearenv to clear the environment
+- check return code of clearenv for errors
+- checked the uid and euid to make sure the program was not run as root
+- called secureCoreDumpRet function to set core dump size to zero
+- checked return code of secureCoreDumpRet for errors
+- set umask to 077 
+- lock fkey in memory and check return code of lockmemory for errors
+- changed how the passphrase is collected away from gets to scanf and reallocing phrase 
+when needed
+- locking the phrase in memory and checking the return code of lock memory for errors
+- Checked return code of EVP_DigestInit freed memory and reported error if there was an error
+- locked kkey in memory and checked return code of lockmemory for errors
+-  checked return code of EVP_DigestUpdate for errors
+- checked EVP_DigestFinal return code for errrors
+- ran EVP_MD_CTX_cleanup on hctx and checked return codes for errors
+- unlocked the memory that held phrase
+- freed phrase
+- check return code of EVP_EncryptInit for errors
+- unlocking the memory containing kkey which also sets the memory to zero
+- check the return from allocated_ciphertext with NULL to make sure ciphertext got malloc'd
+- checked return code of encrypt_and_print function for errors
+- ran EVP_CIPHER_CTX_cleanup on ctx before second use of ctx 
+and checked return code for errors
+- checked return of mallocing keyfile to make there were no errors when mallocing keyfile
+- checked return of open call for fdk to check for errors
+- freed keyfile
+- check return value of write call to fdk for errors
+- closed fdk and check return code for errors
+- freed ciphertext
+- checked return of malloc of encfile to check for errors in mallocing process
+- checked return code for open call on fde to check for errors
+- freed encFile
+- checked return code for second use of EVP_EncryptInit for errors
+- checked return value for allocated_ciphertext of ciphertext for the second time
+- checked the return code for the second use of encrypt_and_print for errors
+- unlocked fkey from memory by calling unlockMemory function which also sets it zero 
+and checked return code for errors
+- called EVP_CIPHER_CTX_cleanup on ctx for a second time and checked return code for errors
+- checked return code of write to fde for errors
+- closed fde and checked return code for errors
+- freed ciphertext
+- added return of 0 if everything went well.
+- No memory leaks
+
+
+
+
+
+
+
+
+
+
+
+
+
