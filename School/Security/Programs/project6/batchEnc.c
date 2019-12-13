@@ -92,7 +92,7 @@ int checkFile(char *name, struct stat *fStats, int * start, int * end)
 
   if (*end > fStats->st_size)
   {
-    printf("Ending offset of %s was < 0, value set to %d.\n", name, fStats->st_size);
+    printf("Ending offset of %s was greater than size of file, value set to %d.\n", name, fStats->st_size);
     *end = fStats->st_size;
   }
 
@@ -455,7 +455,7 @@ int main(int argc, char *argv[])
       free(fileStat);
       exit(1);
     }
-    if (fileCheck == 1)  // Check for improper invocation
+    if (fileCheck == -1)  // Check for improper invocation
     {
       continue;
     }
