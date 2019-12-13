@@ -447,7 +447,7 @@ int main(int argc, char *argv[])
   for (i = 0; i < entries; i++)
   {
     /// CHANGE: Checking input parameters to encrypt file.
-    fileCheck = checkFile(fileList[i]->name, fileList[i]->start, fileList[i]->end);
+    fileCheck = checkFile(fileList[i]->name, fileStat, &fileList[i]->start, &fileList[i]->end);
     if (fileCheck == -2)  // Check for error of a function call
     {
       freeFileList(fileList);
