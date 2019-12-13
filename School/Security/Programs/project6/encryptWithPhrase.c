@@ -63,7 +63,7 @@ int unlockMemory(char *addr, size_t size)
         unsigned long page_size;   // Page size of system
 
         // Clear variable to NULL
-        bzero(addr, size);
+        memset(addr,0,size);
 
         // Set page size and offset
         page_size = sysconf(_SC_PAGE_SIZE);
@@ -104,18 +104,18 @@ int secureCoreDumpRet()
 }
 
 /// POTCHANGE: May need this if the other one is not secure
-// void initializeKey(unsigned char *key , int length)
-// {
-// 	FILE * rng;
-// 	int num=0;
-// 	rng = fopen("/dev/urandom","r");
-// 	while(num<length)
-// 	{
-// 		num+= fread(&key[num],1,length-num,rng);
-// 	}
-// 	fclose(rng);
-// }
-
+/* void initialize_key(unsigned char *key , int length)
+ {
+ 	FILE * rng;
+ 	int num=0;
+ 	rng = fopen("/dev/urandom","r");
+ 	while(num<length)
+ 	{
+ 		num+= fread(&key[num],1,length-num,rng);
+ 	}
+ 	fclose(rng);
+ }
+*/
 void initialize_key(unsigned char *key, int length)
 {
         int more;
@@ -202,7 +202,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         int ctlen;                 /* Length of ciphertext */
 
         /// CHANGE: malloc instead of static size (starts at 80)
-        char *phrase = malloc(sizeof(char) * size);
+        char *phrase = malloc(sizeof(char) * psize);
         int namelen;
 
         /// CHANGE: get uids of current process for preventing root from running
@@ -213,7 +213,8 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (clearenv() != 0)
         {
                 perror("clearenv");
-                exit(1);
+                free(phrase);
+		exit(1);
         }
 
         /// CHANGE: Secure the core dump size to zero
@@ -232,7 +233,8 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (euid == 0 || uid == 0)
         {
                 printf("root: ssp cannot be run as root.\n");
-                exit(1);
+                free(phrase);
+		exit(1);
         }
 
         /* Generate the key -- may be more bytes than needed*/
@@ -265,6 +267,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 free(phrase);
                 exit(1);
         }
+	
 
         /* Compute the digest. Output is the key key.*/
 
@@ -320,8 +323,10 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 exit(1);
         }
 
+
         /// CHANGE: Freeing phrase
         free(phrase);
+
 
         /* Encrypt key */
         cipher = (EVP_CIPHER *)EVP_bf_cbc(); /* Blowfish CBC mode */
@@ -355,17 +360,19 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                               ciphertext, &ctlen, stdout) == -1) /* ciphertext */
         {
                 EVP_CIPHER_CTX_cleanup(&ctx);
-                
+		free(ciphertext);                
                 exit(1);
         }
 
         //CHANGE: Moved ctx cleanup higher up
-        if (EVP_CIPHER_CTX_cleanup(&ctx) == 0)
+      	
+	  if (EVP_CIPHER_CTX_cleanup(&ctx) == 0)
         {
                 perror("cleanup_ctx");
-                
+         	free(ciphertext);       
                 exit(1);
         }
+	
 
         /* Write encrypted key to file */
         namelen = strlen(file) + strlen(".key") + 1;
@@ -375,12 +382,13 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (keyFile == NULL)
         {
                 perror("keyFile_malloc");
-                exit(1);
+                free(ciphertext);
+		exit(1);
         }
 
         strcpy(keyFile, file);
         strcat(keyFile, ".key");
-        keyFile[namelen - 1] = 0;
+        
 
         fdk = open(keyFile, O_CREAT | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
         /// CHANGE: Error checking of open
@@ -388,6 +396,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("keyFile_open");
                 free(keyFile);
+		free(ciphertext);
                 exit(1);
         }
 
@@ -399,7 +408,8 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("keyFile_write");
                 close(fdk);
-                exit(1);
+                free(ciphertext);
+		exit(1);
         }
 
         /// CHANGE: Error checking of close
@@ -409,6 +419,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 exit(1);
         }
 
+	free(ciphertext);
         namelen = strlen(file) + strlen(".key") + 1;
         encFile = malloc(namelen);
 
@@ -421,8 +432,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
 
         strcpy(encFile, file);
         strcat(encFile, ".enc");
-        encFile[namelen - 1] = 0;
-
+        
         fde = open(encFile, O_CREAT | O_TRUNC | O_WRONLY | O_NOFOLLOW | O_APPEND, S_IRUSR | S_IWUSR);
 
         /// CHANGE: Error checking of open
@@ -463,24 +473,26 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         {
                 perror("unlock Memory Error fkey");
                 close(fde);
-                exit(1);
+                free(ciphertext);
+		exit(1);
         }
 
-        //CHANGE cleanup ctx again
-        if (EVP_CIPHER_CTX_cleanup(&ctx) == 0)
+     
+	   //CHANGE cleanup ctx again   
+      if (EVP_CIPHER_CTX_cleanup(&ctx) == 0)
         {
                 perror("cleanup_ctx");
-                
+         	free(ciphertext);       
                 close(fde);
                 exit(1);
         }
         
-
         /// CHANGE: Error checking write
         if (write(fde, ciphertext, ctlen) == -1)
         {
                 perror("writing ciphertext");
-                close(fde);
+                free(ciphertext);
+		close(fde);
                 exit(1);
         }
 
@@ -488,9 +500,10 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         if (close(fde) == -1)
         {
                 perror("closing fde");
-                exit(1);
+                free(ciphertext);
+		exit(1);
         }
-
+	free(ciphertext);
         /// CHANGE: Exit status okay
         exit(0);
 }

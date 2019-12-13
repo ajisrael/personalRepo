@@ -234,11 +234,16 @@ int encryptFile(char *file, int start, int end)
     return -1;
   }
 
-  if (encryptWithPhrase(plain, file, end - start) == 1)
+	encryptWithPhrase(plain,file,end-start);
+/*  if (encryptWithPhrase(plain, file, end - start) == 1)
   {
     return -1;
   }
+  else
+ {*/
+free(plain);
   return 0;
+// }
 }
 
 /// CHANGE: Easier way to free file list ptrs when handling errors
@@ -264,7 +269,7 @@ int main(int argc, char *argv[])
   uid_t euid = geteuid(); // EUID of current process
 
   /// CHANGE: Check input
-  if (!(argc == 2 || argc == 3))
+  if (!(argc == 3 || argc == 4))
   {
     printf("Invocation: batchEnc file start end or -f file.\n");
     exit(1);
