@@ -187,12 +187,6 @@ START:
   lseek(fd, lseek(fd, 0, SEEK_CUR) - 1, SEEK_SET);
   ch = pastWhite(fd);
 
-  if (close(fd) == -1)
-  {
-    perror("fileList_close");
-    exit(1);
-  }
-
   /// CHANGE: Compares to 2 b/c ch is of type char not int
   if (ch == 2)
     return (-1);
@@ -207,6 +201,13 @@ START:
     fctr++;
     goto START;
   }
+
+  if (close(fd) == -1)
+  {
+    perror("fileList_close");
+    exit(1);
+  }
+
   return (-1);
 }
 
