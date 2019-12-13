@@ -313,7 +313,7 @@ int main(int argc, char *argv[])
     switch (entries)
     {
     case -1:
-      perror("ch < 1");
+      //perror("ch < 1");
       freeFileList(fileList);
       exit(1);
       break;
