@@ -461,8 +461,15 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 close(fde);
                 return 1;
         }
-        encrypt_and_print(&ctx, plaintext, size,
-                          ciphertext, &ctlen, stdout); /* ciphertext */
+
+        /// CHANGE: check encrypt_and_print return codes
+        if (encrypt_and_print(&ctx, plaintext, size,              /* Encrypt fkey output is */
+                              ciphertext, &ctlen, stdout) == -1) /* ciphertext */
+        {
+                EVP_CIPHER_CTX_cleanup(&ctx);
+		free(ciphertext);                
+                return 1;
+        }
 
         //CHANGE: unlocking fkey in memory
         if (unlockMemory(fkey, sizeof(fkey)) == -1)

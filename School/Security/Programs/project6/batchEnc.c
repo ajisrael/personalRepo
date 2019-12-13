@@ -444,6 +444,7 @@ int main(int argc, char *argv[])
 
   //-- The encryption
   /// CHANGE: Freeing file list on error
+  fileStat = malloc(sizeof(struct stat));
   for (i = 0; i < entries; i++)
   {
     /// CHANGE: Checking input parameters to encrypt file.
@@ -451,6 +452,7 @@ int main(int argc, char *argv[])
     if (fileCheck == -2)  // Check for error of a function call
     {
       freeFileList(fileList);
+      free(fileStat);
       exit(1);
     }
     if (fileCheck == 1)  // Check for improper invocation
@@ -460,11 +462,13 @@ int main(int argc, char *argv[])
     if (encryptFile(fileList[i]->name, fileList[i]->start, fileList[i]->end) == -1)
     {
       freeFileList(fileList);
+      free(fileStat);
       exit(1);
     }
   }
-  /// CHANGE: freeing filelist
+  /// CHANGE: freeing filelist and fileStat
   freeFileList(fileList);
+  free(fileStat);
 
   /// CHANGE: exit with good code
   exit(0);
