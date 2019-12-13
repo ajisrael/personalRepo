@@ -101,6 +101,8 @@ int getFileList(struct fdata *fileList[], char *file)
   char ch;     //-- Store a character while handling
   int ret;     //-- Return status
 
+  int red = 0;
+
   nctr = 0;
   fctr = 0;
   /// CHANGE: O_RDWR to O_RDONLY remove O_CREAT  added O_NOFOLLOW
@@ -194,8 +196,11 @@ START:
   /// CHANGE: Compares to 2 b/c ch is of type char not int
   if (ch == 2)
     return (-1);
-  if (read(fd, &ch, 1) == 0)
+  red = read(fd, &ch, 1)
+  if ( red == 0)
     return (fctr);
+  if ( red == -1)
+    return (-4)
   if (ch == 10)
   {
     fctr++;
