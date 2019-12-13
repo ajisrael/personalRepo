@@ -252,7 +252,7 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         /// CHANGE: Make sure passphrase isn't less than 3 characters
         if (strlen(phrase) < 3)
         {
-                printf("Invocation: Passphrase needs to be at least 3 characters long.\n")
+                printf("Invocation: Passphrase needs to be at least 3 characters long.\n");
                 free(phrase);
                 return 1;
         }
