@@ -237,6 +237,7 @@ int encryptFile(char *file, int start, int end)
   /// CHANGE: Error check encryptWithPhrase
   if (encryptWithPhrase(plain, file, end - start) == 1)
   {
+    free(plain);
     return -1;
   }
   else
