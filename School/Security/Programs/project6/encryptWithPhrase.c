@@ -103,19 +103,6 @@ int secureCoreDumpRet()
         return status;
 }
 
-/// POTCHANGE: May need this if the other one is not secure
-/* void initialize_key(unsigned char *key , int length)
- {
- 	FILE * rng;
- 	int num=0;
- 	rng = fopen("/dev/urandom","r");
- 	while(num<length)
- 	{
- 		num+= fread(&key[num],1,length-num,rng);
- 	}
- 	fclose(rng);
- }
-*/
 void initialize_key(unsigned char *key, int length)
 {
         int more;
@@ -123,6 +110,7 @@ void initialize_key(unsigned char *key, int length)
         int done;
         int left;
 
+        /// CHANGE: Random seed for srand
         srand(time(NULL));
 
         intsize = sizeof(int);
@@ -260,6 +248,14 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
                 read++;
         }
         phrase[read - 2] = '\0';
+
+        /// CHANGE: Make sure passphrase isn't less than 3 characters
+        if (strlen(phrase) < 3)
+        {
+                printf("Invocation: Passphrase needs to be at least 3 characters long.\n")
+                free(phrase);
+                return 1;
+        }
 
         if (lockMemory(phrase, sizeof(char) * strlen(phrase)) == -1)
         {

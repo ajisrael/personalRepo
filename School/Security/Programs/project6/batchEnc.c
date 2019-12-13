@@ -33,6 +33,79 @@ struct fdata
   int end;
 };
 
+/// CHANGE: Function added to check a file
+int checkFile(char *name, struct stat *fStats, int * start, int * end)
+//------------------------------------------------------------------------------
+// Name: checkFile
+// Func: Checks a file to make sure it is valid to be encrypted.
+// Meth: Calls fstat on the file and sets valid to -2 if the call failed and -1
+//       if the file is not regular. Otherwise valid stays at 0. It also checks
+//       to make sure the program is not trying to encrypt beyond the size of
+//       the file.
+// Args: fd     = File descriptor for file to be checked.
+//       fStats = Struct for getting metadata of a file.
+//       max    = Furthest point in file trying to be encrypted
+// Retn: valid  = Status of the file, if it can be spooled or not.
+//        0 = File is valid.
+//       -1 = File is invalid.
+//       -2 = Fstat() errored in some way.
+//------------------------------------------------------------------------------
+{
+  int valid = 0; // Satus of validity of a file
+  int fd = 0;    // file descriptor of file name
+
+  // Get the file discriptor
+  fd = open(name, O_RDONLY | O_NOFOLLOW);
+  if (fd == -1)
+  {
+    perror("open");
+    valid = -2;
+  }
+
+  // Get file stats
+  if (fstat(fd, fStats) == -1)
+  {
+    perror("fstat");
+    valid = -2;
+  }
+
+  // Close file descriptor
+  if (close(fd) == -1)
+  {
+    perror("close");
+    valid = -2;
+  }
+
+  // Check if not regular
+  if (!(S_ISREG(fStats->st_mode)))
+  {
+    printf("File Type: File %s is not a regular file. File %s will not be encrypted.\n", name, name);
+    valid = -1;
+  }
+
+  // Make sure to not encrypt beyond the size of a file
+  if (*start < 0)
+  {
+    printf("Starting offset of %s was < 0, value set to 0.\n", name);
+    *start = 0;
+  }
+
+  if (*end > fStats->st_size)
+  {
+    printf("Ending offset of %s was < 0, value set to %d.\n", name, fStats->st_size);
+    *end = fStats->st_size;
+  }
+
+  // Check for when start is greater or equal to end
+  if (*start >= *end)
+  {
+    printf("Invocation: For file %s start >= end. File %s will not be encrypted.\n", name, name);
+    valid = -1;
+  }
+
+  return valid;
+}
+
 /// CHANGE: Added function to set core dump to zero.
 void secureCoreDump()
 // -----------------------------------------------------------------------------
@@ -265,6 +338,9 @@ void freeFileList(struct fdata **fileList)
 
 int main(int argc, char *argv[])
 {
+  /// CHANGE: Get stats of files for error checking
+  struct stat * fileStat = NULL;  // Ptr to stat structure of a file
+  int fileCheck = 0; // Return status of checkFile()
 
   struct fdata **fileList;
   int entries;
@@ -360,6 +436,7 @@ int main(int argc, char *argv[])
     /// CHANGE: Removed double malloc and meaningless strlen
     /// fileList[0] = malloc(sizeof(struct fdata));
     /// strlen(argv[1]);
+
     strcpy(fileList[0]->name, argv[1]);
     fileList[0]->start = atoi(argv[2]);
     fileList[0]->end = atoi(argv[3]);
@@ -369,6 +446,17 @@ int main(int argc, char *argv[])
   /// CHANGE: Freeing file list on error
   for (i = 0; i < entries; i++)
   {
+    /// CHANGE: Checking input parameters to encrypt file.
+    fileCheck = checkFile(fileList[i]->name, fileList[i]->start, fileList[i]->end);
+    if (fileCheck == -2)  // Check for error of a function call
+    {
+      freeFileList(fileList);
+      exit(1);
+    }
+    if (fileCheck == 1)  // Check for improper invocation
+    {
+      continue;
+    }
     if (encryptFile(fileList[i]->name, fileList[i]->start, fileList[i]->end) == -1)
     {
       freeFileList(fileList);
