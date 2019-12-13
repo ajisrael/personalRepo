@@ -505,5 +505,5 @@ int encryptWithPhrase(char *plaintext, char *file, int size)
         }
 	free(ciphertext);
         /// CHANGE: Exit status okay
-        exit(0);
+        return 0;
 }
