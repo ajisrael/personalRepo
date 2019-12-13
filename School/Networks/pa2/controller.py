@@ -92,18 +92,18 @@ class AdjMatrix:
         line1 = lines[0].split(',')
         lines.remove(lines[0])
         self.sourceVertex = int(line1[0].strip())
-        self.numVerticies = int(line1[1].strip())
+        self.numVertices = int(line1[1].strip())
 
-        # Loop through next <numVerticies> # of lines to build ipAddrs
+        # Loop through next <numVertices> # of lines to build ipAddrs
         self.ipAddrs = []
-        for i in range(self.numVerticies):
+        for i in range(self.numVertices):
             self.ipAddrs.append((lines[0].split('='))[1].strip())
             lines.remove(lines[0])
 
         # Remove empty line
         lines.remove(lines[0])
         
-        self.matrix = [[0 for col in range(self.numVerticies)] for row in range(self.numVerticies)]
+        self.matrix = [[0 for col in range(self.numVertices)] for row in range(self.numVertices)]
         # Loop through remaining lines
         for i in range(len(lines)-1):
             row = (lines[i].split(','))
@@ -149,19 +149,21 @@ def initMatrix():
     if os.path.isfile(path):
         with open(fileName, 'r') as fileMatrix:
             matrix = AdjMatrix(str(fileMatrix.read()))
-            if debug == 1:
+            if debug:
                 print("Packet :" + str(matrix.packet))
                 print("SourceV:" + str(matrix.sourceVertex))
-                print("NumVert:" + str(matrix.numVerticies))
+                print("NumVert:" + str(matrix.numVertices))
                 print("IP Addr:" + str(matrix.ipAddrs))
                 print("Matrix :" + str(matrix.matrix))
     else:
         erMsg = "adjMatrix: No such file."
         print(erMsg)
-        adjMatrix = erMsg
+        matrix = erMsg
+
+    return matrix
     # --------------------------------------------------------------------------
 
-def connectRouter():
+def connectRouter(matrix):
     #---------------------------------------------------------------------------
     # Func: Establishes TCP connection to router program
     # Vars: serverName   = Name of server (default = localhost)
@@ -175,10 +177,10 @@ def connectRouter():
     # Open Socket
     clientSocket = socket(AF_INET, SOCK_STREAM)
     clientSocket.connect((serverName, serverPort))
-    print("Connected to " + serverName + ":" + serverPort)
+    print("Connected to " + serverName + ":" + str(serverPort))
 
     # Send request for startup flow table (ADD 0)
-    command = matrix.matrix
+    command = matrix.packet
     clientSocket.send(command.encode())
 
     # Load and print welcome response
@@ -191,11 +193,11 @@ def connectRouter():
 
 # Initialize adjacency matrix:
 global debug 
-debug = 1
-initMatrix()
+debug = True
+matrix = initMatrix()
 
 # Connect to router
-connectRouter()
+routerSocket = connectRouter(matrix)
 
 # Periodically open TCP connection to routing program and send adjacency matrix:
 

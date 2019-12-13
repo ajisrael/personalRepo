@@ -8,11 +8,11 @@
 # Meth: Initializes the adjMatrix from a packet by spliting the lines of the 
 #       packet and assinging the correct values to variables tied to the object.
 ################################################################################
-class adjMatrix:
+class AdjMatrix:
     def __init__(self, packet):
         self.packet = packet
         # Separate lines in Adjacency Matrix Packet:
-        lines = packet.splitLines()
+        lines = packet.split('\n')
 
         # Separate first line to get source vertex and # of verticies
         line1 = lines[0].split(',')
@@ -23,13 +23,15 @@ class adjMatrix:
         # Loop through next <numVerticies> # of lines to build ipAddrs
         self.ipAddrs = []
         for i in range(self.numVerticies):
-            self.ipAddrs.append((lines[i].split('=').strip())[1])
+            self.ipAddrs.append((lines[0].split('='))[1].strip())
+            lines.remove(lines[0])
 
-        # Remove lines with ipAddrs and empty line
-        lines.remove(range(self.numVerticies + 1))
+        # Remove empty line
+        lines.remove(lines[0])
         
+        self.matrix = [[0 for col in range(self.numVerticies)] for row in range(self.numVerticies)]
         # Loop through remaining lines
-        for i in range(len(lines)):
-            row = lines[i].split(',').strip()
+        for i in range(len(lines)-1):
+            row = (lines[i].split(','))
             for j in range(len(row)):
-                self.matrix[i][j].append(int(row[j]))
+                self.matrix[i][j] = int(row[j].strip())
