@@ -196,11 +196,11 @@ START:
   /// CHANGE: Compares to 2 b/c ch is of type char not int
   if (ch == 2)
     return (-1);
-  red = read(fd, &ch, 1)
-  if ( red == 0)
+  red = read(fd, &ch, 1);
+  if (red == 0)
     return (fctr);
-  if ( red == -1)
-    return (-4)
+  if (red == -1)
+    return (-4);
   if (ch == 10)
   {
     fctr++;
