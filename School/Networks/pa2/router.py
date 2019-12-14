@@ -62,13 +62,17 @@
 ### Import Required Libraries ### ----------------------------------------------
 
 from socket import *        # Socket lib
+from dataStructs import *   # Data structure objects
 import sys                  # Argument lib
 import os                   # File lib
+import pdb
 
 # ------------------------------------------------------------------------------
 
+global verbose
+verbose = True
 global debug
-debug = True
+debug = False
 
 # ------------------------------------------------------------------------------
 # Func: Defines an adjMatrix object to easily assign values from an Adjacency 
@@ -77,33 +81,7 @@ debug = True
 # Meth: Initializes the adjMatrix from a packet by spliting the lines of the 
 #       packet and assinging the correct values to variables tied to the object.
 # ------------------------------------------------------------------------------
-class AdjMatrix:
-    def __init__(self, packet):
-        self.packet = packet
-        # Separate lines in Adjacency Matrix Packet:
-        lines = packet.split('\n')
 
-        # Separate first line to get source vertex and # of verticies
-        line1 = lines[0].split(',')
-        lines.remove(lines[0])
-        self.sourceVertex = int(line1[0].strip())
-        self.numVertices = int(line1[1].strip())
-
-        # Loop through next <numVertices> # of lines to build ipAddrs
-        self.ipAddrs = []
-        for i in range(self.numVertices):
-            self.ipAddrs.append((lines[0].split('='))[1].strip())
-            lines.remove(lines[0])
-
-        # Remove empty line
-        lines.remove(lines[0])
-        
-        self.matrix = [[0 for col in range(self.numVertices)] for row in range(self.numVertices)]
-        # Loop through remaining lines
-        for i in range(len(lines)-1):
-            row = (lines[i].split(','))
-            for j in range(len(row)):
-                self.matrix[i][j] = int(row[j].strip())
 
 # Open connection to controller:
 serverPort = 25784
@@ -140,50 +118,99 @@ while listening:
 
     # Run forward search algorithm
     while connected:
+        listening = False
         # Get the packet
         packet = connectionSocket.recv(2048).decode()
+        print("Adjacency matrix recieved...")
 
         # Build the matrix object
         matrix = AdjMatrix(packet)
 
-        # Start confirmed list of Forward Search Algorithm (FSA) @ source vertex
-        # Confirmed list = [path length, port]
-        confirmed = [[sys.maxsize, 0] for col in range(matrix.numVertices)]
-        confirmed[matrix.sourceVertex] = [0, 0]
-
-        # Start working list of FSA
-        working  = [[sys.maxsize, 0] for col in range(matrix.numVertices)]
-        working[matrix.sourceVertex] = [0, 0]
-
-        # Get ports for current vertex
-        curPorts = matrix.matrix[matrix.sourceVertex]
-        curVertex = matrix.sourceVertex
-
-        # Loop through ports and update working list
-        for vertex in range(matrix.numVertices):
-            if curPorts[vertex] != 0:
-                working[vertex] = [working[vertex][0]+1, curPorts[vertex]]
-
-        # Find shortest path in working list and update confirmed list
-        minPath = sys.maxsize
-        newVertex = matrix.numVertices
-        newPort = 0
-        for vertex in range(matrix.numVertices):
-            if vertex != curVertex:
-                if working[vertex][0] < minPath and working[vertex][1] != 0:
-                    minPath = working[vertex][0]
-                    newVertex = vertex
-                    newPort = working[vertex][1]
+        # Build confirmed list
+        destination = Vertex(matrix.sourceVertex, matrix.sourceVertex, 0, 0)
+        confirmed = [destination]
+        tentative = []
+        curVert = matrix.sourceVertex
+        costs = [0 for i in range(matrix.numVertices)]
         
-        if debug:
-            print("Next Vertex: " + str(newVertex))
-            print("Next Port:   " + str(newPort))
-            print("Min Path:    " + str(minPath))
-        confirmed[newVertex] = [minPath, newPort]
-        curVertex = newVertex
-        
-
-        
+        building = True
+        while building:
+            # Get the array of paths connected to current vertex
+            paths = matrix.getRow(curVert)
+            # Print out costs
+            if verbose:
+                for vertex in range(len(paths)):
+                    print("VERBOSE: Cost to get to " + str(vertex) + " is " + str(costs[vertex]) + ".")
+            # Loop through paths
+            for vertex in range(len(paths)):
+                # Reset confirmed and tentative checks
+                conf = False
+                tent = False
+                # Assign cost
+                curCost = costs[curVert] + 1
+                # Check for valid path (port != 0)
+                if paths[vertex] != 0:
+                    if verbose:
+                        print("VERBOSE: Path from " + str(vertex) + 
+                        " to " + str(curVert) + " found.")
+                    # Check if path is in confirmed list
+                    for i in range(len(confirmed)):
+                        if vertex == confirmed[i].id:
+                            conf = True
+                            if verbose:
+                                print("VERBOSE: Path from " + str(vertex) + 
+                                " to " + str(curVert) + " in confirmed list.")
+                            break # Go to next vertex if in confirmed list
+                    # If not in confirmed list
+                    if conf == False:
+                        # Check if path is in tentative list
+                        for i in range(len(tentative)):
+                            if vertex == tentative[i].id:
+                                if verbose:
+                                    print("VERBOSE: Path from " + str(vertex) + 
+                                    " to " + str(curVert) + " in tentative list.")
+                                tent = True
+                                # Compare costs
+                                if curCost < tentative[i].cost:
+                                    if verbose:
+                                        print("VERBOSE: Cost of vertex " + str(vertex) + "updated " + 
+                                        "from " + str(tentative[i].cost) + " to " + str(curCost) +
+                                        "through port " + str(paths[vertex]) + ".")
+                                    tentative[i].cost = curCost
+                                    tentative[i].nextHop = paths[vertex]
+                                break # Go to next vertex if in tentative list
+                    # When not in any list, add to tentative
+                    if (conf == False) and (tent == False):
+                        costs[vertex] = curCost
+                        newVertex = Vertex(vertex, curVert, costs[vertex], paths[vertex])
+                        tentative.append(newVertex)
+                        if verbose:
+                            print("VERBOSE: Vertex " + str(newVertex.id) + " added to tentative list:\n"
+                            "VERBOSE: Cost = " + str(newVertex.cost) + ".\n"
+                            "VERBOSE: NextHop = " + str(newVertex.nextHop) + ".")
+            # Find next vertex to add to confirmed list and remove from tentative list
+            minCost = sys.maxsize
+            nextVert = -1
+            minIndex = -1
+            for i in range(len(tentative)):
+                if tentative[i].cost < minCost:
+                    minCost = tentative[i].cost
+                    nextVert = tentative[i].id
+                    minIndex = i
+            curVert = nextVert
+            confirmed.append(tentative[minIndex])
+            if verbose:
+                print("VERBOSE: Vertex " + str(tentative[minIndex].id) + " added to confirmed list.")
+                print("VERBOSE: Vertex " + str(tentative[minIndex].id) + " removed from tentative list.")
+            tentative.remove(tentative[minIndex])
+            if verbose:
+                print("VERBOSE: New current vertex: " + str(curVert) + ".")
+            if len(tentative) == 0:
+                building = False
+            # if debug:    
+            #     pdb.set_trace()
+        if verbose:
+            print("VERBOSE: FSA Complete")
 
 # Generate flow table for packet switch:
 # ------------------------------------------------------------------------------
@@ -194,5 +221,36 @@ while listening:
 # ------------------------------------------------------------------------------
 # Simple file of addrs and egress port #'s
 # ------------------------------------------------------------------------------
-
-# Send flow table to controller
+        table = {}
+        for i in range(len(matrix.ipAddrs)):
+            if i == matrix.sourceVertex:
+                continue
+            for j in range(len(confirmed)):
+                # Find the vetex in the confirmed list
+                if i == confirmed[j].id:
+                    # Find the path to get to that vertex from the source vertex
+                    dest = confirmed[j].dest
+                    if dest != matrix.sourceVertex:
+                        nextIndex = -1
+                        while dest != matrix.sourceVertex:
+                            for k in range(len(confirmed)):
+                                if dest == confirmed[k].id:
+                                    dest = confirmed[k].dest
+                                    nextIndex = k
+                                    break
+                        table[matrix.ipAddrs[i]] = confirmed[nextIndex].nextHop
+                    else:
+                        table[matrix.ipAddrs[i]] = confirmed[j].nextHop
+        flowTable = FlowTable(table)
+        if verbose:
+            print("VERBOSE: Flow Table ---------------------------------------START")
+            print(flowTable.packet)
+            print("VERBOSE: Flow Table -----------------------------------------END")
+        if debug:    
+            pdb.set_trace()
+        # Send flow table to controller
+        print("Sending flow table...")
+        connectionSocket.send(flowTable.packet.encode())
+        connectionSocket.close()
+        connected = False
+        listening = False

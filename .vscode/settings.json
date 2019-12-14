@@ -1,4 +1,4 @@
 {
-    "python.pythonPath": "/usr/local/opt/python/bin/python3.7",
+    "python.pythonPath": "C:\\Users\\KingOfHertz\\AppData\\Local\\Programs\\Python\\Python38-32\\python.exe",
     "C_Cpp.default.cStandard": "c99"
 }

@@ -75,11 +75,15 @@
 
 ### Import Required Libraries ### ---------------------------------------------
 
-from socket import * # Socket lib
+from socket import *        # Socket lib
+from dataStructs import *   # Data structure objects
+import sys                  # Argument lib
+import os                   # File lib
+import pdb
 
 # -----------------------------------------------------------------------------
 
-def connect():
+def connect(init):
     #---------------------------------------------------------------------------
     # Func: Establishes TCP connection to controller program
     # Vars: serverName   = Name of server (default = localhost)
@@ -93,26 +97,25 @@ def connect():
     # Open Socket
     clientSocket = socket(AF_INET, SOCK_STREAM)
     clientSocket.connect((serverName, serverPort))
-    print("Connected to " + serverName + ":" serverPort)
+    print("Connected to " + serverName + ":" + str(serverPort))
 
     # Send request for startup flow table (ADD 0)
-    command = '0, ADD, 0, 0.0.0.0'
+    command = init + ', ADD, 0, 0.0.0.0'
     clientSocket.send(command.encode())
 
     # Load and print welcome response
     response = clientSocket.recv(2048)
+    print("Flow table recieved...")
     print(response.decode())
 
     return clientSocket
 
     #---------------------------------------------------------------------------
 
+# Prompt user for first starting vertex.
+initCommand = input("What vertex do you want to start at?")
 # Establish TCP connection to controller program
-ctrlSocket = connect()
-
-# Request flow table on startup (ADD 0)
-
-# Determine it's virtex ID
+ctrlSocket = connect(initCommand)
 
 # Prompt user for input: FORWARD, ADD, or DELETE a port
 

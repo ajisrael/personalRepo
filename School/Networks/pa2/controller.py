@@ -63,6 +63,7 @@
 ### Import Required Libraries ### ----------------------------------------------
 
 from socket import *        # Socket lib
+from dataStructs import *   # Data structure objects
 import sys                  # Argument lib
 import os                   # File lib
 
@@ -70,8 +71,9 @@ import os                   # File lib
 
 ### Define Global Variables ### ------------------------------------------------
 
-# Adjacency matrix to send to rounting program
-flowTable = "" # Flow table returned from router to send to switch program
+global verbose 
+verbose = True
+global matrix
 
 # ------------------------------------------------------------------------------
 
@@ -82,35 +84,9 @@ flowTable = "" # Flow table returned from router to send to switch program
 # Meth: Initializes the adjMatrix from a packet by spliting the lines of the 
 #       packet and assinging the correct values to variables tied to the object.
 # ------------------------------------------------------------------------------
-class AdjMatrix:
-    def __init__(self, packet):
-        self.packet = packet
-        # Separate lines in Adjacency Matrix Packet:
-        lines = packet.split('\n')
 
-        # Separate first line to get source vertex and # of verticies
-        line1 = lines[0].split(',')
-        lines.remove(lines[0])
-        self.sourceVertex = int(line1[0].strip())
-        self.numVertices = int(line1[1].strip())
 
-        # Loop through next <numVertices> # of lines to build ipAddrs
-        self.ipAddrs = []
-        for i in range(self.numVertices):
-            self.ipAddrs.append((lines[0].split('='))[1].strip())
-            lines.remove(lines[0])
-
-        # Remove empty line
-        lines.remove(lines[0])
-        
-        self.matrix = [[0 for col in range(self.numVertices)] for row in range(self.numVertices)]
-        # Loop through remaining lines
-        for i in range(len(lines)-1):
-            row = (lines[i].split(','))
-            for j in range(len(row)):
-                self.matrix[i][j] = int(row[j].strip())
-
-def initMatrix():
+def initMatrix(sourceVertex):
     # --------------------------------------------------------------------------
     # Name: initMatrix
     # Func: Initializes the adjacency matrix on startup.
@@ -149,12 +125,16 @@ def initMatrix():
     if os.path.isfile(path):
         with open(fileName, 'r') as fileMatrix:
             matrix = AdjMatrix(str(fileMatrix.read()))
-            if debug:
+            matrix.sourceVertex = sourceVertex
+            matrix.updatePacket()
+            if verbose:
+                print("VERBOSE:------------------------------------------------START")
                 print("Packet :" + str(matrix.packet))
                 print("SourceV:" + str(matrix.sourceVertex))
                 print("NumVert:" + str(matrix.numVertices))
                 print("IP Addr:" + str(matrix.ipAddrs))
                 print("Matrix :" + str(matrix.matrix))
+                print("VERBOSE:--------------------------------------------------END")
     else:
         erMsg = "adjMatrix: No such file."
         print(erMsg)
@@ -163,7 +143,17 @@ def initMatrix():
     return matrix
     # --------------------------------------------------------------------------
 
-def connectRouter(matrix):
+def buildTable(packet):
+    lines = packet.split('\n')
+    table = {}
+    for line in lines:
+        if line != '':
+            args = line.split(', ')
+            table[args[0].strip()] = int(args[1].strip())
+    
+    return FlowTable(table)
+
+def getFlowTable(matrix):
     #---------------------------------------------------------------------------
     # Func: Establishes TCP connection to router program
     # Vars: serverName   = Name of server (default = localhost)
@@ -180,24 +170,54 @@ def connectRouter(matrix):
     print("Connected to " + serverName + ":" + str(serverPort))
 
     # Send request for startup flow table (ADD 0)
+    print("Sending adjacency matrix...")
     command = matrix.packet
     clientSocket.send(command.encode())
 
     # Load and print welcome response
-    response = clientSocket.recv(2048)
-    print(response.decode())
+    response = clientSocket.recv(2048).decode()
+    print("Flow table recieved...")
+    
+    if verbose:
+        print("VERBOSE: Flow Table ---------------------------------------START")
+        print(response)
+        print("VERBOSE: Flow Table -----------------------------------------END")
 
-    return clientSocket
+    return buildTable(response)
 
     #---------------------------------------------------------------------------
 
-# Initialize adjacency matrix:
-global debug 
-debug = True
-matrix = initMatrix()
+# Open connection to switch:
+serverPort = 25783
+serverSocket = socket(AF_INET, SOCK_STREAM)
+serverSocket.bind(('', serverPort))
+serverSocket.listen(1)
+print('Controller ready to recieve...')
+listening = True
 
-# Connect to router
-routerSocket = connectRouter(matrix)
+while listening:
+    connectionSocket, addr = serverSocket.accept()
+    print('Connection data recieved from switch...')
+    connected = True
+
+    # Run forward search algorithm
+    while connected:
+        listening = False
+        # Get the packet
+        packet = connectionSocket.recv(2048).decode()
+        print("Command " + packet + " recieved...")
+        update = packet.split(', ')
+
+        if int(update[2]) == 0:
+            # Initialize adjacency matrix:
+            matrix = initMatrix(update[0])
+
+        # Get flow table from router and send to switch
+        flowTable = getFlowTable(matrix)
+        print("Sending flow table to switch...")
+        connectionSocket.send(flowTable.packet.encode())
+        connected = False
+
 
 # Periodically open TCP connection to routing program and send adjacency matrix:
 
