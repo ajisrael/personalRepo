@@ -72,8 +72,7 @@ import os                   # File lib
 ### Define Global Variables ### ------------------------------------------------
 
 global verbose 
-verbose = True
-global matrix
+verbose = False
 
 # ------------------------------------------------------------------------------
 
@@ -167,7 +166,6 @@ def getFlowTable(matrix):
     # Open Socket
     clientSocket = socket(AF_INET, SOCK_STREAM)
     clientSocket.connect((serverName, serverPort))
-    print("Connected to " + serverName + ":" + str(serverPort))
 
     # Send request for startup flow table (ADD 0)
     print("Sending adjacency matrix...")
@@ -186,6 +184,8 @@ def getFlowTable(matrix):
     return buildTable(response)
 
     #---------------------------------------------------------------------------
+
+matrix = initMatrix(0)
 
 # Open connection to switch:
 serverPort = 25783
@@ -211,27 +211,26 @@ while listening:
         if int(update[2]) == 0:
             # Initialize adjacency matrix:
             matrix = initMatrix(update[0])
+        elif update[1] == 'ADD':
+            matrix.sourceVertex = int(update[0])
+            matrix.addPort(int(update[2]), update[3])
+        elif update[1] == 'DELETE':
+            matrix.sourceVertex = int(update[0])
+            matrix.deletePort(int(update[2]))
+        elif update[1] == 'EXIT':
+            matrix.sourceVertex = -1
+            matrix.updatePacket()
+            flowTable = getFlowTable(matrix)
+            print("Exit signal found...")
+            print("Terminating process...")
+            connectionSocket.close()
+            listening = False
+            break
+            
 
         # Get flow table from router and send to switch
         flowTable = getFlowTable(matrix)
         print("Sending flow table to switch...")
         connectionSocket.send(flowTable.packet.encode())
         connected = False
-
-
-# Periodically open TCP connection to routing program and send adjacency matrix:
-
-
-# Listen for incoming flow table:
-
-# Open TCP connection to switch program:
-
-# Send flowtable to swtich program:
-
-# Listen for update events from switch program (port online/offline):
-# ------------------------------------------------------------------------------
-# Update Packet:
-# VertexID, ADD/DELETE, PortNum, IPAdrs
-# ------------------------------------------------------------------------------
-# Switch with ID# VertexID is reporting that port# PortNum was ADDed or DELETEd
-# ------------------------------------------------------------------------------
+        listening = True

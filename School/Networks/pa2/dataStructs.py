@@ -40,6 +40,10 @@ class AdjMatrix:
     def getRow(self, vertexID):
         return self.matrix[vertexID]
 
+    def setRow(self, vertexID, row):
+        self.matrix[vertexID] = row
+        self.updatePacket()
+
     def updatePacket(self):
         self.packet = str(self.sourceVertex) + ', ' + str(self.numVertices) + '\n'
         for i in range(len(self.ipAddrs)):
@@ -51,6 +55,21 @@ class AdjMatrix:
                 self.packet += str(row[j]) + ', '
             self.packet += str(row[len(row)-1]) + '\n'
 
+    def addPort(self, port, ip):
+        toVert = -1
+        for i in range(len(self.ipAddrs)):
+            if ip == self.ipAddrs[i]:
+                toVert = i
+        row = self.getRow(self.sourceVertex)
+        row[toVert] = port
+        self.setRow(self.sourceVertex, row)
+        
+    def deletePort(self, port):
+        row = self.getRow(self.sourceVertex)
+        for i in range(len(row)):
+            if row[i] == port:
+                row[i] = 0
+        self.setRow(self.sourceVertex, row)
 
 class Vertex:
     def __init__(self, id, dest, cost, nextHop):

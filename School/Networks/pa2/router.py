@@ -70,7 +70,7 @@ import pdb
 # ------------------------------------------------------------------------------
 
 global verbose
-verbose = True
+verbose = False
 global debug
 debug = False
 
@@ -125,6 +125,12 @@ while listening:
 
         # Build the matrix object
         matrix = AdjMatrix(packet)
+        if matrix.sourceVertex == -1:
+            print("Exit signal found...")
+            print("Terminating process...")
+            connectionSocket.close()
+            listening = False
+            break
 
         # Build confirmed list
         destination = Vertex(matrix.sourceVertex, matrix.sourceVertex, 0, 0)
@@ -251,6 +257,6 @@ while listening:
         # Send flow table to controller
         print("Sending flow table...")
         connectionSocket.send(flowTable.packet.encode())
-        connectionSocket.close()
         connected = False
-        listening = False
+        listening = True
+    connectionSocket.close()

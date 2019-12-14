@@ -83,7 +83,20 @@ import pdb
 
 # -----------------------------------------------------------------------------
 
-def connect(init):
+global verbose
+verbose = False
+
+def buildTable(packet):
+    lines = packet.split('\n')
+    table = {}
+    for line in lines:
+        if line != '':
+            args = line.split(', ')
+            table[args[0].strip()] = int(args[1].strip())
+    
+    return FlowTable(table)
+
+def getFlowTable(vert, comm, port, IP):
     #---------------------------------------------------------------------------
     # Func: Establishes TCP connection to controller program
     # Vars: serverName   = Name of server (default = localhost)
@@ -97,25 +110,54 @@ def connect(init):
     # Open Socket
     clientSocket = socket(AF_INET, SOCK_STREAM)
     clientSocket.connect((serverName, serverPort))
-    print("Connected to " + serverName + ":" + str(serverPort))
+    print("Sending update packet...")
 
     # Send request for startup flow table (ADD 0)
-    command = init + ', ADD, 0, 0.0.0.0'
+    command = vert + ', ' + comm + ', ' + str(port) + ', ' + IP
     clientSocket.send(command.encode())
 
     # Load and print welcome response
     response = clientSocket.recv(2048)
     print("Flow table recieved...")
-    print(response.decode())
+    if verbose:
+        print("VERBOSE: Flow Table ---------------------------------------START")
+        print(response.decode())
+        print("VERBOSE: Flow Table -----------------------------------------END")
 
-    return clientSocket
+    clientSocket.close()
+    return buildTable(response.decode())
 
     #---------------------------------------------------------------------------
 
 # Prompt user for first starting vertex.
-initCommand = input("What vertex do you want to start at?")
+vertex = input("Enter Source Vertex ID: ")
 # Establish TCP connection to controller program
-ctrlSocket = connect(initCommand)
-
+flowTable = getFlowTable(vertex, 'ADD', 0, '0.0.0.0')
 # Prompt user for input: FORWARD, ADD, or DELETE a port
+running = True
 
+while running:
+    command = input()
+    args = command.split(' ')
+    if args[0].upper() == 'FORWARD' or args[0].upper() == 'F':
+        found = False
+        for ip in flowTable.table.keys():
+            if ip == args[1].strip():
+                found = True
+                print("Forwarding packet out port " + str(flowTable.table[ip]) + ".")
+                break
+        if found == False:
+            print("No rule to match for packet.")
+    elif args[0].upper() == 'ADD' or args[0].upper() == 'A':
+        flowTable = getFlowTable(args[1], 'ADD', args[2], args[3])
+    elif args[0].upper() == 'DELETE' or args[0].upper() == 'D':
+        flowTable = getFlowTable(args[1], 'DELETE', args[2], '0.0.0.0')
+    elif args[0].upper() == 'EXIT':
+        flowTable = getFlowTable('-1', 'EXIT', '-1', '0.0.0.0')
+        running = False
+    else:
+        print("Command " + command + " does not exist.")
+        print("Try one of the following commands:")
+        print("F <IPAddress>")
+        print("A <sourceVertex> <Port#> <IPAddress>")
+        print("D <sourceVertex> <Port#>")
