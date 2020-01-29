@@ -1,13 +1,11 @@
 // ============================================================================
-// Orig: 1.29.2020 - Roger M. Kieckhafer
-// Revs: 1.29.2020 - Alex Israels
-//          - Added Print statement to terminal
 // Func: Sort a list of 16-bit signed integers into ascending order.
 // Meth: Bubble Sort, executed in main.
 //       Yes, we know Bubble Sort is dumb, but it makes an easy demo.
 // Rev:  2015.01.29: C. Jiang changed lower limit on index i
 //       fm "i = 0", to "i = 1" to correct list over-run. Tested Satis.
 //       2018.06.08: Minor updates & corrections.
+//       2020.01.29: A. Israels added print statement to terminal.
 //-----------------------------------------------------------------------------
 
 #include "msp430x22x4.h" // Brobdingnagian chip-specific macros & defs
