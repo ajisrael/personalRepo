@@ -1,0 +1,20 @@
+echo "" > d4-UvsIandD.out
+echo "UNIFIED CACHE ------------------" >> d4-UvsIandD.out
+dineroIV \
+  -l1-usize 32K  -l1-ubsize 8  \
+  -l1-uassoc 4096 \
+  -l1-uccc        \
+  -informat  d    \
+<mtu-ct.din >> d4-UvsIandD.out
+
+echo "" >> d4-UvsIandD.out
+echo "I & D CACHE --------------------" >> d4-UvsIandD.out
+dineroIV \
+  -l1-isize 16K  -l1-ibsize 8  \
+  -l1-iassoc 2048 \
+  -l1-iccc        \
+  -l1-dsize 16K  -l1-dbsize 8  \
+  -l1-dassoc 2048 \
+  -l1-dccc        \
+  -informat  d    \
+<mtu-ct.din >> d4-UvsIandD.out
