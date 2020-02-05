@@ -1,12 +1,29 @@
-int val = 0;
-void setup() {
-  // put your setup code here, to run once:
-  pinMode(11, INPUT);
-  Serial.begin(9600);
+double timeBase = 0.6;
+int freq = 56000;
+int packet[] = {0,1,1,0,0};
+void setup()
+{
+  pinMode(10,OUTPUT);
+  //tone(10, freq, timeBase * 4);
+  //delay(timeBase);
+  for(int i = 0; i < 5; i++)
+  {
+    if (packet[i] == 1)
+    {
+      tone(10, freq, timeBase * 2);
+      noTone(10);
+    }
+    else
+    {
+      tone(10, freq, timeBase);
+      noTone(10);
+      delay(timeBase);
+    }
+    delay(timeBase);
+  }
+}
+void loop()
+{
+  
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  val = digitalRead(11);
-  Serial.println(val);
-}
