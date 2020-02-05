@@ -1,0 +1,45 @@
+---Dinero IV cache simulator, version 7
+---Written by Jan Edler and Mark D. Hill
+---Copyright (C) 1997 NEC Research Institute, Inc. and Mark D. Hill.
+---All rights reserved.
+---Copyright (C) 1985, 1989 Mark D. Hill.  All rights reserved.
+---See -copyright option for details
+
+---Summary of options (-help option gives usage information).
+
+-l1-usize 32768
+-l1-ubsize 8
+-l1-usbsize 8
+-l1-uassoc 1
+-l1-urepl l
+-l1-ufetch d
+-l1-uwalloc a
+-l1-uwback a
+-skipcount 0
+-flushcount 0
+-maxcount 0
+-stat-interval 0
+-informat d
+-on-trigger 0x0
+-off-trigger 0x0
+
+---Simulation begins.
+---Simulation complete.
+l1-ucache
+ Metrics		      Total	      Instrn	       Data	       Read	      Write	       Misc
+ -----------------	      ------	      ------	      ------	      ------	      ------	      ------
+ Demand Fetches		     1000001	      782764	      217237	      150699	       66538	           0
+  Fraction of total	      1.0000	      0.7828	      0.2172	      0.1507	      0.0665	      0.0000
+
+ Demand Misses		       17487	       12370	        5117	        3017	        2100	           0
+  Demand miss rate	      0.0175	      0.0158	      0.0236	      0.0200	      0.0316	      0.0000
+
+ Multi-block refs                 0
+ Bytes From Memory	      139896
+ ( / Demand Fetches)	      0.1399
+ Bytes To Memory	       21336
+ ( / Demand Writes)	      0.3207
+ Total Bytes r/w Mem	      161232
+ ( / Demand Fetches)	      0.1612
+
+---Execution complete.

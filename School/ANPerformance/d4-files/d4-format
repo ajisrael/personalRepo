@@ -1,0 +1,25 @@
+echo " "
+#
+if (-f $1.FMT) then
+   echo "--- Deleting previous version of $1.FMT" 
+   rm $1.FMT 
+endif 
+#
+echo "--- DINERO INPUT/OUTPUT FORMATING STARTING"   
+echo "====================================================== DINERO-HEADER: " >$1.FMT 
+echo "NAME: `/usr/bin/whoami` "   >>$1.FMT  
+echo "DATE: `/bin/date`"          >>$1.FMT  
+echo "FILE: $1.FMT "              >>$1.FMT  
+echo "====================================================== DINERO-INPUT: " >>$1.FMT  
+echo " "     >>$1.FMT
+cat $1.inp   >>$1.FMT
+echo " "     >>$1.FMT  
+echo "====================================================== DINERO-OUPTUT: " >>$1.FMT 
+echo " "    >>$1.FMT  
+cat $1.out  >>$1.FMT   
+#
+echo " "   >>$1.FMT
+echo "-"   >>$1.FMT
+echo "--- DINERO INPUT/OUTPUT FORMATING COMPLETE" 
+echo " "
+#
