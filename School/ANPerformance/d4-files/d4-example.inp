@@ -1,4 +1,4 @@
 dineroIV \
   -l1-usize 32K  -l1-ubsize 8  \
-  -informat d  \
-<spice.din >d4-example.out
+  -informat d  -l1-uccc\
+<cc1.din >d4-example.out
