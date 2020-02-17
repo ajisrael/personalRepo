@@ -1,0 +1,75 @@
+====================================================== DINERO-HEADER: 
+NAME: ajisrael 
+DATE: Sun Feb 16 19:35:33 EST 2020
+FILE: d4-hw5-p1.FMT 
+====================================================== DINERO-INPUT: 
+ 
+echo "" > d4-hw5-p1.out
+echo "Kessel-LT12 Microcontroller ----------" >> d4-hw5-p1.out
+dineroIV \
+  -l1-usize 64K  -l1-ubsize 16  \
+  -l1-uassoc 2  \
+  -l1-uwback n  \
+  -l1-uccc      \
+  -informat d   \
+<mtu-all.din >> d4-hw5-p1.out
+
+ 
+====================================================== DINERO-OUPTUT: 
+ 
+
+Kessel-LT12 Microcontroller ----------
+---Dinero IV cache simulator, version 7
+---Written by Jan Edler and Mark D. Hill
+---Copyright (C) 1997 NEC Research Institute, Inc. and Mark D. Hill.
+---All rights reserved.
+---Copyright (C) 1985, 1989 Mark D. Hill.  All rights reserved.
+---See -copyright option for details
+
+---Summary of options (-help option gives usage information).
+
+-l1-usize 65536
+-l1-ubsize 16
+-l1-usbsize 16
+-l1-uassoc 2
+-l1-urepl l
+-l1-ufetch d
+-l1-uwalloc a
+-l1-uwback n
+-l1-uccc
+-skipcount 0
+-flushcount 0
+-maxcount 0
+-stat-interval 0
+-informat d
+-on-trigger 0x0
+-off-trigger 0x0
+
+---Simulation begins.
+---Simulation complete.
+l1-ucache
+ Metrics		      Total	      Instrn	       Data	       Read	      Write	       Misc
+ -----------------	      ------	      ------	      ------	      ------	      ------	      ------
+ Demand Fetches		     3576424	     2610002	      966422	      676286	      288279	        1857
+  Fraction of total	      1.0000	      0.7298	      0.2702	      0.1891	      0.0806	      0.0005
+
+ Demand Misses		      138379	       82393	       55986	       46411	        9482	          93
+  Demand miss rate	      0.0387	      0.0316	      0.0579	      0.0686	      0.0329	      0.0501
+   Compulsory misses	       84310	       76201	        8109	        2601	        5507	           1
+   Capacity misses	        6518	        3893	        2625	        2302	         248	          75
+   Conflict misses	       47551	        2299	       45252	       41508	        3727	          17
+   Compulsory fraction	      0.6093	      0.9248	      0.1448	      0.0560	      0.5808	      0.0108
+   Capacity fraction	      0.0471	      0.0472	      0.0469	      0.0496	      0.0262	      0.8065
+   Conflict fraction	      0.3436	      0.0279	      0.8083	      0.8944	      0.3931	      0.1828
+
+ Multi-block refs                 0
+ Bytes From Memory	     2214064
+ ( / Demand Fetches)	      0.6191
+ Bytes To Memory	     1153116
+ ( / Demand Writes)	      4.0000
+ Total Bytes r/w Mem	     3367180
+ ( / Demand Fetches)	      0.9415
+
+---Execution complete.
+ 
+-
