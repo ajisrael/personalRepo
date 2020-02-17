@@ -1,0 +1,10 @@
+echo "" > d4-hw5-p1.out
+echo "Kessel-LT12 Microcontroller ----------" >> d4-hw5-p1.out
+dineroIV \
+  -l1-usize 64K  -l1-ubsize 16  \
+  -l1-uassoc 2  \
+  -l1-uwback n  \
+  -l1-uccc      \
+  -informat d   \
+<mtu-all.din >> d4-hw5-p1.out
+
