@@ -7,10 +7,11 @@ from Crypto.Util.Padding import pad, unpad
 key = b'EE82E70D5C71E0D0C79F545FC85506E2'
 cipher = AES.new(key, AES.MODE_ECB)
 
-HEADER_LENGTH = 16
+HEADER_LENGTH = 10
+BLK_SIZE = 16
 
 IP = "127.0.0.1"
-PORT = 25789
+PORT = 25791
 
 # Create a socket
 # socket.AF_INET - address family, IPv4, some otehr possible are AF_INET6, AF_BLUETOOTH, AF_UNIX
@@ -43,7 +44,7 @@ def receive_message(client_socket):
     try:
 
         # Receive our "header" containing message length, it's size is defined and constant
-        message_header_ct = client_socket.recv(HEADER_LENGTH)
+        message_header_ct = client_socket.recv(BLK_SIZE)
         message_header = unpad(cipher.decrypt(message_header_ct),16)
 
         print("Message Header: " + message_header.decode('utf-8').strip())
@@ -59,7 +60,7 @@ def receive_message(client_socket):
         # Return an object of message header and message data
         message_ciphertext = client_socket.recv(message_length)
         message = unpad(cipher.decrypt(message_ciphertext),16)
-        return {'header': message_header, 'data': client_socket.recv(message_length)}
+        return {'header': message_header, 'data': message}
 
     except:
 
@@ -93,6 +94,8 @@ while True:
             # That gives us new socket - client socket, connected to this given client only, it's unique for that client
             # The other returned object is ip/port set
             client_socket, client_address = server_socket.accept()
+
+            print("")
 
             # Client should send his name right away, receive it
             user = receive_message(client_socket)
@@ -140,7 +143,11 @@ while True:
 
                     # Send user and message (both with their headers)
                     # We are reusing here message header sent by sender, and saved username header send by user when he connected
-                    client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
+                    user_header_ct = cipher.encrypt(pad(user['header'],16))
+                    user_data_ct = cipher.encrypt(pad(user['data'],16))
+                    message_header_ct = cipher.encrypt(pad(message['header'],16))
+                    message_data_ct = cipher.encrypt(pad(message['data'],16))
+                    client_socket.send(user_header_ct + user_data_ct + message_header_ct + message_data_ct)
 
     # It's not really necessary to have this, but will handle some socket exceptions just in case
     for notified_socket in exception_sockets:
