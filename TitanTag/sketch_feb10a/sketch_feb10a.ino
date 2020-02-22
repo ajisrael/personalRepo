@@ -16,7 +16,9 @@
 //
 
 #define Tolerance 300
-
+#define PLAYER_ID 0xEF00
+#define TEAM_ID = 0x00C0
+#define DAMAGE =  0x003C
 
 // Digital IO's
 int triggerPin             = 3;      // Push button for primary fire. Low = pressed
@@ -33,8 +35,9 @@ int reloadButton           = 18; //Button to reload the gun's ammo
 // Minimum gun requirements: trigger, receiver, IR led, hit LED.
 
 // Player and Game details
-int myTeamID               = 1;      // 1-7 (0 = system message)
-int myPlayerID             = 5;      // Player ID
+uint16_t myTeamID               = 1;      // 1-7 (0 = system message)
+uint16_t myPlayerID             = 5;      // Player ID
+uint16_t damageID            = 0;
 int myGameID               = 0;      // Interprited by configureGane subroutine; allows for quick change of game types.
 int myWeaponID             = 0;      // Deffined by gameType and configureGame subroutine.
 int myWeaponHP             = 0;      // Deffined by gameType and configureGame subroutine.
@@ -65,7 +68,9 @@ int header                 = 4;      // Header lenght in pulses. 4 = Miles tag s
 int maxSPS                 = 10;     // Maximum Shots Per Seconds. Not yet used.
 int TBS                    = 0;      // Time between shots. Not yet used.
 int gameModeConfig [2][6] ={{1,30,30,3,3,1},{1,100,100,10,10,2}};
-int damage [16] = {1,2,4,5,7,10,15,17,20,25,30,35,40,50,74,100};
+uint16_t damage [16] = {1,2,4,5,7,10,15,17,20,25,30,35,40,50,74,100};
+volatile uint16_t data = 0x0000;
+
 
 // Transmission data
 int byte1[8];                        // String for storing byte1 of the data which gets transmitted when the player fires.
@@ -339,8 +344,9 @@ void shoot() {
     
     delayMicroseconds(IRpulse);
 
-    for (int i = 0; i < 8; i++) { // Transmit Byte1
-      if (byte1[i] == 1) {
+    for (int i = 15; i >= 0; i--) { // Transmit Byte1
+      uint8_t currBit = data >> i & B1;
+      if (currBit == 1) {
         sendPulse(IRtransmitPin, 1);
         //Serial.print("1 ");
       }
@@ -348,24 +354,7 @@ void shoot() {
       sendPulse(IRtransmitPin, 1);
       delayMicroseconds(IRpulse);
     }
-
-    for (int i = 0; i < 8; i++) { // Transmit Byte2
-      if (byte2[i] == 1) {
-        sendPulse(IRtransmitPin, 1);
-        // Serial.print("1 ");
-      }
-      //else{Serial.print("0 ");}
-      sendPulse(IRtransmitPin, 1);
-      delayMicroseconds(IRpulse);
-    }
-
-    if (myParity == 1) { // Parity
-      sendPulse(IRtransmitPin, 1);
-    }
-    sendPulse(IRtransmitPin, 1);
-    delayMicroseconds(IRpulse);
-//    Serial.println("");
-//    Serial.println("DONE 1");
+   
   }
   
   FIRE = 0;
@@ -450,60 +439,27 @@ void frequencyCalculations() { // Works out all the timings needed to give the c
 
 
 void tagCode() { // Works out what the players tagger code (the code that is transmitted when they shoot) is
-  byte1[0] = myTeamID >> 2 & B1;
-  byte1[1] = myTeamID >> 1 & B1;
-  byte1[2] = myTeamID >> 0 & B1;
+  uint16_t newData =0x0000;
+  newData |= myPlayerID << 8;
+  newData |= myTeamID <<6;
+  newData |= damageID << 2;
 
-  byte1[3] = myPlayerID >> 4 & B1;
-  byte1[4] = myPlayerID >> 3 & B1;
-  byte1[5] = myPlayerID >> 2 & B1;
-  byte1[6] = myPlayerID >> 1 & B1;
-  byte1[7] = myPlayerID >> 0 & B1;
-
-
-  byte2[0] = myWeaponID >> 2 & B1;
-  byte2[1] = myWeaponID >> 1 & B1;
-  byte2[2] = myWeaponID >> 0 & B1;
-
-  byte2[3] = myWeaponHP >> 4 & B1;
-  byte2[4] = myWeaponHP >> 3 & B1;
-  byte2[5] = myWeaponHP >> 2 & B1;
-  byte2[6] = myWeaponHP >> 1 & B1;
-  byte2[7] = myWeaponHP >> 0 & B1;
-
-  myParity = 0;
-  for (int i = 0; i < 8; i++) {
-    if (byte1[i] == 1) {
-      myParity = myParity + 1;
-    }
-    if (byte2[i] == 1) {
-      myParity = myParity + 1;
-    }
-    myParity = myParity >> 0 & B1;
+  uint8_t sum = 0;
+  for (uint8_t i = 0; i < 16; i++)
+  {
+    sum += newData >> i & B1;
   }
-
+  if ((myParity = sum % 2) == 1)
+  {
+    newData |= 0x0001; 
+  }
+  
   // Next few lines print the full tagger code.
-  Serial.print("Byte1: ");
-  Serial.print(byte1[0]);
-  Serial.print(byte1[1]);
-  Serial.print(byte1[2]);
-  Serial.print(byte1[3]);
-  Serial.print(byte1[4]);
-  Serial.print(byte1[5]);
-  Serial.print(byte1[6]);
-  Serial.print(byte1[7]);
-  Serial.println();
 
-  Serial.print("Byte2: ");
-  Serial.print(byte2[0]);
-  Serial.print(byte2[1]);
-  Serial.print(byte2[2]);
-  Serial.print(byte2[3]);
-  Serial.print(byte2[4]);
-  Serial.print(byte2[5]);
-  Serial.print(byte2[6]);
-  Serial.print(byte2[7]);
-  Serial.println();
+  data = newData;
+  Serial.println("Binary:");
+  Serial.print(newData,BIN);
+  Serial.println("");
 
   Serial.print("Parity: ");
   Serial.print(myParity);
