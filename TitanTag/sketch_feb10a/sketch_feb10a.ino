@@ -41,7 +41,7 @@ int muzzleFlash            = 22; //LED for muzzle flash
 // Player and Game details
 uint16_t myTeamID               = 1;      // 1-7 (0 = system message)
 uint16_t myPlayerID             = 5;      // Player ID
-uint16_t myDamageID            = 0;
+uint16_t myDamageID            = 9;
 int myGameID               = 0;      // Interprited by configureGane subroutine; allows for quick change of game types.
 int myWeaponID             = 0;      // Deffined by gameType and configureGame subroutine.
 int myWeaponHP             = 0;      // Deffined by gameType and configureGame subroutine.
@@ -185,8 +185,14 @@ void lifeDisplay() { // Updates Ammo LED output
 
 void revivePlayer()
   {
+    Serial.println("Revive");
+    for(int i=0;i<62;i++)
+  {
+    delayMicroseconds(16383);
+  }
     life = maxLife;
     ammo = maxAmmo;
+    digitalWrite(hitPin, LOW);
   }
 
 void receiveIR() { // Void checks for an incoming signal and decodes it if it sees one.
@@ -240,7 +246,6 @@ void receiveIR() { // Void checks for an incoming signal and decodes it if it se
     if (error == 0) {
       interpritReceived(receivedData);
     }
-    digitalWrite(hitPin, LOW);
   }
 }
 
@@ -354,7 +359,6 @@ void reloadAmmo(){
     delayMicroseconds(16383);
   }
     ammo = maxAmmo;
-  Serial.println("reloaded");
   }
   
 
@@ -414,21 +418,21 @@ void playTone(int tone, int duration) { // A sub routine for playing tones like 
 
 void dead() { // void determines what the tagger does when it is out of lives
   // Makes a few noises and flashes some lights
-  for (int i = 1; i < 254; i++) {
-    analogWrite(ammoPin, i);
-    playTone((1000 + 9 * i), 2);
-  }
-  analogWrite(ammoPin, ((int) ammo));
+//  for (int i = 1; i < 254; i++) {
+//    analogWrite(ammoPin, i);
+//    playTone((1000 + 9 * i), 2);
+//  }
+//  analogWrite(ammoPin, ((int) ammo));
   analogWrite(lifePin, ((int) life));
   Serial.println("DEAD");
   digitalWrite(hitPin, HIGH);
 
-  for (int i = 0; i < 10; i++) {
-    analogWrite(ammoPin, 255);
+//  for (int i = 0; i < 10; i++) {
+//    analogWrite(ammoPin, 255);
     delay (500);
-    analogWrite(ammoPin, 0);
+//    analogWrite(ammoPin, 0);
     delay (500);
-  }
+//  }
 }
 
 
@@ -443,13 +447,13 @@ void noAmmo() { // Make some noise and flash some lights when out of ammo
 void hit(uint16_t damageIndex) { // Make some noise and flash some lights when you get shot
   digitalWrite(hitPin, HIGH);
   life = life - damageValues[damageIndex];
-  
+  digitalWrite(hitPin, LOW);
+
   Serial.print("Life: ");
   Serial.println(life);
   playTone(500, 500);
   if (life <= 0) {
     dead();
   }
-  digitalWrite(hitPin, LOW);
   lifeDisplay();
 }
