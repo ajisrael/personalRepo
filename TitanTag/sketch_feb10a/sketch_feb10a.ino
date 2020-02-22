@@ -33,7 +33,7 @@ int IRtransmit2Pin         = 8;      // Secondary fire mode IR transmitter pin: 
 int IRreceivePin           = 12;     // The pin that incoming IR signals are read from
 int IRreceive2Pin          = 11;     // Allows for checking external sensors are attached as well as distinguishing between sensor locations (eg spotting head shots)
 int reloadButton           = 18; //Button to reload the gun's ammo
-int reviveButton           = 19; //Button to revive thyself
+int reviveButton           = 19; //nlButton to revive thyself
 int muzzleFlash            = 22; //LED for muzzle flash
 
 // Minimum gun requirements: trigger, receiver, IR led, hit LED.
@@ -113,7 +113,7 @@ void setup() {
   pinMode(IRreceive2Pin, INPUT);
   pinMode(reloadButton,INPUT_PULLUP);
   pinMode(muzzleFlash,OUTPUT);
-  pinMode(reviveButton,INPUT);
+  pinMode(reviveButton,INPUT_PULLUP);
 
   
   attachInterrupt(digitalPinToInterrupt(reviveButton),revivePlayer,LOW);
@@ -124,7 +124,6 @@ void setup() {
   frequencyCalculations();   // Calculates pulse lengths etc for desired frequency
   configureGame();           // Look up and configure game details
   tagCode();                 // Based on game details etc works out the data that will be transmitted when a shot is fired
-
 
   digitalWrite(triggerPin, HIGH);      // Not really needed if your circuit has the correct pull up resistors already but doesn't harm
 
@@ -140,6 +139,7 @@ void setup() {
   ammoDisplay();
 
   Serial.println("Ready....");
+
 }
 
 
@@ -271,6 +271,7 @@ void interpritReceived(uint16_t data) { // After a message has been received by 
 void shoot() {
   if (FIRE == 1) { // Has the trigger been pressed?
     Serial.println("FIRE 1");
+    digitalWrite(muzzleFlash,HIGH);
     sendPulse(IRtransmitPin, 1); // Transmit Header pulse, send pulse subroutine deals with the details
     sendPulse(IRtransmitPin, 1);
     sendPulse(IRtransmitPin, 1);
@@ -288,7 +289,7 @@ void shoot() {
       sendPulse(IRtransmitPin, 1);
       delayMicroseconds(IRpulse);
     }
-   
+   digitalWrite(muzzleFlash,LOW);
   }
   
   FIRE = 0;
@@ -420,13 +421,12 @@ void dead() { // void determines what the tagger does when it is out of lives
   analogWrite(ammoPin, ((int) ammo));
   analogWrite(lifePin, ((int) life));
   Serial.println("DEAD");
+  digitalWrite(hitPin, HIGH);
 
   for (int i = 0; i < 10; i++) {
     analogWrite(ammoPin, 255);
-    digitalWrite(hitPin, HIGH);
     delay (500);
     analogWrite(ammoPin, 0);
-    digitalWrite(hitPin, LOW);
     delay (500);
   }
 }
