@@ -185,14 +185,13 @@ void lifeDisplay() { // Updates Ammo LED output
 
 void revivePlayer()
   {
-    Serial.println("Revive");
+    digitalWrite(hitPin, LOW);
     for(int i=0;i<62;i++)
   {
     delayMicroseconds(16383);
   }
     life = maxLife;
     ammo = maxAmmo;
-    digitalWrite(hitPin, LOW);
   }
 
 void receiveIR() { // Void checks for an incoming signal and decodes it if it sees one.
@@ -241,6 +240,7 @@ void receiveIR() { // Void checks for an incoming signal and decodes it if it se
       Serial.println("Valid Signal");
     }
     else {
+      digitalWrite(hitPin, LOW);
       Serial.println("ERROR");
     }
     if (error == 0) {
