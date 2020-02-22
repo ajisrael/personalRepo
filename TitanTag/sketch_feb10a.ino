@@ -15,6 +15,7 @@
 // If you have code improvements or additions please go to http://duinotag.blogspot.com
 //
 
+#define Tolerance 300
 
 
 // Digital IO's
@@ -64,6 +65,7 @@ int header                 = 4;      // Header lenght in pulses. 4 = Miles tag s
 int maxSPS                 = 10;     // Maximum Shots Per Seconds. Not yet used.
 int TBS                    = 0;      // Time between shots. Not yet used.
 int gameModeConfig [2][6] ={{1,30,30,3,3,1},{1,100,100,10,10,2}};
+int damage [16] = {1,2,4,5,7,10,15,17,20,25,30,35,40,50,74,100};
 
 // Transmission data
 int byte1[8];                        // String for storing byte1 of the data which gets transmitted when the player fires.
@@ -73,9 +75,11 @@ int myParity               = 0;      // String for storing parity of the data wh
 // Received data
 int memory                 = 10;     // Number of signals to be recorded: Allows for the game data to be reviewed after the game, no provision for transmitting / accessing it yet though.
 int hitNo                  = 0;      // Hit number
+
 // Byte1
 int player[10];                      // Array must be as large as memory
 int team[10];                        // Array must be as large as memory
+
 // Byte2
 int weapon[10];                      // Array must be as large as memory
 int hp[10];                          // Array must be as large as memory
@@ -186,14 +190,19 @@ void receiveIR() { // Void checks for an incoming signal and decodes it if it se
     Serial.print("sensor: ");                            // Prints if it was a head shot or not.
     Serial.print(received[0]);
     Serial.print("...");
-
     for (int i = 1; i <= 17; i++) { // Looks at each one of the received pulses
       int receivedTemp[18];
       receivedTemp[i] = 2;
-      if (received[i] > (IRpulse - 200) &&  received[i] < (IRpulse + 200)) {
+
+      
+      if(received[i]>((4*IRpulse)-Tolerance)&& received[i] <(4*IRpulse+Tolerance))
+      {
+        receivedTemp[i]=0;
+       }
+      if (received[i] > (IRpulse - Tolerance) &&  received[i] < (IRpulse + Tolerance)) {
         receivedTemp[i] = 0; // Works out from the pulse length if it was a data 1 or 0 that was received writes result to receivedTemp string
       }
-      if (received[i] > (IRpulse + IRpulse - 200) &&  received[i] < (IRpulse + IRpulse + 200)) {
+      if (received[i] > (2*IRpulse - Tolerance) &&  received[i] < (2*IRpulse + Tolerance)) {
         receivedTemp[i] = 1; // Works out from the pulse length if it was a data 1 or 0 that was received
       }
       received[i] = 3;                   // Wipes raw received data
@@ -214,9 +223,9 @@ void receiveIR() { // Void checks for an incoming signal and decodes it if it se
         error = 1;
       }
     }
-    // Serial.println(check);
+     Serial.println(check);
     check = check >> 0 & B1;
-    // Serial.println(check);
+     Serial.println(check);
     if (check != received[17]) {
       error = 1;
     }
@@ -391,7 +400,7 @@ void triggers() { // Checks to see if the triggers have been presses
   if (TR == LOW && automatic == 1) {
     FIRE = 1;
   }
-  if (FIRE == 1 || FIRE == 2) {
+  if (FIRE == 1 ) {
     if (ammo < 1) {
       FIRE = 0;
       noAmmo();
@@ -436,7 +445,7 @@ void frequencyCalculations() { // Works out all the timings needed to give the c
   Serial.println(IRt);
   Serial.print("Pulses: ");
   Serial.println(IRpulses);
-  timeOut = IRpulse + 50; // Adding 50 to the expected pulse time gives a little margin for error on the pulse read time out value
+  timeOut = 4*IRpulse + 200; // Adding 50 to the expected pulse time gives a little margin for error on the pulse read time out value
 }
 
 
