@@ -17,8 +17,9 @@
 
 #define Tolerance 300
 #define PLAYER_ID 0xEF00
-#define TEAM_ID = 0x00C0
-#define DAMAGE =  0x003C
+#define TEAM_ID 0x00C0
+#define DAMAGE 0x003C
+#define PARITY  0x0001
 
 // Digital IO's
 int triggerPin             = 3;      // Push button for primary fire. Low = pressed
@@ -32,18 +33,22 @@ int IRtransmit2Pin         = 8;      // Secondary fire mode IR transmitter pin: 
 int IRreceivePin           = 12;     // The pin that incoming IR signals are read from
 int IRreceive2Pin          = 11;     // Allows for checking external sensors are attached as well as distinguishing between sensor locations (eg spotting head shots)
 int reloadButton           = 18; //Button to reload the gun's ammo
+int reviveButton           = 19; //Button to revive thyself
+int muzzleFlash            = 22; //LED for muzzle flash
+
 // Minimum gun requirements: trigger, receiver, IR led, hit LED.
 
 // Player and Game details
 uint16_t myTeamID               = 1;      // 1-7 (0 = system message)
 uint16_t myPlayerID             = 5;      // Player ID
-uint16_t damageID            = 0;
+uint16_t myDamageID            = 0;
 int myGameID               = 0;      // Interprited by configureGane subroutine; allows for quick change of game types.
 int myWeaponID             = 0;      // Deffined by gameType and configureGame subroutine.
 int myWeaponHP             = 0;      // Deffined by gameType and configureGame subroutine.
 int maxAmmo                = 0;      // Deffined by gameType and configureGame subroutine.
 int maxLife                = 0;      // Deffined by gameType and configureGame subroutine.
 int automatic              = 0;      // Deffined by gameType and configureGame subroutine. Automatic fire 0 = Semi Auto, 1 = Fully Auto.
+int friendlyFire           = 0;
 
 //Incoming signal Details
 int received[18];                    // Received data: received[0] = which sensor, received[1] - [17] byte1 byte2 parity (Miles Tag structure)
@@ -51,7 +56,7 @@ int check                  = 0;      // Variable used in parity checking
 
 // Stats
 volatile int ammo          = 0;      // Current ammunition
-int life                   = 0;      // Current life
+volatile int life          = 0;      // Current life
 
 // Code Variables
 int timeOut                = 0;      // Deffined in frequencyCalculations (IRpulse + 50)
@@ -67,8 +72,8 @@ int IRpulses               = 0;      // Number of oscillations needed to make a 
 int header                 = 4;      // Header lenght in pulses. 4 = Miles tag standard
 int maxSPS                 = 10;     // Maximum Shots Per Seconds. Not yet used.
 int TBS                    = 0;      // Time between shots. Not yet used.
-int gameModeConfig [2][6] ={{1,30,30,3,3,1},{1,100,100,10,10,2}};
-uint16_t damage [16] = {1,2,4,5,7,10,15,17,20,25,30,35,40,50,74,100};
+int gameModeConfig [2][6] ={{1,30,30,100,100,1},{1,100,100,100,100,2}};
+uint16_t damageValues [16] = {1,2,4,5,7,10,15,17,20,25,30,35,40,50,74,100};
 volatile uint16_t data = 0x0000;
 
 
@@ -107,7 +112,11 @@ void setup() {
   pinMode(IRreceivePin, INPUT);
   pinMode(IRreceive2Pin, INPUT);
   pinMode(reloadButton,INPUT_PULLUP);
+  pinMode(muzzleFlash,OUTPUT);
+  pinMode(reviveButton,INPUT);
 
+  
+  attachInterrupt(digitalPinToInterrupt(reviveButton),revivePlayer,LOW);
   attachInterrupt(digitalPinToInterrupt(reloadButton),reloadAmmo,LOW);
 
   
@@ -174,64 +183,52 @@ void lifeDisplay() { // Updates Ammo LED output
 }
 
 
+void revivePlayer()
+  {
+    life = maxLife;
+    ammo = maxAmmo;
+  }
+
 void receiveIR() { // Void checks for an incoming signal and decodes it if it sees one.
   int error = 0;
-
-  if (digitalRead(IRreceivePin) == LOW) {  // If the receive pin is low a signal is being received.
+  uint16_t receivedData = 0xFFFF;
+  if (digitalRead(IRreceivePin) == LOW) { 
+    Serial.println("Im hit");
+    // If the receive pin is low a signal is being received.
     digitalWrite(hitPin, HIGH);
-    if (digitalRead(IRreceive2Pin) == LOW) { // Is the incoming signal being received by the head sensors?
-      received[0] = 1;
-    }
-    else {
-      received[0] = 0;
-    }
+//    if (digitalRead(IRreceive2Pin) == LOW) { // Is the incoming signal being received by the head sensors?
+//      received[0] = 1;
+//    }
+//    else {
+//      received[0] = 0;
+//    }
 
     while (digitalRead(IRreceivePin) == LOW) {
     }
-    for (int i = 1; i <= 17; i++) {                       // Repeats several times to make sure the whole signal has been received
+    for (int i = 0; i < 16; i++) {                       // Repeats several times to make sure the whole signal has been received
       received[i] = pulseIn(IRreceivePin, LOW, timeOut);  // pulseIn command waits for a pulse and then records its duration in microseconds.
     }
 
-    Serial.print("sensor: ");                            // Prints if it was a head shot or not.
-    Serial.print(received[0]);
-    Serial.print("...");
-    for (int i = 1; i <= 17; i++) { // Looks at each one of the received pulses
-      int receivedTemp[18];
-      receivedTemp[i] = 2;
+    for (int i = 15; i >= 0; i--) { // Looks at each one of the received pulses
 
-      
-      if(received[i]>((4*IRpulse)-Tolerance)&& received[i] <(4*IRpulse+Tolerance))
-      {
-        receivedTemp[i]=0;
-       }
       if (received[i] > (IRpulse - Tolerance) &&  received[i] < (IRpulse + Tolerance)) {
-        receivedTemp[i] = 0; // Works out from the pulse length if it was a data 1 or 0 that was received writes result to receivedTemp string
+      receivedData &= ~(0x8000 >> i); // Works out from the pulse length if it was a data 1 or 0 that was received writes result to receivedTemp string
       }
-      if (received[i] > (2*IRpulse - Tolerance) &&  received[i] < (2*IRpulse + Tolerance)) {
-        receivedTemp[i] = 1; // Works out from the pulse length if it was a data 1 or 0 that was received
-      }
-      received[i] = 3;                   // Wipes raw received data
-      received[i] = receivedTemp[i];     // Inputs interpreted data
-
-      Serial.print(" ");
-      Serial.print(received[i]);         // Print interpreted data results
+      
     }
-    Serial.println("");                  // New line to tidy up printed results
+    Serial.println(receivedData,BIN);         // Print interpreted data results
 
     // Parity Check. Was the data received a valid signal?
-    check = 0;
-    for (int i = 1; i <= 16; i++) {
-      if (received[i] == 1) {
-        check = check + 1;
-      }
-      if (received[i] == 2) {
-        error = 1;
-      }
-    }
-     Serial.println(check);
-    check = check >> 0 & B1;
-     Serial.println(check);
-    if (check != received[17]) {
+   uint8_t sum = 0;
+  for (uint8_t i = 1; i < 16; i++)
+  {
+    sum += receivedData >> i & B1;
+  }
+  uint16_t parityCalc = sum%2 ;
+  uint16_t parityBit = receivedData & PARITY;
+  check = parityBit ^ parityCalc;
+    
+    if (check|| receivedData == 0xFFFF) {
       error = 1;
     }
     if (error == 0) {
@@ -241,96 +238,33 @@ void receiveIR() { // Void checks for an incoming signal and decodes it if it se
       Serial.println("ERROR");
     }
     if (error == 0) {
-      interpritReceived();
+      interpritReceived(receivedData);
     }
     digitalWrite(hitPin, LOW);
   }
 }
 
 
-void interpritReceived() { // After a message has been received by the ReceiveIR subroutine this subroutine decidedes how it should react to the data
-  if (hitNo == memory) {
-    hitNo = 0; // hitNo sorts out where the data should be stored if statement means old data gets overwritten if too much is received
-  }
-  team[hitNo] = 0;
-  player[hitNo] = 0;
-  weapon[hitNo] = 0;
-  hp[hitNo] = 0;
-  // Next few lines Effectivly converts the binary data into decimal
-  // Im sure there must be a much more efficient way of doing this
-  if (received[1] == 1) {
-    team[hitNo] = team[hitNo] + 4;
-  }
-  if (received[2] == 1) {
-    team[hitNo] = team[hitNo] + 2;
-  }
-  if (received[3] == 1) {
-    team[hitNo] = team[hitNo] + 1;
-  }
+void interpritReceived(uint16_t data) { // After a message has been received by the ReceiveIR subroutine this subroutine decidedes how it should react to the data
 
-  if (received[4] == 1) {
-    player[hitNo] = player[hitNo] + 16;
-  }
-  if (received[5] == 1) {
-    player[hitNo] = player[hitNo] + 8;
-  }
-  if (received[6] == 1) {
-    player[hitNo] = player[hitNo] + 4;
-  }
-  if (received[7] == 1) {
-    player[hitNo] = player[hitNo] + 2;
-  }
-  if (received[8] == 1) {
-    player[hitNo] = player[hitNo] + 1;
-  }
+  uint16_t playerID = ((data & PLAYER_ID)>>8);
+  uint16_t teamID = ((data & TEAM_ID)>>6);
+  uint16_t damageID = ((data & DAMAGE)>>2);
 
-  if (received[9] == 1) {
-    weapon[hitNo] = weapon[hitNo] + 4;
-  }
-  if (received[10] == 1) {
-    weapon[hitNo] = weapon[hitNo] + 2;
-  }
-  if (received[11] == 1) {
-    weapon[hitNo] = weapon[hitNo] + 1;
-  }
+  Serial.print("Player ID:");
+  Serial.println(playerID);
+  Serial.print("Team ID:");
+  Serial.println(teamID);
+  Serial.print("damageID:");
+  Serial.println(damageID);
 
-  if (received[12] == 1) {
-    hp[hitNo] = hp[hitNo] + 16;
+  if(playerID != myPlayerID)
+  {
+    if(friendlyFire||(myTeamID!=teamID))
+    {
+      hit(damageID);
+    }
   }
-  if (received[13] == 1) {
-    hp[hitNo] = hp[hitNo] + 8;
-  }
-  if (received[14] == 1) {
-    hp[hitNo] = hp[hitNo] + 4;
-  }
-  if (received[15] == 1) {
-    hp[hitNo] = hp[hitNo] + 2;
-  }
-  if (received[16] == 1) {
-    hp[hitNo] = hp[hitNo] + 1;
-  }
-
-  parity[hitNo] = received[17];
-
-  Serial.print("Hit No: ");
-  Serial.print(hitNo);
-  Serial.print("  Player: ");
-  Serial.print(player[hitNo]);
-  Serial.print("  Team: ");
-  Serial.print(team[hitNo]);
-  Serial.print("  Weapon: ");
-  Serial.print(weapon[hitNo]);
-  Serial.print("  HP: ");
-  Serial.print(hp[hitNo]);
-  Serial.print("  Parity: ");
-  Serial.println(parity[hitNo]);
-
-
-  //This is probably where more code should be added to expand the game capabilities at the moment the code just checks that the received data was not a system message and deducts a life if it wasn't.
-  if (player[hitNo] != 0) {
-    hit();
-  }
-  hitNo++ ;
 }
 
 
@@ -442,7 +376,7 @@ void tagCode() { // Works out what the players tagger code (the code that is tra
   uint16_t newData =0x0000;
   newData |= myPlayerID << 8;
   newData |= myTeamID <<6;
-  newData |= damageID << 2;
+  newData |= myDamageID << 2;
 
   uint8_t sum = 0;
   for (uint8_t i = 0; i < 16; i++)
@@ -506,9 +440,10 @@ void noAmmo() { // Make some noise and flash some lights when out of ammo
 }
 
 
-void hit() { // Make some noise and flash some lights when you get shot
+void hit(uint16_t damageIndex) { // Make some noise and flash some lights when you get shot
   digitalWrite(hitPin, HIGH);
-  life = life - hp[hitNo];
+  life = life - damageValues[damageIndex];
+  
   Serial.print("Life: ");
   Serial.println(life);
   playTone(500, 500);
