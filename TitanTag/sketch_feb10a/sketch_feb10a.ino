@@ -32,24 +32,32 @@ int IRtransmitPin          = 2;      // Primary fire mode IR transmitter pin: Us
 int IRtransmit2Pin         = 8;      // Secondary fire mode IR transmitter pin:  Use pins 2,4,7,8,12 or 13. DO NOT USE PWM pins!!
 int IRreceivePin           = 12;     // The pin that incoming IR signals are read from
 int IRreceive2Pin          = 11;     // Allows for checking external sensors are attached as well as distinguishing between sensor locations (eg spotting head shots)
-int reloadButton           = 18; //Button to reload the gun's ammo
-int reviveButton           = 19; //nlButton to revive thyself
-int muzzleFlash            = 22; //LED for muzzle flash
+int reloadButton           = 18;     // Button to reload the gun's ammo
+int reviveButton           = 19;     // Button to revive thyself
+int muzzleFlash            = 22;     // LED for muzzle flash
 
 // Minimum gun requirements: trigger, receiver, IR led, hit LED.
 
 // Player and Game details
-uint16_t myTeamID              = 1;      // 1-7 (0 = system message)
-uint16_t myPlayerID            = 5;      // Player ID
-uint16_t myDamageID            = 9;
-uint16_t controlBit            = 1;
+uint16_t myTeamID    =  1; // Team ID: Value in range of 0-3 {Red, Blue, Yellow, Green}
+uint16_t myPlayerID  =  5; // Player ID: Value in range of 0-59. Players[0-49], Special weapons [50-59]
+uint16_t myDamageID  =  9; // Index in damage array. Sent in IR data packet.      
+uint16_t armor       =  0; // Armor for player. Each hit decrements armor by 1 and if armor is > 0 then hits are reduced by 50%.
+uint16_t clipSize    = 25; // Rounds per click.         
+
+// Feature enable and disable; 1 = enabled, 0 = disabled
+bool CTRLB = 0; // Control bit for admin/refs to transmit control packets. Default = 0.
+bool MZFLE = 1; // Muzzle flash enabled; Default = 1.
+bool FRFRE = 0; // Frendly fire enabled; Default = 0.
+bool ARMRE = 0; // Armor enabled; Default = 0.
+bool CPSZE = 0; // Clip size enabled; Default = 0.
+
 int myGameID               = 0;      // Interprited by configureGane subroutine; allows for quick change of game types.
 int myWeaponID             = 0;      // Deffined by gameType and configureGame subroutine.
 int myWeaponHP             = 0;      // Deffined by gameType and configureGame subroutine.
 int maxAmmo                = 0;      // Deffined by gameType and configureGame subroutine.
 int maxLife                = 0;      // Deffined by gameType and configureGame subroutine.
 int automatic              = 0;      // Deffined by gameType and configureGame subroutine. Automatic fire 0 = Semi Auto, 1 = Fully Auto.
-int friendlyFire           = 0;
 int deadState              = 0;
 int reloadDelay            = 2;
 int burst                  = 1;
@@ -253,7 +261,7 @@ void interpritReceived(uint16_t data) { // After a message has been received by 
   
   if(playerID != myPlayerID)
   {
-    if(friendlyFire||(myTeamID!=teamID))
+    if(FRFRE||(myTeamID!=teamID))
     {
       digitalWrite(hitPin, HIGH);
       hit(damageID);

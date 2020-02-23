@@ -1,3 +1,5 @@
 {
-    "board": "arduino:avr:uno"
+    "board": "arduino:avr:uno",
+    "sketch": "TitanTag/sketch_feb10a/sketch_feb10a.ino",
+    "port": "/dev/cu.usbmodem1421"
 }
