@@ -39,8 +39,8 @@ int muzzleFlash            = 22; //LED for muzzle flash
 // Minimum gun requirements: trigger, receiver, IR led, hit LED.
 
 // Player and Game details
-uint16_t myTeamID               = 1;      // 1-7 (0 = system message)
-uint16_t myPlayerID             = 5;      // Player ID
+uint16_t myTeamID               = 0;      // 1-7 (0 = system message)
+uint16_t myPlayerID             = 7;      // Player ID
 uint16_t myDamageID            = 9;
 int myGameID               = 0;      // Interprited by configureGane subroutine; allows for quick change of game types.
 int myWeaponID             = 0;      // Deffined by gameType and configureGame subroutine.
@@ -234,13 +234,14 @@ void receiveIR() { // Void checks for an incoming signal and decodes it if it se
   uint16_t parityBit = receivedData & PARITY;
   check = parityBit ^ parityCalc;
     
-    if (check|| receivedData == 0xFFFF) {
+    if (check || receivedData == 0xFFFF) {
       error = 1;
     }
     if (error == 0) {
       Serial.println("Valid Signal");
     }
     else {
+      digitalWrite(hitPin, LOW);
       Serial.println("ERROR");
     }
     if (error == 0) {
@@ -256,6 +257,12 @@ void interpritReceived(uint16_t data) { // After a message has been received by 
   uint16_t teamID = ((data & TEAM_ID)>>6);
   uint16_t damageID = ((data & DAMAGE)>>2);
 
+  bool invalid = 0;
+  if (playerID > 59) { invalid = 1; }
+  else if (teamID > 3) { invalid = 1; }
+  else if (damageID > 15) { invalid = 1; }
+  
+
   Serial.print("Player ID:");
   Serial.println(playerID);
   Serial.print("Team ID:");
@@ -263,7 +270,7 @@ void interpritReceived(uint16_t data) { // After a message has been received by 
   Serial.print("damageID:");
   Serial.println(damageID);
 
-  if(playerID != myPlayerID)
+  if(playerID != myPlayerID && ~invalid)
   {
     if(friendlyFire||(myTeamID!=teamID))
     {
