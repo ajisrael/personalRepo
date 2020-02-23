@@ -57,11 +57,9 @@ int myWeaponID             = 0;      // Deffined by gameType and configureGame s
 int myWeaponHP             = 0;      // Deffined by gameType and configureGame subroutine.
 int maxAmmo                = 0;      // Deffined by gameType and configureGame subroutine.
 int maxLife                = 0;      // Deffined by gameType and configureGame subroutine.
-int automatic              = 0;      // Deffined by gameType and configureGame subroutine. Automatic fire 0 = Semi Auto, 1 = Fully Auto.
+int automatic              = 1;      // Deffined by gameType and configureGame subroutine. Automatic fire 0 = Semi Auto, 1 = Fully Auto.
 int deadState              = 0;
 int reloadDelay            = 2;
-int burst                  = 1;
-int burstLength            = 3;
 
 //Incoming signal Details
 int received[18];                    // Received data: received[0] = which sensor, received[1] - [17] byte1 byte2 parity (Miles Tag structure)
@@ -332,15 +330,11 @@ void triggers() {
       TR = digitalRead(triggerPin);      // Looks up current trigger button state
    
     
-      if (TR != LTR && TR == LOW && burst !=1) {
+      if (TR != LTR && TR == LOW) {
         FIRE = 1;
       }
       if (TR == LOW && automatic == 1) {
         FIRE = 2;
-      }
-      if(TR !=LTR && TR == LOW && burst == 1 )
-      {
-          FIRE = 3;
       }
 
       if (FIRE == 1 || FIRE ==2) {
@@ -351,20 +345,6 @@ void triggers() {
           delayMicroseconds(16383);
         }
         // Fire rate code to be added here
-      }
-      else if (FIRE == 3)
-      {
-        for(int k = 0; k<burstLength; k++)
-        {
-           FIRE = 3;
-           shoot();
-           
-           for(int j=0;j<31;j++)
-          {
-          delayMicroseconds(16383);
-          }
-          LTR=TR;
-        }
       } 
  }
 
