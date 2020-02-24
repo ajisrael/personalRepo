@@ -1,11 +1,11 @@
 // ============================================================================
-// Orig: 
+// Orig:
 // Func: 
-// Meth:        
+// Meth:
 // Rev:  
 //-----------------------------------------------------------------------------
 
-#include "msp430x22x4.h"   // Brobdingnagian chip-specific macros & defs
+#include "msp430x22x4.h"   // chip-specific macros & defs
 #include "stdint.h"        // MSP430 data type definitions
 
 void main(void)
