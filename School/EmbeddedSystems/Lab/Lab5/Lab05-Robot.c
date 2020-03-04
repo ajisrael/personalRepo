@@ -1,7 +1,17 @@
-//========================================================================== BOF
-// FUNC: Send a pre-defined sequence of commands to Robot via UART
+// ========================================================================= BOF
+// Orig: 2020.03.04 - Alex Israels
+// Func: Send a pre-defined sequence of commands to Robot via UART
 //       Triggered by Timer A0 TAR Rollover IRQ (TAIV)
-//------------------------------------------------------------------------------
+// Meth: TimerA is configured in UP mode with TACCR0 set to a value to make the
+//       period 2 seconds. TAIFG is enabled to allow for an ISR to send the
+//       command to the robot every 2 seconds.
+// Defn: PD_2SEC    = The number of TACLK cycles to achieve a 2 second period.
+//       FWD_SP0_50 = Command to drive both motors forward at half speed.
+//       STOP_STAY  = Command to stop both motors (not global all-stop cmd).
+//       SPN_SP0_25 = Command to spin robot at quarter speed.
+// Rev:  None (yet)
+//-----------------------------------------------------------------------------
+
 #include "msp430x22x4.h"
 #include "stdint.h"
 
@@ -31,31 +41,33 @@ __interrupt void IsrRoboCmds(void)
 //        the correct command in the cmdSet union. The command is sent after
 //        waiting for the TX register to be clear on UCA.
 // Args:  None
-// Vars:  entry = Counter for which command pairs to send.
+// Vars:  entry = Index for which command pairs to send.
 //        i     = Index to the command byte to send.
 // Retn:  None
 //------------------------------------------------------------------------------
 {
-    static uint8_t cmd = 0;       // Init. cntr for entries into IsrRoboCmds
+    static uint8_t cmd = 0;       // Init. indes for which command pair to send
     uint8_t i = 0;                // Init. index of command byte to send
 
     switch (__even_in_range(TAIV, 10)) // I.D. source of the TA IRQ
     {
     case TAIV_TAIFG: // Handle TAR rollover IRQ
 
-        // ??? Your Code Goes Here for handling the timer interrupt
-        while (i < 2)
+        while (i < 2)                       // Send only 2 Bytes at a time
         {
             while (!(IFG2 & UCA0TXIFG)) {}; // Wait for TX buff to be ready
             UCA0TXBUF = cmdSet.u8[cmd+i];   // Send command
             i++;                            // Increment to next command
         }
-        cmd = cmd + 2;              // Prepare for next entry
-        if (cmd > 7)
+
+        cmd = cmd + 2;                      // Prepare for next pair of cmds
+
+        if (cmd > 7)                        // Check if all cmds have been sent
         {
-            TACTL &= ~(TAIE); // Disable further interrupts
+            TACTL &= ~(TAIE);               // Disable further interrupts
         }
         break;
+        
     case TAIV_TACCR1: // ignore chnl 1 IRQ
     case TAIV_TACCR2: // ignore chnl 2 IRQ
     default:          // ignore everything else
@@ -91,7 +103,6 @@ void main(void)
     //......................................Config TA to approx 2 sec rollover
     BCSCTL3 |= LFXT1S_2; // ACLK <-- VLO (approx 12 KHz)
 
-    // ??? Your Code Goes Here to configure Timer modes, params, & IRQ
     TACTL |= TASSEL_1 | MC_1 | TAIE;        // SEL ACLK | Up mode | Enable IRQ
     TACCR0 = PD_2SEC - 1;                   // Set period to 2 sec
     while (!(TACTL & TAIFG)){};             // Wait for 2 second delay
