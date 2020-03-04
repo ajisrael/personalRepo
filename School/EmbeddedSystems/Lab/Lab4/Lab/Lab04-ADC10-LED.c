@@ -1,4 +1,4 @@
-// ========================================================================= BOF
+// =========================================================================BOF
 // Orig: 2020.02.24 - Collin Palmer
 // Func: Turn on and off an LED based on the ambient light in the room. Night
 //       Light.
@@ -71,14 +71,15 @@ __interrupt void IsrAdc10LedSwitch(void)
   
   if (newNadc > turnOnNadc)     // Check new value against turn on threshold
   {
-	P3OUT |= 0x02;              // Turn on LED
+	P3OUT |= 0x02;          // Turn on LED
   }
   
   if (newNadc < turnOffNacd)    // Chekc new value against turn off threshold
   {
-	P3OUT &= ~0x02;             // Turn off LED
+	P3OUT &= ~0x02;         // Turn off LED
   }
   
   __bic_SR_register_on_exit(LPM0_bits);  // Clr previous Low Pwr bits on stack  
                                          // to keep CPU awake upon return;
 } // end ISR
+// =========================================================================EOF

@@ -26,9 +26,6 @@
 volatile uint16_t newNadc;   // Hmmm... Why declare a variable volatile 
                              // that is never used in the main program?
 
-static volatile uint16_t stepSize;
-static volatile uint8_t  direction = 0xFF;
-
 void main(void) 
 //------------------------------------------------------------------------------
 // Func:  Init Ports & Interrupts & Configure the ADC10 module of the MSP430,
@@ -79,10 +76,10 @@ __interrupt void IsrAdjPwmTA1(void) // Define Timer-A PWM Adjust ISR.
     {
     case TAIV_TAIFG:                   // Handle IRQ for TAR Rollover to 0
 	
-	    ADC10CTL0 |= ENC | ADC10SC;    // Enable ADC10 and start sample
-		while(ADC10CTL1&ADC10BUSY){}   // Wait for ADC10 to not be busy
-		newNadc = ADC10MEM;            // Read new value from ADC10
-		TACCR1 = TACCR0 - (newNadc + PW_1MS); // Set PW
+	ADC10CTL0 |= ENC | ADC10SC;    // Enable ADC10 and start sample
+	while(ADC10CTL1&ADC10BUSY){}   // Wait for ADC10 to not be busy
+	newNadc = ADC10MEM;            // Read new value from ADC10
+	TACCR1 = TACCR0 - (newNadc + PW_1MS); // Set PW
         TACTL &= ~TAIFG ;              // Clear TAIFG
         break;
 
