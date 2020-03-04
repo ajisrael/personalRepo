@@ -27,7 +27,7 @@ union                              // Union for 8 Sabertooth command bytes
 }   cmdSet;
 
 cmdSet.u16[0] = FWD_SP0_50;        // 1st cmd go forward @ half speed for 2 sec
-cmdSet.u16[1] =  STOP_STAY;        // 2nd cmd stop and wait for 2 sec
+cmdSet.u16[1] =  STOP_STAY;        // 2nd cmd stop and stay for 2 sec
 cmdSet.u16[2] = SPN_SP0_25;        // 3rd cmd spin @ quarter speed for 2 sec
 cmdSet.u16[3] =  STOP_STAY;        // 4th cmd stop and stay (forever)
 
@@ -67,7 +67,7 @@ __interrupt void IsrRoboCmds(void)
             TACTL &= ~(TAIE);               // Disable further interrupts
         }
         break;
-        
+
     case TAIV_TACCR1: // ignore chnl 1 IRQ
     case TAIV_TACCR2: // ignore chnl 2 IRQ
     default:          // ignore everything else
