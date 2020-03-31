@@ -13,9 +13,13 @@ PARAM
 	[ValidateNotNullOrEmpty()]
     [String] $Author = "Alex Israels",
 
-	[Parameter]
+	[Parameter()]
     [Switch] $FullPath
 )
+BEGIN
+{
+
+}
 PROCESS
 {
 	#region - Template code - Core - Try Begin
