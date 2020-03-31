@@ -1,6 +1,9 @@
 [CmdletBinding(ConfirmImpact="None")]
 PARAM
 (
+    [Parameter(Position=100,Mandatory=$false)]
+	[ValidateNotNullOrEmpty()]
+    [Int16] $MaxValue = 256
 )
 BEGIN
 {
@@ -18,14 +21,14 @@ PROCESS
         $IpPrefix = ([String] $IPAddress.Split(".")[0..2]).Replace(" ",".")
 
         $PingTable = @()
-        for ($i = 0; $i -lt 50; $i++)
+        for ($i = 0; $i -lt $MaxValue; $i++)
         {
             $Reply = Test-Connection -Ping "$IpPrefix.$i" -Count 1 -TimeoutSeconds 2
 
             Write-Verbose "Status for $IpPrefix.$i, $($Reply.Replies.Status)"
             if ($Reply.Replies.Status -eq "Success")
             {
-                $PingTable += $Reply.Replies
+                $PingTable += $Reply.Replies.Address
             }
         }
 
