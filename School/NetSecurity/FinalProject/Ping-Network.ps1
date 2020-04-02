@@ -7,7 +7,16 @@ PARAM
 )
 BEGIN
 {
+    if ($PSVersionTable.PSVersion.Major -lt 7)
+    {
+        Write-Error "$($PSVersionTable.PSVersion) is not supported. Please update to at least version 7.0.0 and try again."
+    }
+    if ($PSVersionTable.PSEdition -ne "Core")
+    {
+        Write-Error "Only PowerShell Core is supported. Please run using PowerShell Core."
+    }
     Invoke-Expression '$IPAddress = (Get-NetIPConfiguration | Where-Object {$_.InterfaceAlias -eq "Wi-Fi"}).IPv4Address.IPAddress'
+
 }
 PROCESS
 {
@@ -24,14 +33,21 @@ PROCESS
         for ($i = 0; $i -lt $MaxValue; $i++)
         {
             $Reply = Test-Connection -Ping "$IpPrefix.$i" -Count 1 -TimeoutSeconds 2
-
-            Write-Verbose "Status for $IpPrefix.$i, $($Reply.Replies.Status)"
-            if ($Reply.Replies.Status -eq "Success")
+           
+                Write-Verbose "$($Reply.Reply)"
+                
+                Write-Verbose "Status for $IpPrefix.$i, $($Reply.Reply.Status)"
+                if ($Reply.Reply.Status -eq "Success")
+                {
+                    $PingTable += $Reply.Reply.Address.IPAddressToString
+                }
+            
+            else 
             {
-                $PingTable += $Reply.Replies.Address
+                
             }
+                
         }
-
         return $PingTable
 		#region - Template code - Core - Try End
 	}
