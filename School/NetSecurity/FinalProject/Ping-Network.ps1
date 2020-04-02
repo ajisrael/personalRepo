@@ -34,17 +34,12 @@ PROCESS
         {
             $Reply = Test-Connection -Ping "$IpPrefix.$i" -Count 1 -TimeoutSeconds 2
            
-                Write-Verbose "$($Reply.Reply)"
-                
-                Write-Verbose "Status for $IpPrefix.$i, $($Reply.Reply.Status)"
-                if ($Reply.Reply.Status -eq "Success")
-                {
-                    $PingTable += $Reply.Reply.Address.IPAddressToString
-                }
+            Write-Verbose "$($Reply.Reply)"
             
-            else 
+            Write-Verbose "Status for $IpPrefix.$i, $($Reply.Reply.Status)"
+            if ($Reply.Reply.Status -eq "Success")
             {
-                
+                $PingTable += , $Reply.Reply.Address.IPAddressToString
             }
                 
         }
