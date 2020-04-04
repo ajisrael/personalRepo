@@ -170,14 +170,28 @@ PROCESS
             $MACPrefix = Join-String -InputObject $MACAddress[0..7]
 
             $Result = New-Object -TypeName "PSObject"
-            Add-Member -InputObject $Result -NotePropertyName "Vendor"     -NotePropertyValue $ShortVendorTable.$MACPrefix[0]
+            Add-Member -InputObject $Result -NotePropertyName "Vendor"     -NotePropertyValue "N/A"
             Add-Member -InputObject $Result -NotePropertyName "IPAddress"  -NotePropertyValue $Neighbor.IPAddress
             Add-Member -InputObject $Result -NotePropertyName "MACAddress" -NotePropertyValue $MACAddress
-            Add-Member -InputObject $Result -NotePropertyName "VendorFullName" -NotePropertyValue $ShortVendorTable.$MACPrefix[1]
-            if ($FullComparison -and [string]::IsNullOrEmpty($Result.Vendor))
+            Add-Member -InputObject $Result -NotePropertyName "VendorFullName" -NotePropertyValue "N/A"
+            
+            $VendorData = $null
+            if ($FullComparison)
             {
-                $Result.Vendor = $LongVendorTable.$MACAddress
+                $VendorData = $LongVendorTable."$MACAddress/36"
             }
+            
+            if ($null -eq $VendorData)
+            {
+                $VendorData = $ShortVendorTable.$MACPrefix
+            }
+            
+            if ($VendorData)
+            {
+                $Result.Vendor = $VendorData[0]
+                $Result.VendorFullName = $VendorData[1]
+            }
+        
             $Report += $Result
         }
 
