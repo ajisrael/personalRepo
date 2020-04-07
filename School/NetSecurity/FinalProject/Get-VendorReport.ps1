@@ -22,6 +22,7 @@ BEGIN
     {
         Write-Error "Only PowerShell Core is supported. Please run using PowerShell Core."
     }
+    $HostIsWindows = ($PSVersionTable.Platform -eq "Windows")
 
     # Progress Bar Setup
     try
@@ -45,7 +46,22 @@ BEGIN
     Write-Progress -Id $MainProgressID -Activity $MainActivity -Status (& $MainStatusBlock) -PercentComplete (($MainStepNum  - 1) / $TotalMainSteps * 100)
 
     # Get host IP Address.
-    Invoke-Expression '$IPAddress = (Get-NetIPConfiguration | Where-Object {$_.InterfaceAlias -eq "Wi-Fi"}).IPv4Address.IPAddress'
+    if ($HostIsWindows)
+    {
+        Invoke-Expression '$IPAddress = (Get-NetIPConfiguration | Where-Object {$_.InterfaceAlias -eq "Wi-Fi"}).IPv4Address.IPAddress'
+    }
+    else 
+    {
+        Invoke-Expression '$RawIPAddressData = ifconfig -a | grep "inet "'
+        $RawIPAddressList = $RawIPAddressData.Split('`n')
+        $PersonalIPAddressList = @()
+        foreach ($RawIPAddressData in $RawIPAddressList)
+        {
+            $PersonalIPAddressList += , $RawIPAddressData.Trim().Split(" ")[1]
+        }
+        #TODO: Figure out a better way to identify local IP address from list
+        $IPAddress = $PersonalIPAddressList[1]
+    }
 
     # Get a list of vendor OUI's from wireshark's database.
     if (-not($LocalDB))
