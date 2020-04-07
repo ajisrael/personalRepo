@@ -40,14 +40,14 @@ BEGIN
 
     # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
     $MainStepNum = 1
-    $StepDescription = "Getting OIU data from WireShark database."
-    if ($LocalDB) {$StepDescription = "Getting OIU data from local copy of WireShark database."}
+    $StepDescription = "Getting OUI data from WireShark database."
+    if ($LocalDB) {$StepDescription = "Getting OUI data from local copy of WireShark database."}
     Write-Progress -Id $MainProgressID -Activity $MainActivity -Status (& $MainStatusBlock) -PercentComplete (($MainStepNum  - 1) / $TotalMainSteps * 100)
 
     # Get host IP Address.
     Invoke-Expression '$IPAddress = (Get-NetIPConfiguration | Where-Object {$_.InterfaceAlias -eq "Wi-Fi"}).IPv4Address.IPAddress'
 
-    # Get a list of vendor OIU's from wireshark's database.
+    # Get a list of vendor OUI's from wireshark's database.
     if (-not($LocalDB))
     {
         $VendorListRaw = (Invoke-WebRequest -Uri "https://gitlab.com/wireshark/wireshark/raw/master/manuf").Content
@@ -59,7 +59,7 @@ BEGIN
     }
     
 
-    # Separate the list into short and long OIU's.
+    # Separate the list into short and long OUI's.
     $LongVendorTable = @{}
     $ShortVendorTable = @{}
     foreach ($Entry in $VendorListContent)
@@ -146,7 +146,7 @@ PROCESS
         $StepDescription = "Generating report."
         Write-Progress -Id $MainProgressID -Activity $MainActivity -Status (& $MainStatusBlock) -PercentComplete (($MainStepNum  - 1) / $TotalMainSteps * 100)
 
-        # Compare the MAC address against the OIU table and build an array of result objects to report on.
+        # Compare the MAC address against the OUI table and build an array of result objects to report on.
         $Report = @()
         foreach ($Neighbor in $NeighborList)
         {
@@ -157,6 +157,8 @@ PROCESS
             Add-Member -InputObject $Result -NotePropertyName "Vendor"     -NotePropertyValue "N/A"
             Add-Member -InputObject $Result -NotePropertyName "IPAddress"  -NotePropertyValue $Neighbor.IPAddress
             Add-Member -InputObject $Result -NotePropertyName "MACAddress" -NotePropertyValue $MACAddress
+            Add-Member -InputObject $Result -NotePropertyName "HostName"   `
+            -NotePropertyValue (Test-Connection -Ping $Neighbor.IPAddress -Count 1 -timeoutSeconds 2 -ResolveDestination).Destination
             Add-Member -InputObject $Result -NotePropertyName "VendorFullName" -NotePropertyValue "N/A"
             
             $VendorData = $null
