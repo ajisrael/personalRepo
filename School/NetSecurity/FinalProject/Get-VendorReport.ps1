@@ -22,7 +22,7 @@ BEGIN
     {
         Write-Error "Only PowerShell Core is supported. Please run using PowerShell Core."
     }
-    $HostIsWindows = ($PSVersionTable.Platform -eq "Windows")
+    $HostIsWindows = ($PSVersionTable.Platform -eq "Win32NT")
 
     # Progress Bar Setup
     try
@@ -169,12 +169,21 @@ PROCESS
             $MACAddress = $Neighbor.LinkLayerAddress.Replace("-",":")
             $MACPrefix = Join-String -InputObject $MACAddress[0..7]
 
+            try
+            {
+                $HostName = (Test-Connection -Ping $Neighbor.IPAddress -Count 1 -timeoutSeconds 2 -ResolveDestination).Destination
+            }
+            catch
+            {
+                $HostName = "?"
+                Write-Verbose $_
+            }
+
             $Result = New-Object -TypeName "PSObject"
             Add-Member -InputObject $Result -NotePropertyName "Vendor"     -NotePropertyValue "N/A"
             Add-Member -InputObject $Result -NotePropertyName "IPAddress"  -NotePropertyValue $Neighbor.IPAddress
             Add-Member -InputObject $Result -NotePropertyName "MACAddress" -NotePropertyValue $MACAddress
-            Add-Member -InputObject $Result -NotePropertyName "HostName"   `
-            -NotePropertyValue (Test-Connection -Ping $Neighbor.IPAddress -Count 1 -timeoutSeconds 2 -ResolveDestination).Destination
+            Add-Member -InputObject $Result -NotePropertyName "HostName"  -NotePropertyValue $HostName
             Add-Member -InputObject $Result -NotePropertyName "VendorFullName" -NotePropertyValue "N/A"
             
             $VendorData = $null
