@@ -46,11 +46,11 @@ BEGIN
     Write-Progress -Id $MainProgressID -Activity $MainActivity -Status (& $MainStatusBlock) -PercentComplete (($MainStepNum  - 1) / $TotalMainSteps * 100)
 
     # Get host IP Address.
-    if ($HostIsWindows)
+    if ($IsWindows)
     {
         Invoke-Expression '$IPAddress = (Get-NetIPConfiguration | Where-Object {$_.InterfaceAlias -eq "Wi-Fi"}).IPv4Address.IPAddress'
     }
-    else 
+    elseif($IsMacOS) 
     {
         Invoke-Expression '$RawIPAddressData = ifconfig -a | grep "inet "'
         $RawIPAddressList = $RawIPAddressData.Split('`n')
@@ -62,16 +62,33 @@ BEGIN
         #TODO: Figure out a better way to identify local IP address from list
         $IPAddress = $PersonalIPAddressList[1]
     }
+    elseif($IsLinux)
+    {
+        Invoke-Expression '$RawIPAddressData = ip address show | grep "inet "'
+        $RawIPAddressList = $RawIPAddressData.Split('`n')
+        $PersonalIPAddressList = @()
+        foreach ($RawIPAddressData in $RawIPAddressList)
+        {
+            $PersonalIPAddressList += , $RawIPAddressData.Trim().Split(" ")[1].Split("/")[0]
+        }
+        #TODO: Figure out a better way to identify local IP address from list
+        $IPAddress = $PersonalIPAddressList[1]
+    }
+    else
+    {
+        Write-Error "$($PSVersionTable.OS) is not supported."
+    }
 
     # Get a list of vendor OUI's from wireshark's database.
     if (-not($LocalDB))
     {
         $VendorListRaw = (Invoke-WebRequest -Uri "https://gitlab.com/wireshark/wireshark/raw/master/manuf").Content
+        Set-Content -Path "$PSScriptRoot/wireSharkDB.txt" -Value $VendorListRaw
         $VendorListContent = $VendorListRaw.Split("`n") | Where-Object {-not ($_.StartsWith("#"))} | Where-Object {$_.Trim() -ne ""}
     }
     else 
     {
-        $VendorListContent = Get-Content -Path "$PSScriptRoot/WireSharkDB.txt" | Where-Object {-not ($_.StartsWith("#"))} | Where-Object {$_.Trim() -ne ""}
+        $VendorListContent = Get-Content -Path "$PSScriptRoot/wireSharkDB.txt" | Where-Object {-not ($_.StartsWith("#"))} | Where-Object {$_.Trim() -ne ""}
     }
     
 
@@ -155,7 +172,29 @@ PROCESS
         Write-Progress -Id $MainProgressID -Activity $MainActivity -Status (& $MainStatusBlock) -PercentComplete (($MainStepNum  - 1) / $TotalMainSteps * 100)
 
         # Get the corresponding MAC address of the active IP addresses.
-        $NeighborList = Get-NetNeighbor -IPAddress $IPAddressList
+        if ($IsWindows)
+        {
+            $NeighborList = Get-NetNeighbor -IPAddress $IPAddressList
+        }
+        elseif ($IsMacOS)
+        {
+            Write-Error "Need to implement lookup for MACOS."
+            return
+        }
+        elseif ($IsLinux)
+        {
+            $NeighborListRaw = (Invoke-Expression "ip neighbor").Split('`n')
+            $NeighborList = @()
+            foreach ($NeighborRaw in $NeighborListRaw)
+            {
+                $MACAddress = $NeighborRaw.Trim().Split(" ")[4]
+                $IPAddress = $NeighborRaw.Trim().Split(" ")[0]
+                $Neighbor = New-Object -TypeName "PSObject"
+                Add-Member -InputObject $Neighbor -NotePropertyName "LinkLayerAddress" -NotePropertyValue $MACAddress
+                Add-Member -InputObject $Neighbor -NotePropertyName "IPAddress" -NotePropertyValue $IPAddress
+                $NeighborList += $Neighbor
+            }
+        }
         
         # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
         $MainStepNum++
@@ -183,7 +222,7 @@ PROCESS
             Add-Member -InputObject $Result -NotePropertyName "Vendor"     -NotePropertyValue "N/A"
             Add-Member -InputObject $Result -NotePropertyName "IPAddress"  -NotePropertyValue $Neighbor.IPAddress
             Add-Member -InputObject $Result -NotePropertyName "MACAddress" -NotePropertyValue $MACAddress
-            Add-Member -InputObject $Result -NotePropertyName "HostName"  -NotePropertyValue $HostName
+            Add-Member -InputObject $Result -NotePropertyName "HostName"   -NotePropertyValue $HostName
             Add-Member -InputObject $Result -NotePropertyName "VendorFullName" -NotePropertyValue "N/A"
             
             $VendorData = $null
