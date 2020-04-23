@@ -48,7 +48,7 @@ BEGIN
     # Get host IP Address.
     if ($IsWindows)
     {
-        Invoke-Expression '$IPAddress = (Get-NetIPConfiguration | Where-Object {$_.InterfaceAlias -eq "Wi-Fi"}).IPv4Address.IPAddress'
+        Invoke-Expression '$PersonalIPAddress = (Get-NetIPConfiguration | Where-Object {$_.InterfaceAlias -eq "Wi-Fi"}).IPv4Address.IPAddress'
     }
     elseif($IsMacOS) 
     {
@@ -60,7 +60,7 @@ BEGIN
             $PersonalIPAddressList += , $RawIPAddressData.Trim().Split(" ")[1]
         }
         #TODO: Figure out a better way to identify local IP address from list
-        $IPAddress = $PersonalIPAddressList[1]
+        $PersonalIPAddress = $PersonalIPAddressList[1]
     }
     elseif($IsLinux)
     {
@@ -72,7 +72,7 @@ BEGIN
             $PersonalIPAddressList += , $RawIPAddressData.Trim().Split(" ")[1].Split("/")[0]
         }
         #TODO: Figure out a better way to identify local IP address from list
-        $IPAddress = $PersonalIPAddressList[1]
+        $PersonalIPAddress = $PersonalIPAddressList[1]
     }
     else
     {
@@ -122,7 +122,7 @@ PROCESS
 		#endregion
 
         # Get the ip prefix.
-        $IpPrefix = ([String] $IPAddress.Split(".")[0..2]).Replace(" ",".")
+        $IpPrefix = ([String] $PersonalIPAddress.Split(".")[0..2]).Replace(" ",".")
 
         # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
         $MainStepNum++
@@ -146,6 +146,7 @@ PROCESS
 
         # Get a list of active IP addresses on the network.
         $IPAddressList = @()
+        $NeighborList = @()
         $ScanStepNum = 0
         for ($i = 0; $i -lt $MaxValue; $i++)
         {
@@ -160,11 +161,22 @@ PROCESS
             if ($Reply.Reply.Status -eq "Success")
             {
                 $IPAddressList += , $Reply.Reply.Address.IPAddressToString
+                if ($IsLinux -and $Reply.Reply.Address.IPAddressToString -ne $PersonalIPAddress)
+                {
+                    $Command = 'ip neighbor | grep "' + $Reply.Reply.Address.IPAddressToString + ' "'
+                    $NeighborRaw = Invoke-Expression -Command $Command
+                    $MACAddress = $NeighborRaw.Trim().Split(" ")[4]
+                    $IPAddress = $NeighborRaw.Trim().Split(" ")[0]
+                    $Neighbor = New-Object -TypeName "PSObject"
+                    Add-Member -InputObject $Neighbor -NotePropertyName "LinkLayerAddress" -NotePropertyValue $MACAddress
+                    Add-Member -InputObject $Neighbor -NotePropertyName "IPAddress" -NotePropertyValue $IPAddress
+                    $NeighborList += $Neighbor
+                }
             }
         }
 
         # Filter out host IPAddress.
-        $IPAddressList = $IPAddressList | Where-Object {$_ -ne $IPAddress}
+        $IPAddressList = $IPAddressList | Where-Object {$_ -ne $PersonalIPAddress}
 
         # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
         $MainStepNum++
@@ -180,20 +192,6 @@ PROCESS
         {
             Write-Error "Need to implement lookup for MACOS."
             return
-        }
-        elseif ($IsLinux)
-        {
-            $NeighborListRaw = (Invoke-Expression "ip neighbor").Split('`n')
-            $NeighborList = @()
-            foreach ($NeighborRaw in $NeighborListRaw)
-            {
-                $MACAddress = $NeighborRaw.Trim().Split(" ")[4]
-                $IPAddress = $NeighborRaw.Trim().Split(" ")[0]
-                $Neighbor = New-Object -TypeName "PSObject"
-                Add-Member -InputObject $Neighbor -NotePropertyName "LinkLayerAddress" -NotePropertyValue $MACAddress
-                Add-Member -InputObject $Neighbor -NotePropertyName "IPAddress" -NotePropertyValue $IPAddress
-                $NeighborList += $Neighbor
-            }
         }
         
         # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
