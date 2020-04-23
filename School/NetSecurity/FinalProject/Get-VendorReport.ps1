@@ -165,7 +165,7 @@ PROCESS
             if ($Reply.Reply.Status -eq "Success")
             {
                 $IPAddressList += , $Reply.Reply.Address.IPAddressToString
-                if ($IsLinux -and $Reply.Reply.Address.IPAddressToString -ne $PersonalIPAddress)
+                if ($IsLinux -and $Reply.Reply.Address.IPAddressToString -notin $PersonalIPAddressList)
                 {
                     $Command = 'ip neighbor | grep "' + $Reply.Reply.Address.IPAddressToString + ' "'
                     $NeighborRaw = Invoke-Expression -Command $Command
@@ -255,7 +255,7 @@ PROCESS
         {
             $PythonArgs  = (Resolve-Path -Path "$PSScriptRoot/PyDeauth.py").Path
             $PythonArgs += " " + $AccessPoint.MACAddress + " " + $Result.MACAddress + " " + $Interface
-            $PythonCommand = [ScriptBlock]::Create("/usr/bin/python3 $PythonArgs")
+            $PythonCommand = [ScriptBlock]::Create("sudo /usr/bin/python3 $PythonArgs")
 
             Write-Information (Invoke-Command -ScriptBlock $PythonCommand).ToString
         }
