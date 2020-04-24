@@ -268,7 +268,7 @@ PROCESS
         $i = 0
         foreach ($Result in $Report)
         {
-            Write-Host "$i : $($Result.HostName) - $($Result.IPAddress)"
+            Write-Host "$i : $($Result.HostName) - $($Result.Vendor) - $($Result.IPAddress) - $($Result.MACAddress)"
             $i++
         }
         
