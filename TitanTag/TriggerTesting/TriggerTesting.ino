@@ -6,8 +6,8 @@ const int baseDelay = TIMERMAX - TIMEBASE;
 const int headerDelay = TIMERMAX - TIMEHEADER;
 const byte triggerPin = 2;
 const byte IRLEDMASK = B00001000;
-byte data = B01110101;
-byte dataBit = 0;
+byte data = B01101001;
+byte dataBit = 7;
 
 void initFireTimer() 
 // ------------------------------------------------------------------------------------
@@ -22,8 +22,6 @@ void initFireTimer()
 {
   TCCR4A = 0;     // clear registers and turn timer off
   TCCR4B = 0;
-  //TCCR4B |= (1<<CS40); // prescaler = 1 and start timer
-  //TIMSK4 |= (1<<TOIE4); // enable interrupt
   DDRL &= ~PL3;   // set pinmode of PL3 (pin 46) to input (no output on boot)
 }
 
@@ -74,17 +72,17 @@ ISR(TIMER4_OVF_vect) {
     {
       TCNT4 -= TIMEBASE;        // increase delay to 1200us
     }
-    dataBit++;                  // increment to next bit
+    dataBit--;                  // increment to next bit
   }
   
   DDRL ^= IRLEDMASK;            // toggle IRLED
   
-  if (dataBit == 9)             // After Xmit packet
+  if (dataBit == 0)             // After Xmit packet
   {
     DDRL   &= ~IRLEDMASK;       // turn off IRLED
     TIMSK4 &= ~(1<<TOIE4);      // disable interrupt
     TCCR4B &= ~(1<<CS40);       // turn off timer
-    dataBit = 0;                // reset bit index
+    dataBit = 7;                // reset bit index
   }
 }
 
