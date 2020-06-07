@@ -1,13 +1,18 @@
-#define TIMEBASE    9600 // Number of 16MHz clk cycles for 600us timer (bit delay)
-#define TIMERMAX   65536 // Max value of 16-bit timer before overflow
-#define TIMEHEADER 38400 // Number of 16MHz clk cycles for 2400us (header delay)
+#define TIME_BASE      9600 // Number of 16MHz clk cycles for 600us timer (bit delay)
+#define TIMER_MAX     65536 // Max value of 16-bit timer before overflow
+#define TIME_HEADER   38400 // Number of 16MHz clk cycles for 2400us (header delay)
+#define PACKET_LENGTH     2 // Default length of the packet being sent in bytes
 
-const int baseDelay = TIMERMAX - TIMEBASE;
-const int headerDelay = TIMERMAX - TIMEHEADER;
+const int baseDelay = TIMER_MAX - TIME_BASE;
+const int headerDelay = TIMER_MAX - TIME_HEADER;
 const byte triggerPin = 2;
 const byte IRLEDMASK = B00001000;
-byte data = B01101001;
-byte dataBit = 7;
+const byte MSB_Byte = B10000000;
+int  triggerDelay = 100000;            // Delay for 10 ms
+byte packetLength = PACKET_LENGTH;     // The current length of the packet
+byte data[2] = {B01101001, B11110000}; // Data to send
+byte dataBit = MSB_Byte;               // Index of which data bit
+byte dataByte = 0;     // Index of which data byte
 
 void initFireTimer() 
 // ------------------------------------------------------------------------------------
@@ -48,42 +53,51 @@ void init56KHzCarrierFreq()
 
 void fire() 
 { 
-  delay(200);             // Debounce delay
+  delayMicroseconds(triggerDelay);
   TCNT4 = headerDelay;    // Delay for header of data packet
   DDRL |= IRLEDMASK;      // Set PL3 to output mode
   TIMSK4 |= (1<<TOIE4);   // enable interrupt
   TCCR4B |= (1<<CS40);    // prescaler = 1 and start timer
 }
 
-void setup() {
-  // put your setup code here, to run once:
-  pinMode(triggerPin, INPUT_PULLUP);
-  initFireTimer();
-  init56KHzCarrierFreq();
-  attachInterrupt(digitalPinToInterrupt(triggerPin), fire, FALLING);
-}
-
 ISR(TIMER4_OVF_vect) {
+  if (dataBit == 0)             // After Xmit packet
+  {
+    dataBit = MSB_Byte;         // reset bit index
+    packetLength--;             // Mark 1 byte sent
+    dataByte++;
+    if (packetLength == 0)
+    {
+      DDRL   |=  IRLEDMASK;       // Set IRLED high for toggle off
+      TIMSK4 &= ~(1<<TOIE4);      // disable interrupt
+      TCCR4B &= ~(1<<CS40);       // turn off timer
+      packetLength = PACKET_LENGTH; // reset packet length
+      dataByte = 0;
+      Serial.println("complete");
+    }
+  }
+  
   TCNT4 = baseDelay;            // set timer for 600us delay
   
   if (!(DDRL & IRLEDMASK))      // if last cycle was low
   {
-    if (data & (1 << dataBit))  // and xmitting a 1
+    if (data[dataByte] & dataBit)  // and xmitting a 1
     {
-      TCNT4 -= TIMEBASE;        // increase delay to 1200us
+      TCNT4 -= TIME_BASE;       // increase delay to 1200us
     }
-    dataBit--;                  // increment to next bit
+    dataBit /= 2;     // increment to next bit
   }
   
   DDRL ^= IRLEDMASK;            // toggle IRLED
-  
-  if (dataBit == 0)             // After Xmit packet
-  {
-    DDRL   &= ~IRLEDMASK;       // turn off IRLED
-    TIMSK4 &= ~(1<<TOIE4);      // disable interrupt
-    TCCR4B &= ~(1<<CS40);       // turn off timer
-    dataBit = 7;                // reset bit index
-  }
+}
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  pinMode(triggerPin, INPUT_PULLUP);
+  initFireTimer();
+  init56KHzCarrierFreq();
+  attachInterrupt(digitalPinToInterrupt(triggerPin), fire, FALLING);
 }
 
 void loop() {
