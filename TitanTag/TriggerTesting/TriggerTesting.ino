@@ -1,21 +1,26 @@
+// Definitions
 #define TIME_BASE      9600 // Number of 16MHz clk cycles for 600us timer (bit delay)
 #define TIMER_MAX     65536 // Max value of 16-bit timer before overflow
 #define TIME_HEADER   38400 // Number of 16MHz clk cycles for 2400us (header delay)
 #define PACKET_LENGTH     2 // Default length of the packet being sent in bytes
 
-const int baseDelay = TIMER_MAX - TIME_BASE;
-const int headerDelay = TIMER_MAX - TIME_HEADER;
+// Byte masks
+const byte IRLEDMASK = B00001000;      // Mask for the IRLED pin in DDRL
+const byte MSB_Byte = B10000000;       // Mas for most significant bit of a byte
 
-const byte triggerPin = 2;
-const byte IRLEDMASK = B00001000;
-const byte MSB_Byte = B10000000;
+// Pin definitions
+const byte triggerPin = 2;             // Pin attached to trigger
 
-int  triggerDelay = 100000;            // Delay for 10 ms
+// Delay variables
+const int baseDelay = TIMER_MAX - TIME_BASE;     // Base delay of 600 us for timer4
+const int headerDelay = TIMER_MAX - TIME_HEADER; // Header delay of 2400 us for timer4
+int  triggerDelay = 100000;            // Delay value of 10 ms in us
 
+// Packet variables
 byte packetLength = PACKET_LENGTH;     // The current length of the packet
 byte data[2] = {B01101001, B11110000}; // Data to send
 byte dataBit = MSB_Byte;               // Index of which data bit
-byte dataByte = 0;     // Index of which data byte
+byte dataByte = 0;                     // Index of which data byte
 
 void initFireTimer() 
 // ------------------------------------------------------------------------------------
@@ -64,46 +69,61 @@ void triggerISR()
 //       for timer 4 and then the timer is started.
 // Defn: TCNT4  = Timer/Counter4 counter register value
 //       DDRL   = Port L Data Direction Register
-//       TIMSK4 = Timer/Counter4 
-//       OCR5A  = Output Compare Register 5A
+//       TIMSK4 = Timer/Counter4 interrupt enable mask
+//       TCCR4B = Timer/Counter4 Control Register B
 // ------------------------------------------------------------------------------------
 { 
   delayMicroseconds(triggerDelay); // Debouce trigger TODO: Remove w/ hardware upgrade
+
   TCNT4 = headerDelay;    // Delay for header of data packet
   DDRL |= IRLEDMASK;      // Set PL3 to output mode
   TIMSK4 |= (1<<TOIE4);   // enable interrupt
   TCCR4B |= (1<<CS40);    // prescaler = 1 and start timer
 }
 
-ISR(TIMER4_OVF_vect) {
-  if (dataBit == 0)             // After Xmit packet
+ISR(TIMER4_OVF_vect)
+// ------------------------------------------------------------------------------------
+// Func: ISR for timer 4 overflow. Sets the delay according to next bit sent to 
+//       transmit the data packet according to the packet structure.
+// Meth: Checks for if the packet has completed being sent and resets index variables
+//       if complete. When not complete it sets the counter for timer 4 to value for a
+//       base delay of 600 us. Then checks if the last cycle was low (delimitter for a
+//       bit) and adds additional delay when transmitting a 1.
+// Defn: TCNT4  = Timer/Counter4 counter register value
+//       DDRL   = Port L Data Direction Register
+//       TIMSK4 = Timer/Counter4 interrupt enable mask
+//       TCCR4B = Timer/Counter4 Control Register B
+// ------------------------------------------------------------------------------------
+{
+  if (dataBit == 0)                 // After Xmit byte complete
   {
-    dataBit = MSB_Byte;         // reset bit index
-    packetLength--;             // Mark 1 byte sent
-    dataByte++;
-    if (packetLength == 0)
+    dataBit = MSB_Byte;             // reset bit index
+    packetLength--;                 // Mark 1 byte sent
+    dataByte++;                     // increment to next byte
+
+    if (packetLength == 0)          // Check for end of packet
     {
-      DDRL   |=  IRLEDMASK;       // Set IRLED high for toggle off
-      TIMSK4 &= ~(1<<TOIE4);      // disable interrupt
-      TCCR4B &= ~(1<<CS40);       // turn off timer
+      DDRL   |=  IRLEDMASK;         // Set IRLED high for toggle off
+      TIMSK4 &= ~(1<<TOIE4);        // disable interrupt
+      TCCR4B &= ~(1<<CS40);         // turn off timer
       packetLength = PACKET_LENGTH; // reset packet length
-      dataByte = 0;
+      dataByte = 0;                 // reset byte index
       Serial.println("complete");
     }
   }
   
-  TCNT4 = baseDelay;            // set timer for 600us delay
+  TCNT4 = baseDelay;               // set timer for 600us delay
   
-  if (!(DDRL & IRLEDMASK))      // if last cycle was low
+  if (!(DDRL & IRLEDMASK))         // if last cycle was low
   {
     if (data[dataByte] & dataBit)  // and xmitting a 1
     {
-      TCNT4 -= TIME_BASE;       // increase delay to 1200us
+      TCNT4 -= TIME_BASE;          // increase delay to 1200us
     }
-    dataBit /= 2;     // increment to next bit
+    dataBit /= 2;                  // increment to next bit
   }
   
-  DDRL ^= IRLEDMASK;            // toggle IRLED
+  DDRL ^= IRLEDMASK;               // toggle IRLED
 }
 
 void setup() {
