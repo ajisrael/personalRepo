@@ -5,10 +5,13 @@
 
 const int baseDelay = TIMER_MAX - TIME_BASE;
 const int headerDelay = TIMER_MAX - TIME_HEADER;
+
 const byte triggerPin = 2;
 const byte IRLEDMASK = B00001000;
 const byte MSB_Byte = B10000000;
+
 int  triggerDelay = 100000;            // Delay for 10 ms
+
 byte packetLength = PACKET_LENGTH;     // The current length of the packet
 byte data[2] = {B01101001, B11110000}; // Data to send
 byte dataBit = MSB_Byte;               // Index of which data bit
@@ -51,9 +54,21 @@ void init56KHzCarrierFreq()
   OCR5A = 17; // 36 / 2 - 1 (0 index) = 17
 }
 
-void fire() 
+void triggerISR()
+// ------------------------------------------------------------------------------------
+// Func: ISR for when the trigger is pulled to transmit the data packet.
+// Meth: Currently, implements a temporary delay to debounce the trigger since it is a
+//       pushbutton. Then sets TCNT4 to overflow after 2400 us (length of the header
+//       field of a data packet). Followed by setting the IRLED pin to output mode
+//       to start the 56KHz wave managed by timer 5. The overflow interrupt is enabled
+//       for timer 4 and then the timer is started.
+// Defn: TCNT4  = Timer/Counter4 counter register value
+//       DDRL   = Port L Data Direction Register
+//       TIMSK4 = Timer/Counter4 
+//       OCR5A  = Output Compare Register 5A
+// ------------------------------------------------------------------------------------
 { 
-  delayMicroseconds(triggerDelay);
+  delayMicroseconds(triggerDelay); // Debouce trigger TODO: Remove w/ hardware upgrade
   TCNT4 = headerDelay;    // Delay for header of data packet
   DDRL |= IRLEDMASK;      // Set PL3 to output mode
   TIMSK4 |= (1<<TOIE4);   // enable interrupt
@@ -97,7 +112,7 @@ void setup() {
   pinMode(triggerPin, INPUT_PULLUP);
   initFireTimer();
   init56KHzCarrierFreq();
-  attachInterrupt(digitalPinToInterrupt(triggerPin), fire, FALLING);
+  attachInterrupt(digitalPinToInterrupt(triggerPin), triggerISR, FALLING);
 }
 
 void loop() {
