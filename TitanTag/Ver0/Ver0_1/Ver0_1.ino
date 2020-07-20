@@ -222,7 +222,7 @@ ISR(TIMER4_OVF_vect)
   
   if (!(DDRL & IRLEDMASK))          // if last cycle was low
   {
-    if (data[xmitByte] & xmitBit)   // and xmitting a 1
+    if (xmitPacket[xmitByte] & xmitBit)   // and xmitting a 1
     {
       TCNT4 -= TIME_BASE;           // increase delay to 1200us
     }
@@ -260,6 +260,9 @@ void resetReceiver()
     currBit = 0;                                  // Current bit value from receiver
     currByte = 0;                                 // Current byte value received
     headerRecv = 0;                               // Boolean for checking for header
+
+    // Make sure the interrupt is enabled
+    attachInterrupt(digitalPinToInterrupt(receiverPin), receiverISR, FALLING);
 }
 
 void clearReceiver()
@@ -286,10 +289,12 @@ void receiverISR()
 //       TCCR3B = Timer/Counter3 Control Register B
 // ------------------------------------------------------------------------------------
 {
+  Serial.println("Received");
   clearReceiver();        // Clear the receiver
   TCNT3 = sampleDelay;    // Delay for sampling when receiving a packet
   TIMSK3 |= (1<<TOIE3);   // enable interrupt
-  TCCR3B |= (1<<CS30);    // prescaler = 1 and start timer
+  TCCR3B |= (1<<CS40);    // prescaler = 1 and start timer
+  detachInterrupt(digitalPinToInterrupt(receiverPin)); // Disable recieverISR()
 }
 
 ISR(TIMER3_OVF_vect)
@@ -311,53 +316,62 @@ ISR(TIMER3_OVF_vect)
 //       packet has finished being processed.
 // ------------------------------------------------------------------------------------
 {
-    
+    //Serial.print("\nProcessing: ");
     sampleValue = digitalRead(receiverPin); // Get current value of receiver
     if (sampleValue) { countHigh++; } else { countLow++; } // Increment weight counters
     sampleCount++;                          // Increment number of samples taken
 
     if (sampleCount == SAMPLE_AMT) // Once samples are taken for current time base
     {
+        Serial.print("\nSample Complete: ");
         sampleCount = 0;           // Reset sample counter for next time base
-        if (countHigh < countLow)  // Evaluating a 1 or 0
-        {
-            currBit++              // Increment to determine value of current bit
+        if (countHigh >= countLow)  // Evaluating a high vs low portion of signal
+        {                          // High is delimitter, low is data
+            currBit++;             // Increment to determine value of current bit
         }
-        else                       // Evaluating a delimitter
+        else                       // Evaluating data
         {
+          Serial.print("Evaluating Data: ");
             switch (currBit)       // Begin parsing data
             {
                 case RECV_2DELIM:     // 2 delimitters in a row (shouldn't happen)
-                    clearReceiver();  // Handle error by clearing receiver
-                    break;
+                  Serial.print("Error: 2 Delimitters ");
+                  clearReceiver();  // Handle error by clearing receiver
+                  break;
                 case RECV_ZERO:              // 1 time base indicates a received 0
-                    if (headerRecv)          // Make sure header packet received
-                    {
-                        recvBit /= 2;        // increment to next bit
-                    }
-                    break;
+                  Serial.print("0, ");
+                  if (headerRecv)          // Make sure header packet received
+                  {
+                      recvBit /= 2;        // increment to next bit
+                  }
+                  break;
                 case RECV_ONE:               // 2 time bases indicates a received 1
-                    if (headerRecv)          // Make sure header packet received
-                    {
-                        currByte |= recvBit; // Save the 1 in the current byte
-                        recvBit /= 2;        // increment to next bit
-                    }
-                    break;
+                  Serial.print("1, ");
+                  if (headerRecv)          // Make sure header packet received
+                  {
+                      currByte |= recvBit; // Save the 1 in the current byte
+                      recvBit /= 2;        // increment to next bit
+                  }
+                  break;
                 case RECV_UNDEF:      // 3 time bases btw delims (shouldn't happen)
-                    clearReceiver();  // Handle error by clearing receiver
-                    break;
+                  Serial.print("Error: 3 Time Bases, Undefined ");
+                  clearReceiver();  // Handle error by clearing receiver
+                  break;
                 case RECV_HEADER:     // 4 time bases indicates a header
-                    headerRecv = 1;
-                    break;
+                  Serial.print("Header Recieved: ");
+                  headerRecv = 1;
+                  break;
                 default:              // 5 or greater indicates end of packet
-                    resetReceiver();  // Get ready to receive next packet
-                    break;
+                  Serial.print("End of Packet ");
+                  resetReceiver();  // Get ready to receive next packet
+                  break;
             }
 
             currBit = 0;      // Reset value for current bit
             
             if (recvBit == 0) // Check if a full byte has been processed
             {
+                Serial.print("Byte Processed: ");
                 recvPacket[recvByte] = currByte; // Save value of byte to buffer
                 recvByte++;                      // Increment to next byte
                 currByte = 0;                    // Reset the current byte
@@ -365,9 +379,12 @@ ISR(TIMER3_OVF_vect)
 
             if (recvByte == recvPktLength) // Check if packet length has been processed
             {
+                Serial.print("Packet Recieved: ");
                 resetReceiver();           // Get ready to receive next packet
             }
-        }  
+        }
+        countHigh = 0;    // Reset value for counters
+        countLow = 0;  
     }
 
     TCNT3 = sampleDelay;      // Reset timer for sample delay time
@@ -379,6 +396,7 @@ void setup()
 // Meth: Sets up pins and timer registers for all functionality to be handled via ISRs.
 // ------------------------------------------------------------------------------------
 {
+  Serial.begin(9600);
   pinMode(triggerPin, INPUT_PULLUP);
   initXmitTimer();
   initRecvTimer();
