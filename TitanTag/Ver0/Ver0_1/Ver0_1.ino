@@ -65,6 +65,8 @@
 //                    something were to break with new changes.
 //                  - Added additional comments to document new changes.
 //                  - Renamed variables for transmitted data.
+//       2020.07.21 - Alex Israels:
+//                  - Testing new recieve functions, not working.
 //-----------------------------------------------------------------------------------
 
 // Definitions
@@ -141,8 +143,8 @@ void initRecvTimer()
 //       TCCR3B = Timer/Counter3 Control Register B
 // ------------------------------------------------------------------------------------
 {
-  TCCR4A = 0;     // clear registers and turn timer off
-  TCCR4B = 0;
+  TCCR3A = 0;     // clear registers and turn timer off
+  TCCR3B = 0;
 }
 
 void init56KHzCarrierFreq() 
@@ -316,35 +318,31 @@ ISR(TIMER3_OVF_vect)
 //       packet has finished being processed.
 // ------------------------------------------------------------------------------------
 {
-    //Serial.print("\nProcessing: ");
     sampleValue = digitalRead(receiverPin); // Get current value of receiver
     if (sampleValue) { countHigh++; } else { countLow++; } // Increment weight counters
     sampleCount++;                          // Increment number of samples taken
 
     if (sampleCount == SAMPLE_AMT) // Once samples are taken for current time base
     {
-        Serial.print("\nSample Complete: ");
         sampleCount = 0;           // Reset sample counter for next time base
-        if (countHigh >= countLow)  // Evaluating a high vs low portion of signal
+        if (countHigh <= countLow) // Evaluating a high vs low portion of signal
         {                          // High is delimitter, low is data
             currBit++;             // Increment to determine value of current bit
         }
         else                       // Evaluating data
         {
-          Serial.print("Evaluating Data: ");
+          Serial.print("\nEvaluating Data: ");
             switch (currBit)       // Begin parsing data
             {
                 case RECV_2DELIM:     // 2 delimitters in a row (shouldn't happen)
                   Serial.print("Error: 2 Delimitters ");
                   clearReceiver();  // Handle error by clearing receiver
-                  break;
                 case RECV_ZERO:              // 1 time base indicates a received 0
                   Serial.print("0, ");
                   if (headerRecv)          // Make sure header packet received
                   {
                       recvBit /= 2;        // increment to next bit
                   }
-                  break;
                 case RECV_ONE:               // 2 time bases indicates a received 1
                   Serial.print("1, ");
                   if (headerRecv)          // Make sure header packet received
@@ -352,19 +350,15 @@ ISR(TIMER3_OVF_vect)
                       currByte |= recvBit; // Save the 1 in the current byte
                       recvBit /= 2;        // increment to next bit
                   }
-                  break;
                 case RECV_UNDEF:      // 3 time bases btw delims (shouldn't happen)
                   Serial.print("Error: 3 Time Bases, Undefined ");
                   clearReceiver();  // Handle error by clearing receiver
-                  break;
                 case RECV_HEADER:     // 4 time bases indicates a header
                   Serial.print("Header Recieved: ");
                   headerRecv = 1;
-                  break;
                 default:              // 5 or greater indicates end of packet
                   Serial.print("End of Packet ");
                   resetReceiver();  // Get ready to receive next packet
-                  break;
             }
 
             currBit = 0;      // Reset value for current bit
@@ -379,7 +373,8 @@ ISR(TIMER3_OVF_vect)
 
             if (recvByte == recvPktLength) // Check if packet length has been processed
             {
-                Serial.print("Packet Recieved: ");
+                Serial.print("Packet Recieved:");
+                //for (int i = 0; i < recvPktLength; i++) { Serial.print(recvPacket[i], HEX); }
                 resetReceiver();           // Get ready to receive next packet
             }
         }
@@ -396,7 +391,7 @@ void setup()
 // Meth: Sets up pins and timer registers for all functionality to be handled via ISRs.
 // ------------------------------------------------------------------------------------
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(triggerPin, INPUT_PULLUP);
   initXmitTimer();
   initRecvTimer();
