@@ -12,26 +12,24 @@ final int BCK = 5;
 // UP, DOWN, RIGHT, LEFT, FRONT, BACK
 color[] colors = {
   #FFFFFF, #FFFF00,
-  #FF0000, #FFA500,
+  #FFA500, #FF0000,
   #00FF00, #0000FF
 };
 
 int dim = 3;
-Cubie[][][] cube = new Cubie[dim][dim][dim];
+Cubie[] cube = new Cubie[dim*dim*dim];
 
 void setup() {
   size(600, 600, P3D);
   cam = new PeasyCam(this, 400);
-  for (int i = 0; i < dim; i++) {
-    for (int j = 0; j < dim; j++) {
-      for (int k = 0; k < dim; k++) {
-        float len = 50;
-        float offset = (dim - 1) * len * 0.5;
-        float x = len * i - offset;
-        float y = len * j - offset;
-        float z = len * k - offset;
-        cube[i][j][k] = new Cubie(x, y, z, len);
-        
+  int index = 0;
+  for (int x = -1; x <= 1; x++) {
+    for (int y = -1; y <= 1; y++) {
+      for (int z = -1; z <= 1; z++) {
+        PMatrix3D matrix = new PMatrix3D();
+        matrix.translate(x,y,z);
+        cube[index] = new Cubie(matrix);
+        index++;
       }
     }
   }
@@ -39,11 +37,8 @@ void setup() {
 
 void draw() {
   background(51);
-  for (int i = 0; i < dim; i++) {
-    for (int j = 0; j < dim; j++) {
-      for (int k = 0; k < dim; k++) {
-        cube[i][j][k].show();
-      }
-    }
+  scale(50);
+  for (int i = 0; i < cube.length; i++) {
+        cube[i].show();
   }
 }
