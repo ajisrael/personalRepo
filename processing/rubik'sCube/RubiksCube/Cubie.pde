@@ -21,19 +21,19 @@ class Cubie {
 
   void turnFacesZ(int dir) {
     for (Face f : faces) {
-        f.turnZ(dir * HALF_PI);
+      f.turnZ(dir * HALF_PI);
     }
   }
-  
+
   void turnFacesY(int dir) {
     for (Face f : faces) {
-        f.turnY(dir * HALF_PI);
+      f.turnY(dir * HALF_PI);
     }
   }
-  
+
   void turnFacesX(int dir) {
     for (Face f : faces) {
-        f.turnX(dir * HALF_PI);
+      f.turnX(dir * HALF_PI);
     }
   }
 

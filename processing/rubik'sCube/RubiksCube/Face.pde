@@ -6,7 +6,7 @@ class Face {
     this.normal = normal;
     this.c = c;
   }
-  
+
   void turnZ(float angle) {
     PVector v2 = new PVector();
     v2.x = round(normal.x * cos(angle) - normal.y * sin(angle));
@@ -14,7 +14,7 @@ class Face {
     v2.z = round(normal.z);
     normal = v2;
   }
-  
+
   void turnY(float angle) {
     PVector v2 = new PVector();
     v2.x = round(normal.x * cos(angle) - normal.z * sin(angle));
@@ -22,7 +22,7 @@ class Face {
     v2.y = round(normal.y);
     normal = v2;
   }
-  
+
   void turnX(float angle) {
     PVector v2 = new PVector();
     v2.y = round(normal.y * cos(angle) - normal.z * sin(angle));

@@ -5,6 +5,9 @@ PeasyCam cam;
 int dim = 3;
 Cubie[] cube = new Cubie[dim*dim*dim];
 
+
+Move move;
+
 void setup() {
   size(600, 600, P3D);
   cam = new PeasyCam(this, 400);
@@ -19,6 +22,8 @@ void setup() {
       }
     }
   }
+
+  move = new Move(0, 0, 1, 1);
 }
 
 void turnZ(int index, int dir) {
@@ -64,21 +69,23 @@ void keyPressed() {
   switch (key)
   {
   case 'f':
-    turnZ(-1, 1);
-    break;
-  case 'F':
-    turnZ(-1, -1);
-  case 'b':
     turnZ(1, 1);
     break;
-  case 'B':
+  case 'F':
     turnZ(1, -1);
+    break;
+  case 'b':
+    turnZ(-1, 1);
+    break;
+  case 'B':
+    turnZ(-1, -1);
     break;
   case 'u':
     turnY(-1, 1);
     break;
   case 'U':
     turnY(-1, -1);
+    break;
   case 'd':
     turnY(1, 1);
     break;
@@ -98,12 +105,21 @@ void keyPressed() {
     turnX(1, -1);
     break;
   }
+  move.start();
 }
 
 void draw() {
   background(51);
   scale(50);
+
+  move.update();
+
   for (int i = 0; i < cube.length; i++) {
+    push();
+    if (cube[i].z == move.z) {
+      rotateZ(move.angle);
+    }
     cube[i].show();
+    pop();
   }
 }
