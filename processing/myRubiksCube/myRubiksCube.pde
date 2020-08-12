@@ -2,23 +2,29 @@ import peasy.*;
 
 PeasyCam cam;
 
-float speed = 0.5;
+float speed = 0.2;
+
+color blackout = color(0);
 int dim = 3;
+int limit = dim / 2;
+boolean even = (0 == dim % 2);
+boolean autosolve = false;
+
 Cubie[] cube = new Cubie[dim*dim*dim];
 
 Move[] allMoves = new Move[] {
-  new Move(0, 1, 0, 1), 
-  new Move(0, 1, 0, -1), 
-  new Move(0, -1, 0, 1), 
-  new Move(0, -1, 0, -1), 
-  new Move(1, 0, 0, 1), 
-  new Move(1, 0, 0, -1), 
-  new Move(-1, 0, 0, 1), 
-  new Move(-1, 0, 0, -1), 
-  new Move(0, 0, 1, 1), 
-  new Move(0, 0, 1, -1), 
-  new Move(0, 0, -1, 1), 
-  new Move(0, 0, -1, -1), 
+  new Move(0, 1, 0, 1), // D'
+  new Move(0, 1, 0, -1), // D
+  new Move(0, -1, 0, 1), // U
+  new Move(0, -1, 0, -1), // U'
+  new Move(1, 0, 0, 1), // R
+  new Move(1, 0, 0, -1), // R'
+  new Move(-1, 0, 0, 1), // L'
+  new Move(-1, 0, 0, -1), // L
+  new Move(0, 0, 1, 1), // F
+  new Move(0, 0, 1, -1), // F'
+  new Move(0, 0, -1, 1), // B'
+  new Move(0, 0, -1, -1), // B
 };
 
 ArrayList<Move> sequence = new ArrayList<Move>();
@@ -50,10 +56,12 @@ void setup() {
 
   currentMove = sequence.get(counter);
 
-  for (int i = sequence.size()-1; i >= 0; i--) {
-    Move nextMove = sequence.get(i).copy();
-    nextMove.reverse();
-    sequence.add(nextMove);
+  if (autosolve) {
+    for (int i = sequence.size()-1; i >= 0; i--) {
+      Move nextMove = sequence.get(i).copy();
+      nextMove.reverse();
+      sequence.add(nextMove);
+    }
   }
 }
 

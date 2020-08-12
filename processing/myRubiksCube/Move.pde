@@ -17,11 +17,11 @@ class Move {
   boolean finished() {
     return finished;
   }
-
+  
   Move copy() {
-    return new Move(x, y, z, dir);
+   return new Move(x,y,z,dir);
   }
-
+  
   void reverse() {
     dir *= -1;
   }
