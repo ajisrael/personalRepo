@@ -9,6 +9,7 @@ var snake;
 
 (function setup() {
     snake = new Snake();
+    snake.pickLocation();
     fruit = new Fruit();
     fruit.pickLocation();
 
@@ -20,7 +21,7 @@ var snake;
         if(snake.eat(fruit)){
             fruit.pickLocation();
         }
-    }, 250);
+    }, 70);
 }());
 
 window.addEventListener('keydown', ((evt) => {
