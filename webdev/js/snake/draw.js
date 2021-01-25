@@ -8,23 +8,23 @@ const columns = canvas.width / scale;
 var snake;
 
 (function setup() {
-    snake = new Snake();
-    snake.pickLocation();
-    fruit = new Fruit();
-    fruit.pickLocation();
+  snake = new Snake();
+  snake.pickLocation();
+  fruit = new Fruit();
+  fruit.pickLocation();
 
-    window.setInterval(() => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        fruit.draw();
-        snake.update();
-        snake.draw();
-        if(snake.eat(fruit)){
-            fruit.pickLocation();
-        }
-    }, 70);
-}());
+  window.setInterval(() => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    fruit.draw();
+    snake.update();
+    snake.draw();
+    if (snake.eat(fruit)) {
+      fruit.pickLocation();
+    }
+  }, 70);
+})();
 
-window.addEventListener('keydown', ((evt) => {
-    const direction = evt.key.replace('Arrow', '');
-    snake.changeDirection(direction);
-}))
+window.addEventListener("keydown", (evt) => {
+  const direction = evt.key.replace("Arrow", "");
+  snake.changeDirection(direction);
+});
