@@ -1,14 +1,17 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "/Users/alexisraels/Amway/infrastructure"
-		},
-		{
-			"path": "../../Amway/amperks"
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "/Users/alexisraels/Amway/infrastructure"
+    },
+    {
+      "path": "../../Amway/amperks"
+    },
+    {
+      "path": "../node_js_api_masterclass"
+    }
+  ],
+  "settings": {}
 }
