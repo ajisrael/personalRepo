@@ -14,7 +14,10 @@
                 "C:\\Program Files (x86)\\Arduino\\tools\\**",
                 "/Applications/Arduino.app/Contents/Java/hardware/tools/**",
                 "/Applications/Arduino.app/Contents/Java/libraries/**",
-                "/Users/alexisraels/Documents/Arduino/libraries/**"
+                "/Users/alexisraels/Documents/Arduino/libraries/**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\**",
+                "C:\\Program Files (x86)\\Arduino\\libraries\\**",
+                "C:\\Users\\KingOfHertz\\Documents\\Arduino\\libraries\\**"
             ],
             "defines": [
                 "USBCON"
