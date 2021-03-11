@@ -1,0 +1,8 @@
+## messageName: welcome
+Hello, this is your captain speaking. You can call me Captain Oliver.
+Our ship has crashed, and somehow we have ended up in this Labyrinth.
+We must work together to find our way out....
+Here are your options:
+  [1] Go back to ship for supplies
+  [2] Adventure further
+What do you want to do: 
