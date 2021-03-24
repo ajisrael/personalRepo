@@ -16,5 +16,9 @@
       "path": "../proshop_mern"
     }
   ],
-  "settings": {}
+  "settings": {
+    "cSpell.words": [
+      "myorders"
+    ]
+  }
 }
