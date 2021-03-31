@@ -14,11 +14,12 @@
     },
     {
       "path": "../proshop_mern"
+    },
+    {
+      "path": "../../Amway/orderManagement"
     }
   ],
   "settings": {
-    "cSpell.words": [
-      "myorders"
-    ]
+    "cSpell.words": ["myorders"]
   }
 }
